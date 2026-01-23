@@ -24,6 +24,7 @@
 - AuthProvider context at `/src/contexts/AuthContext.tsx` - wrap app with `<AuthProvider>`
 - useAuth hook at `/src/hooks/useAuth.ts` - use `const { user, session, signIn, signOut } = useAuth()`
 - For Fast Refresh compatibility: separate createContext() into its own .ts file, keep provider in .tsx
+- ProtectedRoute wrapper at `/src/components/ProtectedRoute.tsx` - wrap protected routes with `<ProtectedRoute>`
 
 ---
 
@@ -332,4 +333,24 @@
   - supabase.auth.onAuthStateChange provides events: SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.
   - Always use useCallback for context methods to prevent unnecessary re-renders
   - useMemo for context value prevents child re-renders when state hasn't changed
+---
+
+## 2026-01-23 - US-014
+- What was implemented:
+  - Created /src/components/ProtectedRoute.tsx wrapper component
+  - Check authentication status from AuthContext via useAuth hook
+  - Redirects unauthenticated users to /login with redirect param preserving original path
+  - Shows animated loading spinner while checking auth status
+  - Renders children when user is authenticated
+  - Uses encodeURIComponent for safe redirect URL encoding
+
+- Files changed:
+  - src/components/ProtectedRoute.tsx (new)
+
+- **Learnings for future iterations:**
+  - Use `useLocation()` from react-router-dom to get current pathname and search params
+  - Preserve original path with `encodeURIComponent(location.pathname + location.search)` for post-login redirect
+  - Use `<Navigate to={...} replace />` to redirect without adding to browser history
+  - The loading state from useAuth is true until initial session check completes
+  - Use `<>{children}</>` to render children without extra wrapper element
 ---
