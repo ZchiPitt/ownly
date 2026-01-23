@@ -41,6 +41,10 @@
 - Use `ReturnType<typeof setTimeout>` instead of `NodeJS.Timeout` for browser TypeScript compatibility
 - useCategories hook at `/src/hooks/useCategories.ts` - use `const { categories, createCategory, getSortedCategories } = useCategories()`
 - For Supabase Database types, include `Relationships: []` in table definitions for type compatibility
+- useDashboardStats hook at `/src/hooks/useDashboardStats.ts` - use `const { stats, isLoading, refetch } = useDashboardStats()` for dashboard counts
+- useExpiringItems hook at `/src/hooks/useExpiringItems.ts` - use `const { items, isLoading, refetch } = useExpiringItems(days, limit)` for expiring items
+- useRecentItems hook at `/src/hooks/useRecentItems.ts` - use `const { items, isLoading, refetch } = useRecentItems(limit)` for recently added items
+- Use `.returns<Type[]>()` method on Supabase query chain for proper TypeScript type inference
 
 ---
 
@@ -981,4 +985,83 @@
   - Sticky header uses `sticky top-0 z-10` with white background and border
   - useMemo for greeting prevents recalculating on every render
   - Section headers pattern: title on left, action link on right with justify-between
+---
+
+## 2026-01-23 - US-037
+- What was implemented:
+  - Created /src/hooks/useDashboardStats.ts hook for fetching dashboard statistics
+  - Hook provides: stats (totalItems, totalLocations, expiringItems), isLoading, error, refetch
+  - Fetches all counts in parallel using Promise.all for better performance
+  - Total items: count of non-deleted items belonging to user
+  - Total locations: count of non-deleted locations belonging to user
+  - Expiring items: count of items with expiration_date within 30 days
+  - Updated DashboardPage with StatCard and StatCardSkeleton components
+  - StatCard component with icon, label, count, and click handler
+  - StatCardSkeleton with pulse animation for loading state
+  - Horizontal scrollable row of 3 stat cards: Items, Locations, Expiring
+  - Card styling: icon in colored circle, label above, count below, rounded corners, subtle shadow
+  - Click handlers navigate to /inventory with appropriate view/filter params
+
+- Files changed:
+  - src/hooks/useDashboardStats.ts (new)
+  - src/pages/DashboardPage.tsx (updated - added stat cards, skeleton loaders)
+
+- **Learnings for future iterations:**
+  - useDashboardStats hook at `/src/hooks/useDashboardStats.ts` - use `const { stats, isLoading, refetch } = useDashboardStats()`
+  - Use `{ count: 'exact', head: true }` option in Supabase select for efficient count queries
+  - Date filtering with `.lte('expiration_date', date.toISOString().split('T')[0])` for expiring items
+  - StatCard pattern: icon node, label string, count number, color classes for theming
+  - Horizontal scroll with `-mx-4 px-4` for edge-to-edge scroll but proper padding
+---
+
+## 2026-01-23 - US-038
+- What was implemented:
+  - Created /src/hooks/useExpiringItems.ts hook for fetching items expiring within specified days
+  - Hook provides: items (ExpiringItem[]), isLoading, error, refetch
+  - Added Expiring Soon section to DashboardPage below quick stats
+  - Section header with warning icon, "Expiring Soon" title, and "See All" link to /inventory?filter=expiring
+  - Shows up to 3 items expiring within 7 days, sorted by expiration date (soonest first)
+  - ExpiringItemCard component displays: thumbnail, name, expiration date, days remaining badge
+  - Badge colors: red (<=3 days or expired), orange (4-7 days)
+  - Section hidden entirely when no expiring items (conditional rendering)
+  - Skeleton loading states for cards while data loads
+  - Tap card navigates to /item/{id}
+
+- Files changed:
+  - src/hooks/useExpiringItems.ts (new)
+  - src/pages/DashboardPage.tsx (updated - added Expiring Soon section, ExpiringItemCard, skeletons)
+
+- **Learnings for future iterations:**
+  - useExpiringItems hook at `/src/hooks/useExpiringItems.ts` - use `const { items, isLoading, refetch } = useExpiringItems(days, limit)`
+  - Use `.returns<Type[]>()` method on Supabase query chain for proper TypeScript inference
+  - Calculate days remaining: Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - use ceil to round up
+  - Set both dates to midnight (setHours(0,0,0,0)) for accurate day calculation
+  - Conditional section rendering: `{(loading || items.length > 0) && <section>...</section>}` to hide when empty but show skeleton while loading
+---
+
+## 2026-01-23 - US-039
+- What was implemented:
+  - Created /src/hooks/useRecentItems.ts hook for fetching recently added items
+  - Hook provides: items (RecentItem[]), isLoading, error, refetch
+  - Fetches up to 5 most recent items with category info (name, color) via join
+  - Added 'Recently Added' section to DashboardPage below Expiring Soon section
+  - Section header with clock icon, "Recently Added" title, and "See All" link to /inventory?sort=newest
+  - Horizontal scrollable row showing up to 5 recent items
+  - RecentItemCard component displays: thumbnail, name (2 lines truncate), category badge overlay, relative time
+  - Relative time formatting: 'Just now', 'X minutes ago', 'X hours ago', 'Yesterday', 'X days ago', or date for older
+  - Skeleton loading states with RecentItemCardSkeleton components
+  - Empty state shows message and "Add your first item" link
+  - Tap card navigates to /item/{id}
+
+- Files changed:
+  - src/hooks/useRecentItems.ts (new)
+  - src/pages/DashboardPage.tsx (updated - added Recently Added section, RecentItemCard, skeletons, relative time helper)
+
+- **Learnings for future iterations:**
+  - useRecentItems hook at `/src/hooks/useRecentItems.ts` - use `const { items, isLoading, refetch } = useRecentItems(limit)`
+  - Supabase join syntax for related tables: `.select('id, name, categories (name, color)')` returns nested object
+  - Use `.returns<Type[]>()` for proper TypeScript inference on complex queries with joins
+  - Relative time calculation: compare timestamps with Math.floor for seconds/minutes/hours/days
+  - Category badge overlay positioned with `absolute bottom-1.5 right-1.5` inside relative container
+  - Use `line-clamp-2` Tailwind class for 2-line text truncation
 ---

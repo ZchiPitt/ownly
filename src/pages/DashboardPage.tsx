@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useExpiringItems, type ExpiringItem } from '@/hooks/useExpiringItems';
+import { useRecentItems, type RecentItem } from '@/hooks/useRecentItems';
 
 /**
  * Get time-based greeting message
@@ -209,11 +210,126 @@ function ExpiringItemCard({ item, onClick }: ExpiringItemCardProps) {
   );
 }
 
+/**
+ * Skeleton component for recent item card loading state
+ */
+function RecentItemCardSkeleton() {
+  return (
+    <div className="flex-shrink-0 w-36">
+      {/* Thumbnail skeleton */}
+      <div className="w-full aspect-square rounded-xl bg-gray-200 animate-pulse mb-2" />
+      {/* Name skeleton */}
+      <div className="w-24 h-4 bg-gray-200 rounded animate-pulse mb-1" />
+      {/* Category skeleton */}
+      <div className="w-16 h-3 bg-gray-200 rounded animate-pulse mb-1" />
+      {/* Time skeleton */}
+      <div className="w-12 h-3 bg-gray-200 rounded animate-pulse" />
+    </div>
+  );
+}
+
+/**
+ * Get relative time string from date
+ */
+function getRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSecs < 60) {
+    return 'Just now';
+  } else if (diffMins < 60) {
+    return diffMins === 1 ? '1 minute ago' : `${diffMins} minutes ago`;
+  } else if (diffHours < 24) {
+    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  } else if (diffDays === 1) {
+    return 'Yesterday';
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  }
+}
+
+/**
+ * Recent item card component
+ */
+interface RecentItemCardProps {
+  item: RecentItem;
+  onClick: () => void;
+}
+
+function RecentItemCard({ item, onClick }: RecentItemCardProps) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex-shrink-0 w-36 text-left active:scale-95 transition-transform"
+    >
+      {/* Thumbnail - 80x80 but using aspect-ratio for responsive sizing */}
+      <div className="w-full aspect-square rounded-xl bg-gray-100 overflow-hidden mb-2 relative">
+        {item.thumbnail_url || item.photo_url ? (
+          <img
+            src={item.thumbnail_url || item.photo_url}
+            alt={item.name || 'Item'}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        )}
+
+        {/* Category badge overlay */}
+        {item.category_name && (
+          <div className="absolute bottom-1.5 right-1.5">
+            <span
+              className="px-1.5 py-0.5 rounded text-[10px] font-medium text-white shadow-sm"
+              style={{
+                backgroundColor: item.category_color || '#6b7280',
+              }}
+            >
+              {item.category_name}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Name - max 2 lines */}
+      <p className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight mb-0.5">
+        {item.name || 'Unnamed item'}
+      </p>
+
+      {/* Relative time */}
+      <p className="text-xs text-gray-500">{getRelativeTime(item.created_at)}</p>
+    </button>
+  );
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats, isLoading: statsLoading } = useDashboardStats();
   const { items: expiringItems, isLoading: expiringLoading } = useExpiringItems(7, 3);
+  const { items: recentItems, isLoading: recentLoading } = useRecentItems(5);
 
   const greeting = useMemo(() => getGreeting(), []);
   const displayName = useMemo(
@@ -419,23 +535,13 @@ export function DashboardPage() {
           </section>
         )}
 
-        {/* Recent Items Section - Placeholder */}
+        {/* Recently Added Section */}
         <section>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Items</h2>
-            <button
-              onClick={() => navigate('/inventory')}
-              className="text-sm text-blue-600 font-medium hover:text-blue-700"
-            >
-              See all
-            </button>
-          </div>
-
-          {/* Empty state or placeholder */}
-          <div className="bg-white rounded-xl p-6 text-center border border-gray-200">
-            <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              {/* Clock icon */}
               <svg
-                className="w-6 h-6 text-gray-400"
+                className="w-5 h-5 text-blue-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -444,18 +550,64 @@ export function DashboardPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
+              <h2 className="text-lg font-semibold text-gray-900">Recently Added</h2>
             </div>
-            <p className="text-gray-500 text-sm">No items yet</p>
             <button
-              onClick={() => navigate('/add')}
-              className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700"
+              onClick={() => navigate('/inventory?sort=newest')}
+              className="text-sm text-blue-600 font-medium hover:text-blue-700"
             >
-              Add your first item
+              See All
             </button>
           </div>
+
+          {/* Recent items horizontal scroll */}
+          {recentLoading ? (
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              <RecentItemCardSkeleton />
+              <RecentItemCardSkeleton />
+              <RecentItemCardSkeleton />
+              <RecentItemCardSkeleton />
+              <RecentItemCardSkeleton />
+            </div>
+          ) : recentItems.length > 0 ? (
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {recentItems.map((item) => (
+                <RecentItemCard
+                  key={item.id}
+                  item={item}
+                  onClick={() => navigate(`/item/${item.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl p-6 text-center border border-gray-200">
+              <div className="w-12 h-12 mx-auto mb-3 bg-gray-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
+                </svg>
+              </div>
+              <p className="text-gray-500 text-sm">No items yet</p>
+              <button
+                onClick={() => navigate('/add')}
+                className="mt-3 text-sm text-blue-600 font-medium hover:text-blue-700"
+              >
+                Add your first item
+              </button>
+            </div>
+          )}
         </section>
 
         {/* Categories Section - Placeholder */}
