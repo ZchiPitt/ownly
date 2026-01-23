@@ -68,7 +68,7 @@ export function AddItemPage() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [analysisSecondsElapsed, setAnalysisSecondsElapsed] = useState(0);
   const analysisAbortRef = useRef<AbortController | null>(null);
-  const analysisTimersRef = useRef<NodeJS.Timeout[]>([]);
+  const analysisTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Pinch-to-zoom state
   const [scale, setScale] = useState(1);

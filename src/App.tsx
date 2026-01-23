@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -47,6 +47,7 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/add" element={<AddItemPage />} />
+                    <Route path="/add/edit" element={<ItemEditorPage />} />
                     <Route path="/inventory" element={<InventoryPage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                   </Routes>
