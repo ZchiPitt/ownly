@@ -19,6 +19,8 @@ import {
 import { GalleryGrid } from '@/components/GalleryGrid';
 import { ItemList } from '@/components/ItemList';
 import { SortBottomSheet } from '@/components/SortBottomSheet';
+import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomSheet';
+import { useLocations } from '@/hooks/useLocations';
 
 // Key for storing scroll position in sessionStorage
 const SCROLL_POSITION_KEY = 'inventory-scroll-position';
@@ -192,16 +194,18 @@ export function InventoryPage() {
   // Parse categories from URL (comma-separated IDs)
   const selectedCategoryIds = categoriesFromUrl ? categoriesFromUrl.split(',').filter(Boolean) : [];
 
-  // Bottom sheet state for sorting
+  // Bottom sheet states
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false);
+  const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
 
-  // Placeholder states for category and location bottom sheets (to be implemented in US-048/US-049)
+  // Placeholder states for category bottom sheet (to be implemented in US-049)
   const [_isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
-  const [_isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
   // Temporary: Use these states so they're not flagged as unused by tsc
-  // The actual bottom sheets will be added in US-048 and US-049
+  // The actual bottom sheet will be added in US-049
   void _isCategorySheetOpen;
-  void _isLocationSheetOpen;
+
+  // Fetch locations for getting location name for chip label
+  const { locations } = useLocations();
 
   // Compute filter active states
   const hasActiveCategories = selectedCategoryIds.length > 0;
@@ -277,13 +281,24 @@ export function InventoryPage() {
     setSearchParams(newParams, { replace: true });
   };
 
-  // Chip click handlers - open respective bottom sheets (to be implemented in US-048/US-049)
+  // Chip click handlers - open respective bottom sheets
   const onCategoryChipClick = () => {
     setIsCategorySheetOpen(true);
   };
 
   const onLocationChipClick = () => {
     setIsLocationSheetOpen(true);
+  };
+
+  // Handle location filter apply
+  const handleLocationFilterApply = (locationId: string | null) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (locationId) {
+      newParams.set('location', locationId);
+    } else {
+      newParams.delete('location');
+    }
+    setSearchParams(newParams, { replace: true });
   };
 
   // Compute chip labels
@@ -293,8 +308,12 @@ export function InventoryPage() {
       : `${selectedCategoryIds.length} Categories`
     : 'All Categories';
 
-  const locationChipLabel = hasActiveLocation
-    ? 'Location' // Will be replaced with actual location name in US-048
+  // Get selected location name for chip label
+  const selectedLocation = locationIdFromUrl
+    ? locations.find((l) => l.id === locationIdFromUrl)
+    : null;
+  const locationChipLabel = selectedLocation
+    ? selectedLocation.name
     : 'All Locations';
 
   // Pull-to-refresh handlers
@@ -687,6 +706,14 @@ export function InventoryPage() {
         onClose={() => setIsSortSheetOpen(false)}
         currentSort={sortFromUrl}
         onSortChange={handleSortChange}
+      />
+
+      {/* Location Filter Bottom Sheet */}
+      <LocationFilterBottomSheet
+        isOpen={isLocationSheetOpen}
+        onClose={() => setIsLocationSheetOpen(false)}
+        selectedLocationId={locationIdFromUrl}
+        onApplyFilter={handleLocationFilterApply}
       />
     </div>
   );
