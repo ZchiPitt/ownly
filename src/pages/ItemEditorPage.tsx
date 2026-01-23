@@ -15,6 +15,12 @@
  * - itemQueue: DetectedItem[] - Remaining items to process
  * - totalItems: number - Total items in queue
  * - currentItemIndex: number - Current item position (1-based)
+ *
+ * Multi-item queue flow (US-035):
+ * - Shows progress indicator "Adding item X of Y"
+ * - After saving: brief toast "Item X saved", auto-proceeds to next
+ * - After all saved: summary "X items added successfully!" with View Inventory button
+ * - User can cancel queue at any point
  */
 
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -40,6 +46,11 @@ interface ItemEditorState {
   currentItemIndex: number;
 }
 
+/**
+ * Success type determines what UI to show after save
+ */
+type SuccessType = 'single' | 'queue-continue' | 'queue-complete';
+
 export function ItemEditorPage() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,13 +65,18 @@ export function ItemEditorPage() {
   // Save state
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successType, setSuccessType] = useState<SuccessType>('single');
   const [savedItemId, setSavedItemId] = useState<string | null>(null);
+  const [savedItemsCount, setSavedItemsCount] = useState(0);
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Auto-dismiss timer ref for success overlay
   const autoDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Timer ref for queue continue toast
+  const queueContinueTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Redirect if no state (direct navigation)
   useEffect(() => {
@@ -69,11 +85,14 @@ export function ItemEditorPage() {
     }
   }, [state, navigate]);
 
-  // Cleanup auto-dismiss timer
+  // Cleanup timers
   useEffect(() => {
     return () => {
       if (autoDismissTimerRef.current) {
         clearTimeout(autoDismissTimerRef.current);
+      }
+      if (queueContinueTimerRef.current) {
+        clearTimeout(queueContinueTimerRef.current);
       }
     };
   }, []);
@@ -110,7 +129,7 @@ export function ItemEditorPage() {
             detected_category: state.detectedItem.category_suggestion || undefined,
             detected_tags: state.detectedItem.tags || undefined,
             detected_brand: state.detectedItem.brand || undefined,
-            confidence_score: state.detectedItem.confidence_score || undefined,
+            confidence_score: state.detectedItem.confidence || undefined,
             analysis_provider: 'openai',
             analysis_model: 'gpt-4o',
             analyzed_at: new Date().toISOString(),
@@ -118,30 +137,34 @@ export function ItemEditorPage() {
         : null;
 
       // Insert item into database
-      const { data, error } = await supabase
-        .from('items')
-        .insert({
-          user_id: user.id,
-          photo_url: state.imageUrl,
-          thumbnail_url: state.thumbnailUrl || null,
-          name: values.name || null,
-          description: values.description || null,
-          category_id: values.categoryId || null,
-          tags: values.tags,
-          location_id: values.locationId || null,
-          quantity: values.quantity,
-          price: values.price,
-          currency: values.currency,
-          purchase_date: values.purchaseDate || null,
-          expiration_date: values.expirationDate || null,
-          brand: values.brand || null,
-          model: values.model || null,
-          notes: null, // Notes are in description for now
-          is_favorite: false,
-          keep_forever: false,
-          ai_metadata: aiMetadata,
-          last_viewed_at: null,
-        })
+      // Type assertion needed because Database type definition may not be fully compatible
+      // with the Supabase client's generic inference
+      const insertData = {
+        user_id: user.id,
+        photo_url: state.imageUrl,
+        thumbnail_url: state.thumbnailUrl || null,
+        name: values.name || null,
+        description: values.description || null,
+        category_id: values.categoryId || null,
+        tags: values.tags,
+        location_id: values.locationId || null,
+        quantity: values.quantity,
+        price: values.price,
+        currency: values.currency,
+        purchase_date: values.purchaseDate || null,
+        expiration_date: values.expirationDate || null,
+        brand: values.brand || null,
+        model: values.model || null,
+        notes: null, // Notes are in description for now
+        is_favorite: false,
+        keep_forever: false,
+        ai_metadata: aiMetadata,
+        last_viewed_at: null,
+      };
+
+      const { data, error } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
+        .insert(insertData as Record<string, unknown>)
         .select('id')
         .single();
 
@@ -152,13 +175,55 @@ export function ItemEditorPage() {
       // Store saved item ID
       setSavedItemId(data.id);
 
-      // Show success overlay
-      setShowSuccess(true);
+      // Determine success type based on queue state
+      const hasMoreItems = state.itemQueue.length > 0;
+      const isPartOfQueue = state.totalItems > 1;
 
-      // Start auto-dismiss timer (5 seconds)
-      autoDismissTimerRef.current = setTimeout(() => {
-        navigate('/inventory', { replace: true });
-      }, 5000);
+      if (hasMoreItems) {
+        // More items in queue - show brief toast and proceed to next item
+        setSuccessType('queue-continue');
+        setSavedItemsCount(state.currentItemIndex);
+        setShowSuccess(true);
+
+        // Brief delay then navigate to next item
+        queueContinueTimerRef.current = setTimeout(() => {
+          const nextItem = state.itemQueue[0];
+          const remainingQueue = state.itemQueue.slice(1);
+
+          navigate('/add/edit', {
+            replace: true,
+            state: {
+              detectedItem: nextItem,
+              imageUrl: state.imageUrl,
+              thumbnailUrl: state.thumbnailUrl,
+              imagePath: state.imagePath,
+              thumbnailPath: state.thumbnailPath,
+              itemQueue: remainingQueue,
+              totalItems: state.totalItems,
+              currentItemIndex: state.currentItemIndex + 1,
+            },
+          });
+        }, 1500);
+      } else if (isPartOfQueue) {
+        // Last item in queue - show summary
+        setSuccessType('queue-complete');
+        setSavedItemsCount(state.totalItems);
+        setShowSuccess(true);
+
+        // Auto-dismiss after 5 seconds
+        autoDismissTimerRef.current = setTimeout(() => {
+          navigate('/inventory', { replace: true });
+        }, 5000);
+      } else {
+        // Single item (not part of queue) - show standard success
+        setSuccessType('single');
+        setShowSuccess(true);
+
+        // Start auto-dismiss timer (5 seconds)
+        autoDismissTimerRef.current = setTimeout(() => {
+          navigate('/inventory', { replace: true });
+        }, 5000);
+      }
     } catch (error) {
       console.error('Failed to save item:', error);
       setToast({ message: 'Failed to save item. Please try again.', type: 'error' });
@@ -196,6 +261,23 @@ export function ItemEditorPage() {
     if (autoDismissTimerRef.current) {
       clearTimeout(autoDismissTimerRef.current);
     }
+    if (queueContinueTimerRef.current) {
+      clearTimeout(queueContinueTimerRef.current);
+    }
+    navigate('/inventory', { replace: true });
+  }, [navigate]);
+
+  /**
+   * Handle cancel queue action (stop adding remaining items)
+   */
+  const handleCancelQueue = useCallback(() => {
+    if (autoDismissTimerRef.current) {
+      clearTimeout(autoDismissTimerRef.current);
+    }
+    if (queueContinueTimerRef.current) {
+      clearTimeout(queueContinueTimerRef.current);
+    }
+    // Go to inventory - the current item was already saved
     navigate('/inventory', { replace: true });
   }, [navigate]);
 
@@ -212,31 +294,82 @@ export function ItemEditorPage() {
     <>
       <div className="fixed inset-0 z-50 bg-white flex flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
-          <button
-            onClick={handleBack}
-            disabled={isSaving}
-            className="p-2 -ml-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
-            aria-label="Go back"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={handleBack}
+              disabled={isSaving}
+              className="p-2 -ml-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+              aria-label="Go back"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-          <h1 className="text-lg font-semibold text-gray-900">
-            {state.detectedItem ? 'Edit Item Details' : 'Add Item Details'}
-          </h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {state.detectedItem ? 'Edit Item Details' : 'Add Item Details'}
+            </h1>
+            {/* Cancel queue button (when in queue mode) */}
+            {state.totalItems > 1 ? (
+              <button
+                onClick={handleCancelQueue}
+                disabled={isSaving}
+                className="text-sm text-red-500 hover:text-red-600 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            ) : (
+              <div className="w-10" /> // Spacer for centering
+            )}
+          </div>
+
+          {/* Progress indicator for queue mode */}
+          {state.totalItems > 1 && (
+            <div className="px-4 pb-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm font-medium text-gray-700">
+                  Adding item {state.currentItemIndex} of {state.totalItems}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {state.itemQueue.length} remaining
+                </span>
+              </div>
+              {/* Progress bar */}
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  style={{
+                    width: `${((state.currentItemIndex - 1) / state.totalItems) * 100}%`,
+                  }}
+                />
+              </div>
+              {/* Progress dots */}
+              <div className="flex items-center justify-center gap-1.5 mt-2">
+                {Array.from({ length: state.totalItems }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2 h-2 rounded-full ${
+                      i < state.currentItemIndex - 1
+                        ? 'bg-green-500'
+                        : i === state.currentItemIndex - 1
+                          ? 'bg-blue-600'
+                          : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ItemEditor Component */}
@@ -333,87 +466,176 @@ export function ItemEditorPage() {
             </div>
           </div>
 
-          {/* Success message */}
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Item Saved!
-          </h2>
-          <p className="text-gray-500 text-center mb-8">
-            Your item has been added to your inventory.
-          </p>
-
-          {/* Action buttons */}
-          <div className="w-full max-w-sm space-y-3">
-            <button
-              onClick={handleAddAnother}
-              className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+          {/* Success message - varies by type */}
+          {successType === 'queue-continue' ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Item {savedItemsCount} Saved!
+              </h2>
+              <p className="text-gray-500 text-center mb-6">
+                Loading next item...
+              </p>
+              {/* Progress indicator */}
+              <div className="flex items-center gap-2 mb-6">
+                {Array.from({ length: state?.totalItems || 0 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                      i < savedItemsCount
+                        ? 'bg-green-500'
+                        : i === savedItemsCount
+                          ? 'bg-blue-500 animate-pulse'
+                          : 'bg-gray-200'
+                    }`}
+                  />
+                ))}
+              </div>
+              {/* Cancel queue button */}
+              <button
+                onClick={handleCancelQueue}
+                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              Add Another Item
-            </button>
+                Stop and go to inventory
+              </button>
+            </>
+          ) : successType === 'queue-complete' ? (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {savedItemsCount} Items Added!
+              </h2>
+              <p className="text-gray-500 text-center mb-8">
+                All items have been added to your inventory successfully.
+              </p>
+              {/* Action buttons for queue complete */}
+              <div className="w-full max-w-sm space-y-3">
+                <button
+                  onClick={handleGoToInventory}
+                  className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                    />
+                  </svg>
+                  View Inventory
+                </button>
+                <button
+                  onClick={handleAddAnother}
+                  className="w-full py-3.5 px-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add More Items
+                </button>
+              </div>
+              {/* Auto-dismiss timer */}
+              <p className="mt-6 text-sm text-gray-400">
+                Redirecting to inventory in 5 seconds...
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Item Saved!
+              </h2>
+              <p className="text-gray-500 text-center mb-8">
+                Your item has been added to your inventory.
+              </p>
 
-            <button
-              onClick={handleViewItem}
-              className="w-full py-3.5 px-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
-              View Item
-            </button>
+              {/* Action buttons for single item */}
+              <div className="w-full max-w-sm space-y-3">
+                <button
+                  onClick={handleAddAnother}
+                  className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  Add Another Item
+                </button>
 
-            <button
-              onClick={handleGoToInventory}
-              className="w-full py-3.5 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                />
-              </svg>
-              Go to Inventory
-            </button>
-          </div>
+                <button
+                  onClick={handleViewItem}
+                  className="w-full py-3.5 px-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                  View Item
+                </button>
 
-          {/* Auto-dismiss timer */}
-          <p className="mt-6 text-sm text-gray-400">
-            Redirecting to inventory in 5 seconds...
-          </p>
+                <button
+                  onClick={handleGoToInventory}
+                  className="w-full py-3.5 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                    />
+                  </svg>
+                  Go to Inventory
+                </button>
+              </div>
+
+              {/* Auto-dismiss timer */}
+              <p className="mt-6 text-sm text-gray-400">
+                Redirecting to inventory in 5 seconds...
+              </p>
+            </>
+          )}
         </div>
       )}
 

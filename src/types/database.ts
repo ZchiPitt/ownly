@@ -203,13 +203,28 @@ export type Database = {
       };
       items: {
         Row: Item;
-        Insert: Omit<Item, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> & {
-          id?: string;
+        Insert: {
+          user_id: string;
+          photo_url: string;
+          thumbnail_url?: string | null;
+          name?: string | null;
+          description?: string | null;
+          category_id?: string | null;
           tags?: string[];
+          location_id?: string | null;
           quantity?: number;
+          price?: number | null;
           currency?: string;
+          purchase_date?: string | null;
+          expiration_date?: string | null;
+          brand?: string | null;
+          model?: string | null;
+          notes?: string | null;
           is_favorite?: boolean;
           keep_forever?: boolean;
+          ai_metadata?: ItemAIMetadata | null;
+          last_viewed_at?: string | null;
+          id?: string;
           created_at?: string;
           updated_at?: string;
           deleted_at?: string | null;
