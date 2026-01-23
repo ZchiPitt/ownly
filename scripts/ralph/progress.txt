@@ -1273,3 +1273,87 @@
   - isLoadingMore separate from isLoading to differentiate initial load from pagination loads
   - Use requestAnimationFrame when restoring scroll to ensure DOM has updated
 ---
+
+## 2026-01-23 - US-047
+- What was implemented:
+  - Added horizontal scrollable filter bar below header in InventoryPage
+  - Added Categories chip that shows "All Categories" (inactive) or "X Categories" (active)
+  - Added Locations chip that shows "All Locations" (inactive) or "Location" (active)
+  - Kept existing Sort chip with consistent styling
+  - Inactive chip style: outlined border, gray text
+  - Active chip style: filled blue-600, white text
+  - Added Clear All link that appears on the right when any filter (categories or location) is active
+  - Clear All removes categories and location URL params, keeps sort param
+  - URL param structure: ?categories=id1,id2&location=id
+  - Placeholder bottom sheet states for US-048/US-049 implementation
+  - Used `void` expression to silence TypeScript unused variable errors for placeholder state
+
+- Files changed:
+  - src/pages/InventoryPage.tsx (updated - added filter chips, Clear All, URL param handling)
+
+- **Learnings for future iterations:**
+  - Filter bar uses `scrollbar-hide` utility class (if available) or negative margin for edge-to-edge scroll
+  - Use `void variableName` to silence TypeScript "declared but never read" errors for placeholder variables
+  - Prefix unused state variables with underscore (`_isCategorySheetOpen`) and use `void` to indicate intentional placeholder
+  - Filter chips share same styling pattern: icon + label + chevron, conditional bg-blue-600 text-white for active
+  - Clear All link uses `ml-auto flex-shrink-0` to push to right edge of scrollable container
+  - URL params for filters: `categories` (comma-separated), `location` (single ID), `sort` (sort key)
+  - Bottom sheet open states prepared for US-048 (Location filter) and US-049 (Category filter)
+---
+
+## 2026-01-23 - US-048
+- What was implemented:
+  - Created LocationFilterBottomSheet component for filtering items by location
+  - Added search input at top for filtering long lists with auto-expand of matching ancestors
+  - Implemented hierarchical tree with expand/collapse using recursive LocationTreeItem component
+  - Added item count badges to each location
+  - Added "All Locations" option at top that clears the filter
+  - Single-select with radio indicator styling
+  - Apply Filter button at bottom confirms selection
+  - Search highlighting shows matching text in yellow
+  - Empty state messages for no locations and no search results
+  - Integrated with InventoryPage - opens when Location chip clicked
+  - Location chip now shows actual location name when filter is active
+  - URL parameter `location` updated on Apply Filter
+
+- Files changed:
+  - src/components/LocationFilterBottomSheet.tsx (new - 570+ lines)
+  - src/pages/InventoryPage.tsx (updated - integrated bottom sheet, added handleLocationFilterApply, show location name in chip)
+
+- **Learnings for future iterations:**
+  - Avoid calling setState inside useEffect - use useMemo for derived state instead (lint rule: react-hooks/set-state-in-effect)
+  - For search-based auto-expansion, compute expanded IDs with useMemo and combine with manual expansions
+  - LocationFilterBottomSheet pattern: reusable for similar filter sheets (search + tree + apply)
+  - Use `highlight` function pattern for search result text highlighting
+  - Radio indicator: w-5 h-5 rounded-full border-2, filled with checkmark when selected
+  - Bottom sheet max height: max-h-[80vh] with flex column and overflow-y-auto on content area
+  - useLocations hook provides: locations, locationTree, getLocationById for location data
+---
+
+## 2026-01-23 - US-049
+- What was implemented:
+  - Created CategoryFilterBottomSheet component for multi-select category filtering
+  - Added "All Categories" checkbox at top (toggles select all/deselect all)
+  - Implemented multi-select checkboxes for category selection
+  - System categories displayed first (by sort_order), then user categories (alphabetical)
+  - Each row shows: checkbox + icon + name + item count badge
+  - Selected count indicator shows "X selected" when partially selected
+  - Indeterminate checkbox state for partial selection
+  - Apply Filter button at bottom confirms selection
+  - Created useCategoryItemCounts hook to fetch item counts per category
+  - Integrated with InventoryPage - opens when Category chip clicked
+  - URL parameter `categories` updated on Apply Filter (comma-separated IDs)
+
+- Files changed:
+  - src/components/CategoryFilterBottomSheet.tsx (new - 370+ lines)
+  - src/pages/InventoryPage.tsx (updated - integrated bottom sheet, added handleCategoryFilterApply)
+
+- **Learnings for future iterations:**
+  - CategoryFilterBottomSheet follows same pattern as LocationFilterBottomSheet for consistency
+  - Multi-select checkbox pattern: Set<string> for local state, handles toggle and toggle-all
+  - Indeterminate checkbox: show minus icon when some selected (not all, not none)
+  - Checkbox style: w-5 h-5 rounded (not rounded-full like radio)
+  - Category sorting: systemCategories by sort_order, userCategories by name (alphabetical)
+  - Empty array passed to onApplyFilter when all/none selected (clears the filter)
+  - useCategories hook provides: categories, systemCategories, userCategories arrays
+---

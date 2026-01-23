@@ -20,6 +20,7 @@ import { GalleryGrid } from '@/components/GalleryGrid';
 import { ItemList } from '@/components/ItemList';
 import { SortBottomSheet } from '@/components/SortBottomSheet';
 import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomSheet';
+import { CategoryFilterBottomSheet } from '@/components/CategoryFilterBottomSheet';
 import { useLocations } from '@/hooks/useLocations';
 
 // Key for storing scroll position in sessionStorage
@@ -197,12 +198,7 @@ export function InventoryPage() {
   // Bottom sheet states
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false);
   const [isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
-
-  // Placeholder states for category bottom sheet (to be implemented in US-049)
-  const [_isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
-  // Temporary: Use these states so they're not flagged as unused by tsc
-  // The actual bottom sheet will be added in US-049
-  void _isCategorySheetOpen;
+  const [isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
 
   // Fetch locations for getting location name for chip label
   const { locations } = useLocations();
@@ -297,6 +293,17 @@ export function InventoryPage() {
       newParams.set('location', locationId);
     } else {
       newParams.delete('location');
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Handle category filter apply
+  const handleCategoryFilterApply = (categoryIds: string[]) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (categoryIds.length > 0) {
+      newParams.set('categories', categoryIds.join(','));
+    } else {
+      newParams.delete('categories');
     }
     setSearchParams(newParams, { replace: true });
   };
@@ -714,6 +721,14 @@ export function InventoryPage() {
         onClose={() => setIsLocationSheetOpen(false)}
         selectedLocationId={locationIdFromUrl}
         onApplyFilter={handleLocationFilterApply}
+      />
+
+      {/* Category Filter Bottom Sheet */}
+      <CategoryFilterBottomSheet
+        isOpen={isCategorySheetOpen}
+        onClose={() => setIsCategorySheetOpen(false)}
+        selectedCategoryIds={selectedCategoryIds}
+        onApplyFilter={handleCategoryFilterApply}
       />
     </div>
   );
