@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
+import { useExpiringItems, type ExpiringItem } from '@/hooks/useExpiringItems';
 
 /**
  * Get time-based greeting message
@@ -95,10 +96,124 @@ function StatCard({ icon, label, count, color, bgColor, onClick }: StatCardProps
   );
 }
 
+/**
+ * Skeleton component for expiring item card loading state
+ */
+function ExpiringItemCardSkeleton() {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100">
+      {/* Thumbnail skeleton */}
+      <div className="w-14 h-14 rounded-lg bg-gray-200 animate-pulse flex-shrink-0" />
+      {/* Content skeleton */}
+      <div className="flex-1 min-w-0">
+        <div className="w-24 h-4 bg-gray-200 rounded animate-pulse mb-2" />
+        <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
+      </div>
+      {/* Badge skeleton */}
+      <div className="w-12 h-6 bg-gray-200 rounded-full animate-pulse flex-shrink-0" />
+    </div>
+  );
+}
+
+/**
+ * Expiring item card component
+ */
+interface ExpiringItemCardProps {
+  item: ExpiringItem;
+  onClick: () => void;
+}
+
+function ExpiringItemCard({ item, onClick }: ExpiringItemCardProps) {
+  // Badge color based on days remaining
+  // Red for <=3 days, orange for 4-7 days
+  const getBadgeClasses = () => {
+    if (item.daysRemaining <= 0) {
+      return 'bg-red-100 text-red-700';
+    } else if (item.daysRemaining <= 3) {
+      return 'bg-red-100 text-red-700';
+    } else {
+      return 'bg-amber-100 text-amber-700';
+    }
+  };
+
+  // Badge text
+  const getBadgeText = () => {
+    if (item.daysRemaining <= 0) {
+      const daysAgo = Math.abs(item.daysRemaining);
+      return daysAgo === 0 ? 'Today' : `${daysAgo}d ago`;
+    } else if (item.daysRemaining === 1) {
+      return '1 day';
+    } else {
+      return `${item.daysRemaining}d`;
+    }
+  };
+
+  // Format expiration date
+  const formatExpirationDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:shadow-md transition-shadow active:scale-[0.98]"
+    >
+      {/* Thumbnail */}
+      <div className="w-14 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+        {item.thumbnail_url || item.photo_url ? (
+          <img
+            src={item.thumbnail_url || item.photo_url}
+            alt={item.name || 'Item'}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <svg
+              className="w-6 h-6 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 text-left">
+        <p className="text-sm font-medium text-gray-900 truncate">
+          {item.name || 'Unnamed item'}
+        </p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Expires {formatExpirationDate(item.expiration_date)}
+        </p>
+      </div>
+
+      {/* Days remaining badge */}
+      <div
+        className={`flex-shrink-0 px-2 py-1 rounded-full text-xs font-medium ${getBadgeClasses()}`}
+      >
+        {getBadgeText()}
+      </div>
+    </button>
+  );
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { stats, isLoading } = useDashboardStats();
+  const { stats, isLoading: statsLoading } = useDashboardStats();
+  const { items: expiringItems, isLoading: expiringLoading } = useExpiringItems(7, 3);
 
   const greeting = useMemo(() => getGreeting(), []);
   const displayName = useMemo(
@@ -164,7 +279,7 @@ export function DashboardPage() {
         {/* Quick Stats - Horizontal scrollable cards */}
         <section>
           <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-            {isLoading ? (
+            {statsLoading ? (
               <>
                 <StatCardSkeleton />
                 <StatCardSkeleton />
@@ -253,6 +368,56 @@ export function DashboardPage() {
             )}
           </div>
         </section>
+
+        {/* Expiring Soon Section - Hidden if no expiring items */}
+        {(expiringLoading || expiringItems.length > 0) && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                {/* Warning icon */}
+                <svg
+                  className="w-5 h-5 text-amber-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                <h2 className="text-lg font-semibold text-gray-900">Expiring Soon</h2>
+              </div>
+              <button
+                onClick={() => navigate('/inventory?filter=expiring')}
+                className="text-sm text-blue-600 font-medium hover:text-blue-700"
+              >
+                See All
+              </button>
+            </div>
+
+            {/* Expiring items list */}
+            <div className="space-y-2">
+              {expiringLoading ? (
+                <>
+                  <ExpiringItemCardSkeleton />
+                  <ExpiringItemCardSkeleton />
+                  <ExpiringItemCardSkeleton />
+                </>
+              ) : (
+                expiringItems.map((item) => (
+                  <ExpiringItemCard
+                    key={item.id}
+                    item={item}
+                    onClick={() => navigate(`/item/${item.id}`)}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Recent Items Section - Placeholder */}
         <section>
