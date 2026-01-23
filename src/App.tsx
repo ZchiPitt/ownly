@@ -2,20 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage } from '@/pages'
 
 const queryClient = new QueryClient()
-
-// Placeholder pages - will be replaced with actual implementations
-function InventoryPage() {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">My Inventory</h1>
-      <p className="text-gray-600">Your inventory items will appear here.</p>
-    </div>
-  )
-}
-
 
 function App() {
   return (
