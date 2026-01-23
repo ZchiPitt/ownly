@@ -8,6 +8,8 @@
 - Uses TanStack React Query for server state management
 - Uses React Router v6 for navigation
 - Mobile-first design approach
+- Supabase client in `/src/lib/supabase.ts` - import { supabase } from '@/lib/supabase'
+- Use `import.meta.env.VITE_*` for environment variables (Vite pattern)
 
 ---
 
@@ -32,4 +34,26 @@
   - Tailwind CSS v4 doesn't need tailwind.config.js when using @tailwindcss/vite plugin
   - The project uses React 19 with concurrent features
   - TanStack React Query v5 is installed
+---
+
+## 2026-01-23 - US-002
+- What was implemented:
+  - Installed @supabase/supabase-js package
+  - Created /src/lib/supabase.ts with typed client initialization
+  - Created placeholder Database type in /src/types/database.ts (to be expanded in US-011)
+  - Created .env.example with VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY placeholders
+  - Added .env to .gitignore for security
+
+- Files changed:
+  - package.json, package-lock.json (added supabase dependency)
+  - .gitignore (added .env files)
+  - .env.example (new - Supabase config template)
+  - src/lib/supabase.ts (new - Supabase client)
+  - src/types/database.ts (new - placeholder Database type)
+
+- **Learnings for future iterations:**
+  - Supabase client accepts a generic Database type for full TypeScript support
+  - Use `import.meta.env.VITE_*` for Vite environment variables
+  - Always validate env vars exist at runtime with meaningful error messages
+  - The Database type will be expanded in US-011 with full schema
 ---
