@@ -16,6 +16,8 @@
 
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useCategories } from '@/hooks/useCategories';
+import { useLocations } from '@/hooks/useLocations';
+import { LocationPickerModal } from '@/components/LocationPickerModal';
 import type { DetectedItem } from '@/types/api';
 import type { Category } from '@/types';
 
@@ -51,8 +53,8 @@ export interface ItemEditorValues {
   description: string;
   quantity: number;
   categoryId: string | null;
+  locationId: string | null;
   // These will be added in future stories:
-  // locationId: string | null;
   // tags: string[];
   // price: number | null;
   // currency: string;
@@ -588,6 +590,11 @@ export function ItemEditor({
   // Track if full image viewer is open
   const [isViewingFullImage, setIsViewingFullImage] = useState(false);
 
+  // Location state
+  const [locationId, setLocationId] = useState<string | null>(null);
+  const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
+  const { locations, isLoading: locationsLoading } = useLocations();
+
   /**
    * Handle name change - clear AI indicator when user modifies
    */
@@ -636,6 +643,40 @@ export function ItemEditor({
   }, [aiFilledFields.category]);
 
   /**
+   * Handle location change
+   */
+  const handleLocationChange = useCallback((newLocationId: string | null) => {
+    setLocationId(newLocationId);
+  }, []);
+
+  /**
+   * Open location picker modal
+   */
+  const openLocationPicker = useCallback(() => {
+    setIsLocationPickerOpen(true);
+  }, []);
+
+  /**
+   * Close location picker modal
+   */
+  const closeLocationPicker = useCallback(() => {
+    setIsLocationPickerOpen(false);
+  }, []);
+
+  /**
+   * Get selected location display
+   */
+  const selectedLocationDisplay = useMemo(() => {
+    if (!locationId) return null;
+    const location = locations.find((l) => l.id === locationId);
+    if (!location) return null;
+    return {
+      icon: location.icon,
+      path: location.path || location.name,
+    };
+  }, [locationId, locations]);
+
+  /**
    * Handle thumbnail click - open full image viewer
    */
   const handleThumbnailClick = useCallback(() => {
@@ -661,7 +702,8 @@ export function ItemEditor({
     description,
     quantity,
     categoryId,
-  }), [name, description, quantity, categoryId]);
+    locationId,
+  }), [name, description, quantity, categoryId, locationId]);
 
   // Notify parent of form changes
   useMemo(() => {
@@ -810,13 +852,78 @@ export function ItemEditor({
               onAIFieldModified={handleCategoryAIModified}
             />
 
-            {/* Placeholder sections for future fields (US-031 to US-033) */}
-            {/* Location - US-031 */}
+            {/* Location Field */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location
+              </label>
+              <button
+                type="button"
+                onClick={openLocationPicker}
+                disabled={locationsLoading}
+                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
+                  locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
+                } border-gray-300 bg-white`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  {selectedLocationDisplay ? (
+                    <>
+                      <span className="text-lg flex-shrink-0">{selectedLocationDisplay.icon}</span>
+                      <span className="truncate">{selectedLocationDisplay.path}</span>
+                    </>
+                  ) : (
+                    <span className="text-gray-400 flex items-center gap-2">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      Select a location
+                    </span>
+                  )}
+                </div>
+                <svg
+                  className="w-5 h-5 text-gray-400 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <p className="mt-1 text-xs text-gray-400">
+                Where is this item stored?
+              </p>
+            </div>
+
+            {/* Placeholder sections for future fields (US-032 to US-033) */}
             {/* Tags - US-032 */}
             {/* Additional fields (price, dates, brand, model) - US-033 */}
           </div>
         </div>
       </div>
+
+      {/* Location Picker Modal */}
+      <LocationPickerModal
+        isOpen={isLocationPickerOpen}
+        onClose={closeLocationPicker}
+        selectedLocationId={locationId}
+        onSelect={handleLocationChange}
+      />
 
       {/* Full Image Viewer Modal */}
       {isViewingFullImage && (
