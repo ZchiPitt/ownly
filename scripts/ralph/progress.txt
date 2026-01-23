@@ -903,3 +903,56 @@
   - Warning badges (amber color) work well for past expiration date indication
   - Number inputs need [appearance:textfield] and webkit pseudo-element overrides to hide spinners
 ---
+
+## 2026-01-23 - US-034
+- What was implemented:
+  - Added sticky Save Item button at bottom of Item Editor page
+  - Button shows loading spinner during save with "Saving..." text
+  - Button disabled during save to prevent double-submit
+  - Back button disabled during save to prevent navigation
+  - Creates item record in database with all form data
+  - Stores AI metadata (detected_name, detected_category, detected_tags, detected_brand, confidence_score)
+  - On success: shows full-screen success overlay with animated checkmark
+  - Success overlay has three action buttons: Add Another Item, View Item, Go to Inventory
+  - Auto-dismiss after 5 seconds, automatically navigate to /inventory
+  - On error: shows toast notification 'Failed to save item. Please try again.'
+  - Proper cleanup of auto-dismiss timer on component unmount
+
+- Files changed:
+  - src/pages/ItemEditorPage.tsx (updated - added save functionality, success overlay, error handling)
+
+- **Learnings for future iterations:**
+  - Use useRef for form values in save callbacks to avoid stale closure issues
+  - For CSS animations in React, use <style> tag with template literal for custom keyframes
+  - stroke-dasharray/stroke-dashoffset pattern creates checkmark drawing animation
+  - z-index [60] for success overlay to appear above the editor (z-50)
+  - Always cleanup setTimeout timers in useEffect return function
+  - ItemAIMetadata type from '@/types' for AI detection metadata storage
+---
+
+## 2026-01-23 - US-035
+- What was implemented:
+  - Added multi-item queue save flow to ItemEditorPage
+  - Added progress indicator in header showing "Adding item X of Y" with progress bar and dots
+  - Shows Cancel button in header when in queue mode (replaces spacer)
+  - Added three success types: 'single' (normal save), 'queue-continue' (more items), 'queue-complete' (all done)
+  - After saving item in queue: shows brief success overlay with "Item X saved!", loading next item...
+  - Progress dots show completed items (green), current (blue), pending (gray)
+  - Auto-proceeds to next item after 1.5 second delay
+  - After all items saved: shows summary "X Items Added!" with View Inventory button
+  - User can cancel queue at any point via Cancel button or "Stop and go to inventory" link
+  - Fixed confidence field name (confidence not confidence_score) in AI metadata
+  - Added type assertion pattern for Supabase insert to work around type inference issues
+
+- Files changed:
+  - src/pages/ItemEditorPage.tsx (updated - added queue flow, progress indicator, cancel, multiple success types)
+  - src/types/database.ts (updated - explicit items Insert type for better TypeScript compatibility)
+
+- **Learnings for future iterations:**
+  - Use SuccessType union type ('single' | 'queue-continue' | 'queue-complete') for conditional success UI
+  - DetectedItem.confidence (not confidence_score) is the correct field from API types
+  - For Supabase insert type issues, use type assertion pattern: `(supabase.from('table') as ReturnType<typeof supabase.from>).insert(data as Record<string, unknown>)`
+  - Multi-item queue state: itemQueue (remaining), totalItems (original count), currentItemIndex (1-based position)
+  - Use separate timer refs for different auto-navigation behaviors (autoDismissTimerRef, queueContinueTimerRef)
+  - Progress indicator shows visual progress with both bar (percentage) and dots (discrete items)
+---
