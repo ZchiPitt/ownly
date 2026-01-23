@@ -18,6 +18,7 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useCategories } from '@/hooks/useCategories';
 import { useLocations } from '@/hooks/useLocations';
 import { LocationPickerModal } from '@/components/LocationPickerModal';
+import { TagsInput } from '@/components/TagsInput';
 import type { DetectedItem } from '@/types/api';
 import type { Category } from '@/types';
 
@@ -54,8 +55,8 @@ export interface ItemEditorValues {
   quantity: number;
   categoryId: string | null;
   locationId: string | null;
+  tags: string[];
   // These will be added in future stories:
-  // tags: string[];
   // price: number | null;
   // currency: string;
   // purchaseDate: string | null;
@@ -71,6 +72,7 @@ interface AIFilledFields {
   name: boolean;
   description: boolean;
   category: boolean;
+  tags: boolean;
 }
 
 /**
@@ -580,11 +582,21 @@ export function ItemEditor({
     setHasUserSelectedCategory(true);
   }, []);
 
+  // Tags state - initialized from AI detection
+  const [tags, setTags] = useState<string[]>(detectedItem?.tags || []);
+
+  // AI-suggested tags for display
+  const aiSuggestedTags = useMemo(
+    () => detectedItem?.tags || [],
+    [detectedItem?.tags]
+  );
+
   // Track which fields are still AI-filled (sparkle shown until user modifies)
   const [aiFilledFields, setAIFilledFields] = useState<AIFilledFields>(() => ({
     name: !!detectedItem?.name,
     description: false, // AI doesn't provide description
     category: !!detectedItem?.category_suggestion,
+    tags: (detectedItem?.tags || []).length > 0,
   }));
 
   // Track if full image viewer is open
@@ -650,6 +662,22 @@ export function ItemEditor({
   }, []);
 
   /**
+   * Handle tags change
+   */
+  const handleTagsChange = useCallback((newTags: string[]) => {
+    setTags(newTags);
+  }, []);
+
+  /**
+   * Handle tags AI field modified
+   */
+  const handleTagsAIModified = useCallback(() => {
+    if (aiFilledFields.tags) {
+      setAIFilledFields((prev) => ({ ...prev, tags: false }));
+    }
+  }, [aiFilledFields.tags]);
+
+  /**
    * Open location picker modal
    */
   const openLocationPicker = useCallback(() => {
@@ -703,7 +731,8 @@ export function ItemEditor({
     quantity,
     categoryId,
     locationId,
-  }), [name, description, quantity, categoryId, locationId]);
+    tags,
+  }), [name, description, quantity, categoryId, locationId, tags]);
 
   // Notify parent of form changes
   useMemo(() => {
@@ -910,8 +939,16 @@ export function ItemEditor({
               </p>
             </div>
 
-            {/* Placeholder sections for future fields (US-032 to US-033) */}
-            {/* Tags - US-032 */}
+            {/* Tags Field */}
+            <TagsInput
+              value={tags}
+              onChange={handleTagsChange}
+              aiSuggestedTags={aiSuggestedTags}
+              isAIFilled={aiFilledFields.tags}
+              onAIFieldModified={handleTagsAIModified}
+            />
+
+            {/* Placeholder sections for future fields (US-033) */}
             {/* Additional fields (price, dates, brand, model) - US-033 */}
           </div>
         </div>
