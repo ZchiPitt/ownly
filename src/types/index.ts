@@ -93,3 +93,9 @@ export type {
   ImageUploadResult,
   ImageValidationError,
 } from './api';
+
+// ============================================
+// Auth Context Types
+// ============================================
+
+export type { AuthContextValue } from './auth';
