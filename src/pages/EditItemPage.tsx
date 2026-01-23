@@ -659,8 +659,8 @@ export function EditItemPage() {
         notes: formValues.notes || null,
       };
 
-      const { error: updateError } = await supabase
-        .from('items')
+      const { error: updateError } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
         .update(updateData)
         .eq('id', id)
         .eq('user_id', user.id);

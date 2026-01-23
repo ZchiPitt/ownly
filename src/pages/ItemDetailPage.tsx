@@ -34,6 +34,13 @@
  * - Share: uses Web Share API, fallback to copy URL
  * - Add to Favorites / Remove from Favorites: toggle is_favorite, heart icon changes
  * - Mark as Keep Forever / Unmark: toggle keep_forever, toast explains effect
+ *
+ * Features (US-058):
+ * - Delete confirmation dialog with thumbnail, item name, and warning
+ * - Soft delete: sets deleted_at timestamp (not hard delete)
+ * - Undo toast with 5-second countdown timer
+ * - Undo: clears deleted_at, navigates back to item, shows 'Item restored' toast
+ * - Auto-dismiss toast after 5 seconds
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -874,6 +881,16 @@ export function ItemDetailPage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Delete state (US-058)
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [undoToast, setUndoToast] = useState<{
+    itemId: string;
+    itemName: string;
+    countdown: number;
+  } | null>(null);
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Fetch item details
   const fetchItem = useCallback(async () => {
     if (!id) {
@@ -1005,6 +1022,130 @@ export function ItemDetailPage() {
   }, []);
 
   /**
+   * Clean up undo timers (US-058)
+   */
+  const clearUndoTimers = useCallback(() => {
+    if (undoTimeoutRef.current) {
+      clearTimeout(undoTimeoutRef.current);
+      undoTimeoutRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Start undo countdown timer (US-058)
+   */
+  const startUndoCountdown = useCallback((itemId: string, itemName: string) => {
+    // Clear any existing timers
+    clearUndoTimers();
+
+    // Initialize countdown at 5 seconds
+    setUndoToast({ itemId, itemName, countdown: 5 });
+
+    // Update countdown every second
+    countdownIntervalRef.current = setInterval(() => {
+      setUndoToast((prev) => {
+        if (!prev) return null;
+        const newCountdown = prev.countdown - 1;
+        if (newCountdown <= 0) {
+          clearUndoTimers();
+          return null;
+        }
+        return { ...prev, countdown: newCountdown };
+      });
+    }, 1000);
+
+    // Auto-dismiss after 5 seconds (backup)
+    undoTimeoutRef.current = setTimeout(() => {
+      clearUndoTimers();
+      setUndoToast(null);
+    }, 5000);
+  }, [clearUndoTimers]);
+
+  /**
+   * Execute soft delete (US-058)
+   * Sets deleted_at timestamp and navigates back with undo option
+   */
+  const handleConfirmDelete = useCallback(async () => {
+    if (!id || !item || isDeleting) return;
+
+    setIsDeleting(true);
+    setShowDeleteConfirm(false);
+
+    try {
+      const { error: deleteError } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('user_id', user?.id as string);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // Navigate back first
+      if (window.history.length > 1) {
+        navigate(-1);
+      } else {
+        navigate('/inventory');
+      }
+
+      // Start the undo countdown after navigation
+      startUndoCountdown(id, item.name || 'Unnamed Item');
+    } catch (err) {
+      console.error('Error deleting item:', err);
+      setToast({ message: 'Failed to delete item', type: 'error' });
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [id, item, user?.id, isDeleting, navigate, startUndoCountdown]);
+
+  /**
+   * Undo delete (US-058)
+   * Clears deleted_at and navigates back to the item
+   */
+  const handleUndo = useCallback(async () => {
+    if (!undoToast) return;
+
+    const { itemId } = undoToast;
+
+    // Clear the undo timers immediately
+    clearUndoTimers();
+    setUndoToast(null);
+
+    try {
+      const { error: restoreError } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
+        .update({ deleted_at: null })
+        .eq('id', itemId)
+        .eq('user_id', user?.id as string);
+
+      if (restoreError) {
+        throw restoreError;
+      }
+
+      // Navigate to the restored item
+      navigate(`/item/${itemId}`);
+
+      // Show success toast
+      setToast({ message: 'Item restored', type: 'success' });
+    } catch (err) {
+      console.error('Error restoring item:', err);
+      setToast({ message: 'Failed to restore item', type: 'error' });
+    }
+  }, [undoToast, user?.id, navigate, clearUndoTimers]);
+
+  // Clean up timers on unmount
+  useEffect(() => {
+    return () => {
+      clearUndoTimers();
+    };
+  }, [clearUndoTimers]);
+
+  /**
    * Handle Share action (US-056)
    * Uses Web Share API if available, otherwise falls back to clipboard copy
    */
@@ -1065,11 +1206,11 @@ export function ItemDetailPage() {
     const newFavoriteStatus = !item.is_favorite;
 
     try {
-      const { error: updateError } = await supabase
-        .from('items')
+      const { error: updateError } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
         .update({ is_favorite: newFavoriteStatus })
         .eq('id', id)
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id as string);
 
       if (updateError) {
         throw updateError;
@@ -1103,11 +1244,11 @@ export function ItemDetailPage() {
     const newKeepForeverStatus = !item.keep_forever;
 
     try {
-      const { error: updateError } = await supabase
-        .from('items')
+      const { error: updateError } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
         .update({ keep_forever: newKeepForeverStatus })
         .eq('id', id)
-        .eq('user_id', user?.id);
+        .eq('user_id', user?.id as string);
 
       if (updateError) {
         throw updateError;
@@ -1352,18 +1493,27 @@ export function ItemDetailPage() {
             <div className="flex border-t border-gray-200">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                disabled={isDeleting}
+                className="flex-1 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  // Delete action to be implemented in US-058
-                  setShowDeleteConfirm(false);
-                }}
-                className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-gray-200"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Delete
+                {isDeleting ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete</span>
+                )}
               </button>
             </div>
           </div>
@@ -1392,6 +1542,34 @@ export function ItemDetailPage() {
         >
           {toast.type === 'success' && <CheckIcon className="w-5 h-5 flex-shrink-0" />}
           <span>{toast.message}</span>
+        </div>
+      )}
+
+      {/* Undo delete toast (US-058) */}
+      {undoToast && (
+        <div
+          className="fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg bg-gray-800 text-white z-50 animate-fade-in"
+          role="alert"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <TrashIcon className="w-5 h-5 flex-shrink-0 text-gray-300" />
+              <span>Item deleted</span>
+            </div>
+            <div className="flex items-center gap-3">
+              {/* Countdown indicator */}
+              <span className="text-sm text-gray-400 tabular-nums">
+                {undoToast.countdown}s
+              </span>
+              {/* Undo button */}
+              <button
+                onClick={handleUndo}
+                className="px-3 py-1 bg-white text-gray-800 font-medium rounded hover:bg-gray-100 transition-colors"
+              >
+                Undo
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

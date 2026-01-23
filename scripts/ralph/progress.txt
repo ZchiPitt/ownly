@@ -1488,3 +1488,104 @@
   - Use aria-expanded and aria-controls for accessibility on collapsible sections
   - DetailRow uses definition list (dl/dt/dd) for semantic markup of label-value pairs
 ---
+
+## 2026-01-23 - US-055
+- What was implemented:
+  - Added metadata section with gray background showing:
+    - Added date and time (e.g., "Jan 15, 2024 at 2:30 PM")
+    - Modified date (only if different from created) using areDifferentDays helper
+    - Last viewed time (relative, e.g., "2 hours ago") using formatRelativeTime helper
+  - Added sticky bottom action bar with:
+    - Edit Item button (primary blue) -> navigates to /item/{id}/edit
+    - Delete button (red outline) -> shows confirmation dialog
+  - Added delete confirmation dialog with:
+    - Item thumbnail preview
+    - Item name display
+    - "Permanently deleted after 30 days" warning text
+    - Cancel and Delete action buttons
+  - Created helper functions: formatDateTime, formatRelativeTime, areDifferentDays
+  - Created icon components: EditIcon, TrashIcon, ClockIcon
+  - Created MetadataSection and ActionBar components
+  - Fixed TypeScript types for Supabase query with proper RawItemDetails interface
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (373 insertions, 11 deletions)
+
+- **Learnings for future iterations:**
+  - When using Supabase select() with foreign key joins, define a RawItemDetails interface that uses the plural table names (e.g., `categories`, `locations`) for nested objects, then transform to the expected format
+  - Use `.returns<RawItemDetails[]>()` with `.single()` to properly type Supabase join queries
+  - For Supabase update queries, cast to `ReturnType<typeof supabase.from>` to work around TypeScript inference limitations
+  - Use sticky positioning with `fixed bottom-0` for bottom action bars, add a spacer div to account for the bar height
+---
+
+## 2026-01-23 - US-056
+- What was implemented:
+  - Added overflow menu actions to Item Detail page
+  - Share option: uses Web Share API when available, falls back to clipboard copy
+  - Add to Favorites / Remove from Favorites: toggles is_favorite field in database
+  - Heart icon shows filled when favorited, outline when not
+  - Mark as Keep Forever / Unmark: toggles keep_forever field in database
+  - Infinity icon color changes based on state (blue when active)
+  - Toast notifications for feedback on all actions
+  - Menu items disabled during update operations to prevent double-clicks
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (added icons, handlers, toast UI)
+
+- **Learnings for future iterations:**
+  - Web Share API is supported on mobile and some desktop browsers (Chrome/Edge); always provide clipboard fallback
+  - Use inner function definitions within useCallback to avoid dependency array issues
+  - Heart icon should have two variants: filled (currentColor fill) for active, outline (stroke) for inactive
+  - Toast notifications auto-dismiss with useEffect timer cleanup pattern
+  - Disable action buttons during async operations to prevent double-clicks
+---
+
+## 2026-01-23 - US-057
+- What was implemented:
+  - Created EditItemPage at /src/pages/EditItemPage.tsx
+  - Added route /item/:id/edit to App.tsx router
+  - Page title: 'Edit Item'
+  - Photo is shown but read-only (no editing)
+  - Bottom action bar: Cancel (text) and Save Changes (primary)
+  - Save success: returns to /item/{id} with toast 'Item updated successfully'
+  - Cancel: returns to /item/{id} without saving
+  - Unsaved changes detection using react-router-dom useBlocker
+  - Shows 'Discard changes?' dialog on navigation with unsaved changes
+  - Full form fields: name, quantity, description, category, location, tags
+  - Additional fields section: price, purchase date, expiration date, brand, model, notes
+  - Reuses TagsInput, LocationPickerModal, Toast components
+
+- Files changed:
+  - src/pages/EditItemPage.tsx (created)
+  - src/pages/index.ts (added export)
+  - src/App.tsx (added route)
+
+- **Learnings for future iterations:**
+  - Use useBlocker from react-router-dom v6 for navigation blocking on unsaved changes
+  - useBlocker returns { state: 'blocked', proceed(), reset() } - call reset() to stay, proceed() to navigate
+  - For edit pages, track both formValues and initialValues to compute hasChanges
+  - Supabase .returns<Type[]>() is useful for type inference on queries without joins
+  - For read-only photo, show 'View only' badge and disable actual photo change
+  - Keep form state updates immutable using updateField pattern with setFormValues callback
+---
+
+## 2026-01-23 - US-058
+- What was implemented:
+  - Implemented soft delete functionality by setting deleted_at timestamp
+  - Added delete confirmation dialog that shows item thumbnail, name, and "Permanently deleted after 30 days" warning
+  - Created undo toast with 5-second countdown timer (shows "Item deleted" + Undo button + countdown)
+  - Implemented undo functionality that clears deleted_at and navigates back to the restored item
+  - Toast auto-dismisses after 5 seconds if not dismissed manually
+  - Fixed pre-existing type casting issues for Supabase update operations in EditItemPage.tsx
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (updated - added soft delete, undo toast with countdown, restore functionality)
+  - src/pages/EditItemPage.tsx (fixed - applied type casting for Supabase update operation)
+
+- **Learnings for future iterations:**
+  - Use `as ReturnType<typeof supabase.from>` to cast Supabase from() calls to fix TypeScript type inference issues with update operations
+  - Use `as string` assertion for user?.id when it could be undefined but the guard ensures it's defined
+  - Use `ReturnType<typeof setTimeout>` for timer refs instead of `NodeJS.Timeout` for browser TypeScript compatibility
+  - Countdown timers use setInterval for per-second updates with a backup setTimeout for overall duration
+  - Clean up intervals and timeouts on component unmount and when undo is triggered to prevent memory leaks
+---
