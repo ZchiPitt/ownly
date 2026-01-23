@@ -21,10 +21,14 @@
 - API request/response types from `/src/types/api.ts` for Edge Functions and client-side data fetching
 - Storage bucket 'items' for photos: upload to items/{user_id}/{filename}, RLS enforces user-only access
 - Path alias `@/` configured in vite.config.ts and tsconfig.app.json - use `import { x } from '@/lib/...'`
-- AuthProvider context at `/src/contexts/AuthContext.tsx` - wrap app with `<AuthProvider>`
+- AuthProvider context at `/src/contexts/AuthProvider.tsx` - wrap app with `<AuthProvider>`
 - useAuth hook at `/src/hooks/useAuth.ts` - use `const { user, session, signIn, signOut } = useAuth()`
 - For Fast Refresh compatibility: separate createContext() into its own .ts file, keep provider in .tsx
 - ProtectedRoute wrapper at `/src/components/ProtectedRoute.tsx` - wrap protected routes with `<ProtectedRoute>`
+- Context exports from `/src/contexts/index.ts` - import { AuthProvider, AuthContext } from '@/contexts'
+- AppShell layout at `/src/components/layout/AppShell.tsx` - use `<AppShell>` for pages with bottom nav
+- BottomNav at `/src/components/layout/BottomNav.tsx` - 4 tabs (Home, Add FAB, Inventory, Settings)
+- Layout exports from `/src/components/layout/index.ts` - import { AppShell, BottomNav } from '@/components/layout'
 
 ---
 
@@ -353,4 +357,36 @@
   - Use `<Navigate to={...} replace />` to redirect without adding to browser history
   - The loading state from useAuth is true until initial session check completes
   - Use `<>{children}</>` to render children without extra wrapper element
+---
+
+## 2026-01-23 - US-015
+- What was implemented:
+  - Created /src/components/layout/AppShell.tsx with header area and bottom nav integration
+  - Created /src/components/layout/BottomNav.tsx with 4 tabs: Home, Add (center FAB), Inventory, Settings
+  - Bottom nav is fixed at bottom, 56px height (h-14), white background with top border
+  - Active tab highlighted with blue-600 primary color, icon filled and text bold
+  - Center Add button is larger/prominent FAB style with blue-600 background
+  - Tabs navigate to: /dashboard, /add, /inventory, /settings
+  - Created layout index.ts for clean exports
+  - Updated App.tsx to use AppShell and added placeholder pages for each route
+  - Renamed context files to avoid macOS case-sensitivity issues (AuthContext.tsx -> AuthProvider.tsx, authContext.ts -> auth-context.ts)
+  - Created /src/contexts/index.ts for clean context exports
+
+- Files changed:
+  - src/components/layout/AppShell.tsx (new)
+  - src/components/layout/BottomNav.tsx (new)
+  - src/components/layout/index.ts (new)
+  - src/contexts/AuthProvider.tsx (renamed from AuthContext.tsx)
+  - src/contexts/auth-context.ts (renamed from authContext.ts)
+  - src/contexts/index.ts (new)
+  - src/App.tsx (updated - added AppShell, placeholder pages, routes)
+  - src/hooks/useAuth.ts (updated import path)
+
+- **Learnings for future iterations:**
+  - On macOS (case-insensitive file system), avoid files with same name different case (e.g., authContext.ts vs AuthContext.tsx)
+  - Use dash-separated naming for consistency (auth-context.ts) when splitting context and provider
+  - Create index.ts files for directories to provide clean exports
+  - BottomNav uses NavLink from react-router-dom with active state detection via useLocation
+  - FAB style center button uses negative margin (-mt-5) to extend above the nav bar
+  - AppShell adds pb-14 (padding-bottom 56px) to content to account for fixed bottom nav
 ---
