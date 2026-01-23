@@ -32,6 +32,7 @@
 - Pages exported from `/src/pages/index.ts` - import { SignupPage, LoginPage, etc. } from '@/pages'
 - Auth pages (/signup, /login, /reset-password) are outside AppShell - no bottom navigation
 - Simple Toast component at `/src/components/Toast.tsx` - use `<Toast message="" type="error" onClose={() => {}} />` (to be expanded in US-083)
+- Image utilities at `/src/lib/imageUtils.ts` - use `validateImage()`, `compressImage()`, `convertHeicToJpeg()`, `generateThumbnail()`, `uploadToStorage()`, `processAndUploadImage()`
 
 ---
 
@@ -541,4 +542,62 @@
   - Mask email for display: show first 2 chars of local part + "***" + "@" + domain
   - The resetPassword function in AuthContext includes redirectTo parameter pointing to /reset-password/confirm
   - Cooldown pattern: track remaining seconds in state, disable button when > 0
+---
+
+## 2026-01-23 - US-022
+- What was implemented:
+  - Created /src/pages/ResetPasswordConfirmPage.tsx at route /reset-password/confirm
+  - Form with new password and confirm password inputs
+  - Password validation: minimum 8 characters, passwords must match
+  - Token validation using Supabase auth session check via onAuthStateChange
+  - Three states: loading (verifying token), invalid (expired/bad token), valid (show form)
+  - On success: signs out user, redirects to /login with location state for success toast
+  - On expired/invalid token: shows error view with "Request New Link" and "Back to Log in" buttons
+  - Updated LoginPage to show "Password reset successfully" toast when redirected from password reset
+  - Used useState initializer function to set initial toast state from location state (avoids lint error)
+  - Updated pages index.ts to export ResetPasswordConfirmPage
+  - Added route for /reset-password/confirm in App.tsx outside AppShell (no bottom nav)
+
+- Files changed:
+  - src/pages/ResetPasswordConfirmPage.tsx (new)
+  - src/pages/LoginPage.tsx (updated - added success toast for password reset redirect)
+  - src/pages/index.ts (updated - added ResetPasswordConfirmPage export)
+  - src/App.tsx (updated - added /reset-password/confirm route)
+
+- **Learnings for future iterations:**
+  - Supabase handles password recovery tokens via URL hash automatically
+  - Use onAuthStateChange to listen for PASSWORD_RECOVERY event when Supabase processes reset link
+  - After updatePassword(), sign out the user and redirect to login for fresh session
+  - Use location.state to pass data between routes (e.g., success message from password reset)
+  - Use useState initializer function `useState(() => computeInitialValue())` to set initial state from props/context to avoid setState-in-effect lint error
+  - Use window.history.replaceState({}, document.title) to clear location state without triggering navigation
+---
+
+## 2026-01-23 - US-023
+- What was implemented:
+  - Created /src/lib/imageUtils.ts with comprehensive image utility functions
+  - Function validateImage: validates images for supported formats (JPEG, PNG, WebP, HEIC) and minimum dimensions (200x200)
+  - Function compressImage: resizes and compresses images to max 2MB, adjusts quality iteratively
+  - Function convertHeicToJpeg: converts HEIC/HEIF files to JPEG using heic2any library
+  - Function generateThumbnail: creates 200x200 center-cropped square thumbnails
+  - Function uploadToStorage: uploads to Supabase storage at items/{user_id}/{uuid}.jpg path, returns URL
+  - Function processAndUploadImage: convenience function combining validate, compress, thumbnail, and upload
+  - Added helper functions: getImageDimensions, loadImage, resizeImage, generateFilename, deleteFromStorage
+  - Installed heic2any library for HEIC conversion
+  - Created type declaration file for heic2any at /src/types/heic2any.d.ts
+
+- Files changed:
+  - package.json (added heic2any dependency)
+  - package-lock.json (dependency lock file)
+  - src/lib/imageUtils.ts (new - image utility functions)
+  - src/types/heic2any.d.ts (new - TypeScript declaration for heic2any)
+
+- **Learnings for future iterations:**
+  - heic2any library doesn't have bundled TypeScript types, need to create custom .d.ts declaration
+  - HEIC files may not have correct MIME type set, also check filename extension
+  - Canvas-based image compression works by reducing dimensions and JPEG quality iteratively
+  - Use crypto.randomUUID() for generating unique filenames (browser built-in)
+  - Center-crop for thumbnails: calculate square crop from center of original image
+  - heic2any returns Blob or Blob[] (for multi-frame images), handle array case
+  - Use Promise-based wrappers for canvas.toBlob() and image loading for async/await compatibility
 ---
