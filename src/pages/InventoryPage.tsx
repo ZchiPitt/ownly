@@ -624,6 +624,8 @@ export function InventoryPage() {
               onRefresh={handleRefresh}
               onLoadMore={loadMore}
               error={itemsError}
+              hasActiveFilters={hasAnyActiveFilter}
+              onClearFilters={handleClearAllFilters}
             />
           ) : (
             <ItemList
@@ -636,6 +638,8 @@ export function InventoryPage() {
               onRefresh={handleRefresh}
               onLoadMore={loadMore}
               error={itemsError}
+              hasActiveFilters={hasAnyActiveFilter}
+              onClearFilters={handleClearAllFilters}
             />
           )}
         </div>
