@@ -956,3 +956,29 @@
   - Use separate timer refs for different auto-navigation behaviors (autoDismissTimerRef, queueContinueTimerRef)
   - Progress indicator shows visual progress with both bar (percentage) and dots (discrete items)
 ---
+
+## 2026-01-23 - US-036
+- What was implemented:
+  - Created /src/pages/DashboardPage.tsx at route /dashboard
+  - Implemented time-based greeting ('Good morning/afternoon/evening') with user's display name extracted from email
+  - Added user avatar (initials fallback) that navigates to /settings on tap
+  - Created sticky search bar below header with magnifying glass icon
+  - Search bar navigates to /search on tap (placeholder for future search page)
+  - Added placeholder sections: Recent Items, Categories, Locations, Quick Stats
+  - Empty state UI for new users with 'Add your first item' link
+  - Updated pages/index.ts to export DashboardPage
+  - Removed placeholder DashboardPage from App.tsx
+
+- Files changed:
+  - src/pages/DashboardPage.tsx (new)
+  - src/pages/index.ts (updated - added DashboardPage export)
+  - src/App.tsx (updated - removed placeholder, imported from @/pages)
+
+- **Learnings for future iterations:**
+  - Time-based greeting uses `new Date().getHours()`: <12 morning, <18 afternoon, else evening
+  - User initials extracted from email: first 2 chars of local part (before @)
+  - Display name derived from email: capitalize first letter of local part
+  - Sticky header uses `sticky top-0 z-10` with white background and border
+  - useMemo for greeting prevents recalculating on every render
+  - Section headers pattern: title on left, action link on right with justify-between
+---
