@@ -4,13 +4,20 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
-import { useInventoryItems } from '@/hooks/useInventoryItems';
+import type { InventorySortOption } from '@/hooks/useInventoryItems';
+import {
+  useInventoryItems,
+  getSortFromUrlParam,
+  getUrlParamFromSort,
+  getSortLabel,
+} from '@/hooks/useInventoryItems';
 import { GalleryGrid } from '@/components/GalleryGrid';
 import { ItemList } from '@/components/ItemList';
+import { SortBottomSheet } from '@/components/SortBottomSheet';
 
 // View mode type
 type ViewMode = 'gallery' | 'list';
@@ -167,15 +174,23 @@ function ViewToggle({
 
 export function InventoryPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { count, isLoading: countLoading, refetch: refetchCount } = useItemCount();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
+
+  // Get sort from URL param, default to 'newest'
+  const sortFromUrl = getSortFromUrlParam(searchParams.get('sort'));
+
+  // Bottom sheet state for sorting
+  const [isSortSheetOpen, setIsSortSheetOpen] = useState(false);
+
   const {
     items,
     isLoading: itemsLoading,
     isRefreshing,
     error: itemsError,
     refresh: refreshItems,
-  } = useInventoryItems();
+  } = useInventoryItems({ sortBy: sortFromUrl });
 
   // Track if user has explicitly changed the view (to avoid overriding with settings)
   const [userSelectedView, setUserSelectedView] = useState<ViewMode | null>(null);
@@ -207,6 +222,18 @@ export function InventoryPage() {
     setIsUpdatingView(true);
     await updateSettings({ default_view: mode });
     setIsUpdatingView(false);
+  };
+
+  const handleSortChange = (sort: InventorySortOption) => {
+    // Update URL param using replaceState (no history push)
+    const newParams = new URLSearchParams(searchParams);
+    if (sort === 'newest') {
+      // Remove param if default
+      newParams.delete('sort');
+    } else {
+      newParams.set('sort', getUrlParamFromSort(sort));
+    }
+    setSearchParams(newParams, { replace: true });
   };
 
   // Pull-to-refresh handlers
@@ -294,6 +321,49 @@ export function InventoryPage() {
               </svg>
             </button>
           </div>
+        </div>
+
+        {/* Filter bar with Sort chip */}
+        <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 -mx-4 px-4">
+          {/* Sort chip */}
+          <button
+            onClick={() => setIsSortSheetOpen(true)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              sortFromUrl !== 'newest'
+                ? 'bg-blue-600 text-white'
+                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {/* Sort icon */}
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+              />
+            </svg>
+            <span>Sort: {getSortLabel(sortFromUrl)}</span>
+            {/* Dropdown indicator */}
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -390,6 +460,14 @@ export function InventoryPage() {
           />
         </svg>
       </button>
+
+      {/* Sort Bottom Sheet */}
+      <SortBottomSheet
+        isOpen={isSortSheetOpen}
+        onClose={() => setIsSortSheetOpen(false)}
+        currentSort={sortFromUrl}
+        onSortChange={handleSortChange}
+      />
     </div>
   );
 }

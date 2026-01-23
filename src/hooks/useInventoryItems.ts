@@ -27,12 +27,59 @@ export interface InventoryItem {
   is_favorite: boolean;
   created_at: string;
   updated_at: string;
+  last_viewed_at: string | null;
 }
 
 /**
  * Sort options for inventory items
  */
-export type InventorySortOption = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
+export type InventorySortOption = 'newest' | 'oldest' | 'name_asc' | 'name_desc' | 'expiring' | 'viewed';
+
+/**
+ * Sort option configuration for display
+ */
+export interface SortOptionConfig {
+  key: InventorySortOption;
+  label: string;
+  urlParam: string;
+}
+
+/**
+ * All available sort options with display labels and URL params
+ */
+export const SORT_OPTIONS: SortOptionConfig[] = [
+  { key: 'newest', label: 'Newest First', urlParam: 'newest' },
+  { key: 'oldest', label: 'Oldest First', urlParam: 'oldest' },
+  { key: 'name_asc', label: 'Name A-Z', urlParam: 'az' },
+  { key: 'name_desc', label: 'Name Z-A', urlParam: 'za' },
+  { key: 'expiring', label: 'Expiring Soon', urlParam: 'expiring' },
+  { key: 'viewed', label: 'Recently Viewed', urlParam: 'viewed' },
+];
+
+/**
+ * Get sort option from URL param
+ */
+export function getSortFromUrlParam(param: string | null): InventorySortOption {
+  if (!param) return 'newest';
+  const option = SORT_OPTIONS.find(opt => opt.urlParam === param);
+  return option?.key ?? 'newest';
+}
+
+/**
+ * Get URL param from sort option
+ */
+export function getUrlParamFromSort(sort: InventorySortOption): string {
+  const option = SORT_OPTIONS.find(opt => opt.key === sort);
+  return option?.urlParam ?? 'newest';
+}
+
+/**
+ * Get display label from sort option
+ */
+export function getSortLabel(sort: InventorySortOption): string {
+  const option = SORT_OPTIONS.find(opt => opt.key === sort);
+  return option?.label ?? 'Newest First';
+}
 
 interface UseInventoryItemsOptions {
   sortBy?: InventorySortOption;
@@ -84,6 +131,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
           is_favorite,
           created_at,
           updated_at,
+          last_viewed_at,
           categories (
             name,
             color,
@@ -127,6 +175,14 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         case 'name_desc':
           query = query.order('name', { ascending: false, nullsFirst: false });
           break;
+        case 'expiring':
+          // Sort by expiration date ascending (soonest first), nulls last
+          query = query.order('expiration_date', { ascending: true, nullsFirst: false });
+          break;
+        case 'viewed':
+          // Sort by last_viewed_at descending (most recent first), nulls last
+          query = query.order('last_viewed_at', { ascending: false, nullsFirst: false });
+          break;
         case 'newest':
         default:
           query = query.order('created_at', { ascending: false });
@@ -145,6 +201,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         is_favorite: boolean;
         created_at: string;
         updated_at: string;
+        last_viewed_at: string | null;
         categories: {
           name: string;
           color: string;
@@ -178,6 +235,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         is_favorite: item.is_favorite,
         created_at: item.created_at,
         updated_at: item.updated_at,
+        last_viewed_at: item.last_viewed_at,
       }));
 
       setItems(inventoryItems);
