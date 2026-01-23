@@ -1,0 +1,35 @@
+# Ralph Progress Log
+# Project: Clekee - Smart Home Inventory App
+# Branch: ralph/smart-home-inventory-mvp
+# Created: 2026-01-23
+
+## Codebase Patterns
+- Uses Tailwind CSS v4 with @tailwindcss/vite plugin (no tailwind.config.js needed)
+- Uses TanStack React Query for server state management
+- Uses React Router v6 for navigation
+- Mobile-first design approach
+
+---
+
+## 2026-01-23 - US-001
+- What was implemented:
+  - Created React app with Vite and TypeScript template
+  - Installed and configured Tailwind CSS v4 with @tailwindcss/vite plugin
+  - Installed React Router v6 for navigation
+  - Installed TanStack React Query for server state management
+  - Created base folder structure: /src/components, /src/pages, /src/hooks, /src/lib, /src/types
+  - Configured App.tsx with QueryClientProvider and BrowserRouter
+
+- Files changed:
+  - package.json (dependencies and project metadata)
+  - vite.config.ts (added Tailwind plugin)
+  - src/index.css (Tailwind imports and base styles)
+  - src/App.tsx (React Query and Router setup)
+  - Created folder structure with .gitkeep files
+
+- **Learnings for future iterations:**
+  - Tailwind CSS v4 uses `@import "tailwindcss"` syntax, no @tailwind directives
+  - Tailwind CSS v4 doesn't need tailwind.config.js when using @tailwindcss/vite plugin
+  - The project uses React 19 with concurrent features
+  - TanStack React Query v5 is installed
+---
