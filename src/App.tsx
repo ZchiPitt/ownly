@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -45,6 +45,7 @@ function App() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/reset-password/confirm" element={<ResetPasswordConfirmPage />} />
 
             {/* Protected routes - inside AppShell (with bottom nav) */}
             <Route

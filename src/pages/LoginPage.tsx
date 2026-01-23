@@ -12,9 +12,14 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Toast } from '@/components/Toast';
+
+// Types for location state from password reset
+interface LocationState {
+  passwordResetSuccess?: boolean;
+}
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,8 +41,12 @@ interface FormTouched {
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { signIn, user, loading: authLoading } = useAuth();
+
+  // Check for password reset success from location state
+  const locationState = location.state as LocationState | null;
 
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -51,7 +60,21 @@ export function LoginPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'error' | 'info' } | null>(null);
+
+  // Initialize toast state based on location state (password reset success)
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'info' | 'success' } | null>(
+    () => locationState?.passwordResetSuccess
+      ? { message: 'Password reset successfully', type: 'success' }
+      : null
+  );
+
+  // Clear location state after showing toast to prevent re-showing on navigation
+  useEffect(() => {
+    if (locationState?.passwordResetSuccess) {
+      // Clear the state to prevent showing the toast again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [locationState]);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
