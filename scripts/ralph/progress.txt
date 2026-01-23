@@ -29,6 +29,8 @@
 - AppShell layout at `/src/components/layout/AppShell.tsx` - use `<AppShell>` for pages with bottom nav
 - BottomNav at `/src/components/layout/BottomNav.tsx` - 4 tabs (Home, Add FAB, Inventory, Settings)
 - Layout exports from `/src/components/layout/index.ts` - import { AppShell, BottomNav } from '@/components/layout'
+- Pages exported from `/src/pages/index.ts` - import { SignupPage, LoginPage, etc. } from '@/pages'
+- Auth pages (/signup, /login, /reset-password) are outside AppShell - no bottom navigation
 
 ---
 
@@ -389,4 +391,30 @@
   - BottomNav uses NavLink from react-router-dom with active state detection via useLocation
   - FAB style center button uses negative margin (-mt-5) to extend above the nav bar
   - AppShell adds pb-14 (padding-bottom 56px) to content to account for fixed bottom nav
+---
+
+## 2026-01-23 - US-016
+- What was implemented:
+  - Created /src/pages/SignupPage.tsx at route /signup with full registration form
+  - Email input with real-time validation (email format check using regex)
+  - Password input with validation (minimum 8 characters)
+  - Confirm password input with validation (must match password)
+  - Inline validation errors shown below each field on blur
+  - Create Account button disabled until all validations pass
+  - Footer link: "Already have an account? Log in" -> /login
+  - Created /src/pages/index.ts barrel export for pages
+  - Updated App.tsx to add /signup route outside AppShell (no bottom nav for auth pages)
+
+- Files changed:
+  - src/pages/SignupPage.tsx (new)
+  - src/pages/index.ts (new)
+  - src/App.tsx (updated - restructured routes to separate auth from protected routes)
+
+- **Learnings for future iterations:**
+  - Auth pages (/signup, /login, etc.) should be outside AppShell since they don't need bottom navigation
+  - Use nested Routes for grouping protected routes inside AppShell wrapper
+  - Form validation pattern: use `touched` state to track which fields have been visited, only show errors for touched fields
+  - Use `useMemo` for computing validation errors to avoid recalculating on every render
+  - Email validation regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` covers most common cases
+  - Button disabled state: combine isFormValid check with Tailwind conditional classes
 ---
