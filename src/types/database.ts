@@ -156,6 +156,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Omit<Profile, 'id' | 'user_id' | 'created_at'>>;
+        Relationships: [];
       };
       user_settings: {
         Row: UserSettings;
@@ -170,6 +171,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: Partial<Omit<UserSettings, 'id' | 'user_id' | 'created_at'>>;
+        Relationships: [];
       };
       categories: {
         Row: Category;
@@ -182,6 +184,7 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<Category, 'id' | 'user_id' | 'created_at' | 'is_system'>>;
+        Relationships: [];
       };
       locations: {
         Row: Location;
@@ -196,6 +199,7 @@ export type Database = {
           deleted_at?: string | null;
         };
         Update: Partial<Omit<Location, 'id' | 'user_id' | 'created_at' | 'path' | 'depth' | 'item_count'>>;
+        Relationships: [];
       };
       items: {
         Row: Item;
@@ -211,6 +215,7 @@ export type Database = {
           deleted_at?: string | null;
         };
         Update: Partial<Omit<Item, 'id' | 'user_id' | 'created_at'>>;
+        Relationships: [];
       };
       notifications: {
         Row: Notification;
@@ -221,6 +226,7 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<Notification, 'id' | 'user_id' | 'created_at' | 'type'>>;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

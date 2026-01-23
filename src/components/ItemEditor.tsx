@@ -9,12 +9,15 @@
  * - Name input with max 200 chars
  * - Quantity stepper (1-999)
  * - Description textarea with max 1000 chars
+ * - Category selector with AI suggestion and create new option
  * - AI sparkle indicator for AI pre-filled fields
  * - Sparkle disappears when user modifies field
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useCategories } from '@/hooks/useCategories';
 import type { DetectedItem } from '@/types/api';
+import type { Category } from '@/types';
 
 /**
  * Props for the ItemEditor component
@@ -47,8 +50,8 @@ export interface ItemEditorValues {
   name: string;
   description: string;
   quantity: number;
+  categoryId: string | null;
   // These will be added in future stories:
-  // categoryId: string | null;
   // locationId: string | null;
   // tags: string[];
   // price: number | null;
@@ -65,6 +68,7 @@ export interface ItemEditorValues {
 interface AIFilledFields {
   name: boolean;
   description: boolean;
+  category: boolean;
 }
 
 /**
@@ -166,6 +170,368 @@ function QuantityStepper({
   );
 }
 
+/**
+ * Category Selector component with AI suggestion and create new option
+ */
+function CategorySelector({
+  value,
+  onChange,
+  aiSuggestion,
+  isAIFilled,
+  onAIFieldModified,
+}: {
+  value: string | null;
+  onChange: (categoryId: string | null) => void;
+  aiSuggestion: string | null;
+  isAIFilled: boolean;
+  onAIFieldModified: () => void;
+}) {
+  const { categories, isLoading, createCategory, getSortedCategories } = useCategories();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get sorted categories with AI suggestion at top
+  const sortedCategories = useMemo(
+    () => getSortedCategories(aiSuggestion),
+    [getSortedCategories, aiSuggestion]
+  );
+
+  // Find the selected category
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.id === value) || null,
+    [categories, value]
+  );
+
+  // Find AI suggested category
+  const aiSuggestedCategory = useMemo(() => {
+    if (!aiSuggestion) return null;
+    return categories.find((c) => c.name.toLowerCase() === aiSuggestion.toLowerCase()) || null;
+  }, [categories, aiSuggestion]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setIsCreating(false);
+        setNewCategoryName('');
+        setCreateError(null);
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
+  // Focus input when creating
+  useEffect(() => {
+    if (isCreating && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isCreating]);
+
+  /**
+   * Handle category selection
+   */
+  const handleSelect = useCallback(
+    (category: Category | null) => {
+      onChange(category?.id || null);
+      setIsOpen(false);
+      // Clear AI indicator when user selects a different category
+      if (isAIFilled && category?.id !== aiSuggestedCategory?.id) {
+        onAIFieldModified();
+      }
+    },
+    [onChange, isAIFilled, aiSuggestedCategory, onAIFieldModified]
+  );
+
+  /**
+   * Handle creating a new category
+   */
+  const handleCreateCategory = useCallback(async () => {
+    const trimmedName = newCategoryName.trim();
+
+    if (!trimmedName) {
+      setCreateError('Category name is required');
+      return;
+    }
+
+    if (trimmedName.length > 50) {
+      setCreateError('Category name must be 50 characters or less');
+      return;
+    }
+
+    // Check if category already exists (case-insensitive)
+    const exists = categories.some(
+      (c) => c.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (exists) {
+      setCreateError('A category with this name already exists');
+      return;
+    }
+
+    setIsSaving(true);
+    setCreateError(null);
+
+    const newCategory = await createCategory({ name: trimmedName });
+
+    setIsSaving(false);
+
+    if (newCategory) {
+      // Select the newly created category
+      onChange(newCategory.id);
+      setIsCreating(false);
+      setNewCategoryName('');
+      setIsOpen(false);
+      // Clear AI indicator since user created a new category
+      if (isAIFilled) {
+        onAIFieldModified();
+      }
+    } else {
+      setCreateError('Failed to create category. Please try again.');
+    }
+  }, [newCategoryName, categories, createCategory, onChange, isAIFilled, onAIFieldModified]);
+
+  /**
+   * Handle key press in create input
+   */
+  const handleCreateKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleCreateCategory();
+      } else if (e.key === 'Escape') {
+        setIsCreating(false);
+        setNewCategoryName('');
+        setCreateError(null);
+      }
+    },
+    [handleCreateCategory]
+  );
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+        Category
+        {isAIFilled && (
+          <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+            <SparkleIcon className="w-3 h-3" />
+            AI
+          </span>
+        )}
+      </label>
+
+      {/* Dropdown trigger button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={isLoading}
+        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
+          isAIFilled
+            ? 'border-blue-300 bg-blue-50/50'
+            : 'border-gray-300 bg-white'
+        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          {selectedCategory ? (
+            <>
+              <span className="text-lg flex-shrink-0">{selectedCategory.icon}</span>
+              <span className="truncate">{selectedCategory.name}</span>
+              {isAIFilled && selectedCategory.id === aiSuggestedCategory?.id && (
+                <span className="flex-shrink-0 text-xs text-blue-600">(AI suggested)</span>
+              )}
+            </>
+          ) : (
+            <span className="text-gray-400">Select a category</span>
+          )}
+        </div>
+        <svg
+          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
+            isOpen ? 'rotate-180' : ''
+          }`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Dropdown menu */}
+      {isOpen && (
+        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+          {isLoading ? (
+            <div className="px-4 py-3 text-gray-500 text-center">Loading categories...</div>
+          ) : (
+            <>
+              {/* Category options */}
+              {sortedCategories.map((category, index) => {
+                const isAISuggested = category.id === aiSuggestedCategory?.id;
+                const isSelected = category.id === value;
+                const isFirstUserCategory =
+                  index > 0 &&
+                  !category.is_system &&
+                  sortedCategories[index - 1]?.is_system;
+                const isFirstSystemCategory =
+                  index > 0 &&
+                  category.is_system &&
+                  !sortedCategories[index - 1]?.is_system &&
+                  !isAISuggested;
+
+                return (
+                  <div key={category.id}>
+                    {/* Section divider */}
+                    {(isFirstUserCategory || isFirstSystemCategory) && (
+                      <div className="border-t border-gray-100 my-1" />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSelect(category)}
+                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
+                        isSelected
+                          ? 'bg-blue-50 text-blue-700'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className="text-lg flex-shrink-0">{category.icon}</span>
+                      <span className="flex-1 truncate">{category.name}</span>
+                      {isAISuggested && (
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          <SparkleIcon className="w-3 h-3" />
+                          AI
+                        </span>
+                      )}
+                      {isSelected && (
+                        <svg
+                          className="w-5 h-5 text-blue-600 flex-shrink-0"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
+
+              {/* Create new category option */}
+              <div className="border-t border-gray-100 mt-1">
+                {isCreating ? (
+                  <div className="p-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={newCategoryName}
+                        onChange={(e) => {
+                          setNewCategoryName(e.target.value.slice(0, 50));
+                          setCreateError(null);
+                        }}
+                        onKeyDown={handleCreateKeyPress}
+                        placeholder="Category name"
+                        maxLength={50}
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        disabled={isSaving}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateCategory}
+                        disabled={isSaving || !newCategoryName.trim()}
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                          isSaving || !newCategoryName.trim()
+                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isSaving ? (
+                          <svg
+                            className="w-4 h-4 animate-spin"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                        ) : (
+                          'Save'
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreating(false);
+                          setNewCategoryName('');
+                          setCreateError(null);
+                        }}
+                        disabled={isSaving}
+                        className="p-2 text-gray-400 hover:text-gray-600"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    {createError && (
+                      <p className="mt-1 text-xs text-red-600">{createError}</p>
+                    )}
+                    <p className="mt-1 text-xs text-gray-400">
+                      {newCategoryName.length}/50
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreating(true)}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    <span>Create new category</span>
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ItemEditor({
   detectedItem,
   imageUrl,
@@ -175,15 +541,48 @@ export function ItemEditor({
   onViewFullImage,
   onFormChange,
 }: ItemEditorProps) {
+  // Get categories to find AI suggested category
+  const { categories, isLoading: categoriesLoading } = useCategories();
+
   // Initialize form state from detected item or defaults
   const [name, setName] = useState(detectedItem?.name || '');
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(1);
 
+  // Derive the AI-suggested category ID from categories
+  // This will be null until categories are loaded
+  const categorySuggestion = detectedItem?.category_suggestion || null;
+  const aiSuggestedCategoryId = useMemo(() => {
+    if (!categorySuggestion || categoriesLoading) return null;
+    const match = categories.find(
+      (c) => c.name.toLowerCase() === categorySuggestion.toLowerCase()
+    );
+    return match?.id || null;
+  }, [categories, categorySuggestion, categoriesLoading]);
+
+  // Category state - uses the AI suggestion or null
+  // We use the aiSuggestedCategoryId as the default when it becomes available
+  const [categoryIdState, setCategoryIdState] = useState<string | null>(null);
+  const [hasUserSelectedCategory, setHasUserSelectedCategory] = useState(false);
+
+  // Derive the actual categoryId to use
+  // If user has explicitly selected a category, use that
+  // Otherwise, use the AI suggestion if available
+  const categoryId = hasUserSelectedCategory
+    ? categoryIdState
+    : (aiSuggestedCategoryId ?? categoryIdState);
+
+  // Wrapper to set category and mark as user-selected
+  const setCategoryId = useCallback((newCategoryId: string | null) => {
+    setCategoryIdState(newCategoryId);
+    setHasUserSelectedCategory(true);
+  }, []);
+
   // Track which fields are still AI-filled (sparkle shown until user modifies)
   const [aiFilledFields, setAIFilledFields] = useState<AIFilledFields>(() => ({
     name: !!detectedItem?.name,
     description: false, // AI doesn't provide description
+    category: !!detectedItem?.category_suggestion,
   }));
 
   // Track if full image viewer is open
@@ -221,6 +620,22 @@ export function ItemEditor({
   }, []);
 
   /**
+   * Handle category change
+   */
+  const handleCategoryChange = useCallback((newCategoryId: string | null) => {
+    setCategoryId(newCategoryId);
+  }, [setCategoryId]);
+
+  /**
+   * Handle category AI field modified
+   */
+  const handleCategoryAIModified = useCallback(() => {
+    if (aiFilledFields.category) {
+      setAIFilledFields((prev) => ({ ...prev, category: false }));
+    }
+  }, [aiFilledFields.category]);
+
+  /**
    * Handle thumbnail click - open full image viewer
    */
   const handleThumbnailClick = useCallback(() => {
@@ -245,7 +660,8 @@ export function ItemEditor({
     name,
     description,
     quantity,
-  }), [name, description, quantity]);
+    categoryId,
+  }), [name, description, quantity, categoryId]);
 
   // Notify parent of form changes
   useMemo(() => {
@@ -385,8 +801,16 @@ export function ItemEditor({
               </div>
             </div>
 
-            {/* Placeholder sections for future fields (US-030 to US-033) */}
-            {/* Category - US-030 */}
+            {/* Category Field */}
+            <CategorySelector
+              value={categoryId}
+              onChange={handleCategoryChange}
+              aiSuggestion={detectedItem?.category_suggestion || null}
+              isAIFilled={aiFilledFields.category}
+              onAIFieldModified={handleCategoryAIModified}
+            />
+
+            {/* Placeholder sections for future fields (US-031 to US-033) */}
             {/* Location - US-031 */}
             {/* Tags - US-032 */}
             {/* Additional fields (price, dates, brand, model) - US-033 */}

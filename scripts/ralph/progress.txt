@@ -36,6 +36,11 @@
 - Supabase Edge Functions in `supabase/functions/{function-name}/index.ts` - use Deno runtime with esm.sh imports
 - Shared Edge Function utilities in `supabase/functions/_shared/` - e.g., cors.ts for CORS headers
 - Edge Function auth validation: create Supabase client with user token, call auth.getUser() to verify
+- ItemEditor component at `/src/components/ItemEditor.tsx` - use `<ItemEditor detectedItem={...} imageUrl={...} .../>` for item form
+- ItemEditorPage at `/src/pages/ItemEditorPage.tsx` - route wrapper that receives state via React Router location.state
+- Use `ReturnType<typeof setTimeout>` instead of `NodeJS.Timeout` for browser TypeScript compatibility
+- useCategories hook at `/src/hooks/useCategories.ts` - use `const { categories, createCategory, getSortedCategories } = useCategories()`
+- For Supabase Database types, include `Relationships: []` in table definitions for type compatibility
 
 ---
 
@@ -718,4 +723,99 @@
   - Navigate with state object to pass data between routes (detectedItem, imageUrl, etc.)
   - processAndUploadImage() returns imagePath and thumbnailPath for cleanup if needed
   - Use useCallback for derived values that depend on state (getAnalysisLoadingText)
+---
+
+## 2026-01-23 - US-028
+- What was implemented:
+  - Created /src/components/MultiItemSelection.tsx component for multi-item selection
+  - Displays original photo at top of selection UI
+  - Lists detected items with: checkbox, name, category suggestion, confidence badge (High/Medium/Low)
+  - AI sparkle indicator shows which fields are AI-detected
+  - Tags preview (first 3 tags with "+N more" overflow indicator)
+  - Brand information display when available
+  - Select All / Deselect All toggle functionality
+  - Add Selected Items button with dynamic count (disabled when none selected)
+  - Helper text "You'll edit each item one by one" when multiple items selected
+  - Item queue navigation: passes selected items to Item Editor with queue state
+  - Updated AddItemPage.tsx to use MultiItemSelection component instead of placeholder
+  - Consistent state structure for all navigation paths (single item, multi-item, manual add)
+  - Added itemQueue, totalItems, currentItemIndex to navigation state for US-035
+
+- Files changed:
+  - src/components/MultiItemSelection.tsx (new)
+  - src/pages/AddItemPage.tsx (updated - integrated MultiItemSelection component)
+
+- **Learnings for future iterations:**
+  - Use Set for tracking selected indices for O(1) lookup and efficient toggling
+  - Confidence thresholds: >=0.8 High (green), >=0.6 Medium (yellow), <0.6 Low (gray)
+  - Navigation state should include queue info (itemQueue, totalItems, currentItemIndex) for multi-item flows
+  - ImageInfo type contains all image-related data (imageUrl, thumbnailUrl, imagePath, thumbnailPath)
+  - Safe-area-pb class handles iPhone notch/safe-area padding for bottom action bar
+  - Buttons should be interactive (use <button> not <div>) for full accessibility with tab/enter
+---
+
+## 2026-01-23 - US-029
+- What was implemented:
+  - Created /src/components/ItemEditor.tsx component with basic form fields
+  - Photo thumbnail at top with tap-to-view functionality (opens full image modal)
+  - Name input with placeholder 'e.g., Blue Coffee Mug', max 200 chars, character counter
+  - Quantity stepper component with increment/decrement buttons (min 1, max 999)
+  - Description textarea with placeholder 'Add notes...', max 1000 chars, character counter
+  - AI sparkle indicator badge for AI pre-filled fields (shows "AI" pill with sparkle icon)
+  - Sparkle/AI indicator disappears when user modifies the field
+  - Progress indicator for multi-item queue (shows "Adding item X of Y" with dot progress)
+  - Full image viewer modal with tap-anywhere-to-close
+  - Created /src/pages/ItemEditorPage.tsx wrapper for routing with state handling
+  - Redirects to /add when accessed directly without state (security)
+  - Updated App.tsx to add route for /add/edit
+  - Fixed NodeJS.Timeout type to use ReturnType<typeof setTimeout> for browser compatibility
+
+- Files changed:
+  - src/components/ItemEditor.tsx (new)
+  - src/pages/ItemEditorPage.tsx (new)
+  - src/pages/index.ts (added ItemEditorPage export)
+  - src/App.tsx (added /add/edit route, imported ItemEditorPage)
+  - src/pages/AddItemPage.tsx (fixed NodeJS.Timeout type)
+
+- **Learnings for future iterations:**
+  - Use `ReturnType<typeof setTimeout>` instead of `NodeJS.Timeout` for browser TypeScript compatibility
+  - Don't re-export types that are already exported in the same file (causes TS2484)
+  - ItemEditorPage uses location.state from React Router for passing data (detectedItem, imageUrl, etc.)
+  - ItemEditor component receives form data and notifies parent via onFormChange callback
+  - AIFilledFields state tracks which fields have AI sparkle indicator
+  - QuantityStepper is a separate component with increment/decrement buttons and input field
+  - Use [appearance:textfield] and [&::-webkit-*]:appearance-none to hide number input spinners
+  - Full image viewer uses z-50 fixed positioning with tap-anywhere-to-close pattern
+---
+
+## 2026-01-23 - US-030
+- What was implemented:
+  - Created /src/hooks/useCategories.ts hook for fetching and managing categories
+  - Hook provides: categories (system + user), isLoading, error, createCategory, getSortedCategories
+  - Categories sorted: AI suggestion first (with sparkle), then user categories, then system categories
+  - Added CategorySelector component to ItemEditor with dropdown UI
+  - Dropdown shows category icon, name, AI sparkle indicator for suggested category
+  - Added 'Create new category' option at bottom of dropdown
+  - Inline create form with name input, save button, cancel button
+  - Validates category name: required, max 50 chars, no duplicate names
+  - Auto-selects newly created category after creation
+  - AI-suggested category auto-selected when categories load
+  - Sparkle/AI indicator cleared when user manually selects a different category
+  - Updated ItemEditorValues to include categoryId field
+  - Added Relationships property to Database types for Supabase compatibility
+
+- Files changed:
+  - src/hooks/useCategories.ts (new)
+  - src/components/ItemEditor.tsx (updated - added CategorySelector, categoryId state)
+  - src/types/database.ts (updated - added Relationships to all table definitions)
+  - scripts/ralph/prd.json (marked US-030 as passes: true)
+
+- **Learnings for future iterations:**
+  - useCategories hook at `/src/hooks/useCategories.ts` - use `const { categories, createCategory, getSortedCategories } = useCategories()`
+  - For Supabase Database types, add `Relationships: []` to each table definition for compatibility
+  - When using supabase.from().insert(), may need type assertion if Database types aren't fully inferred
+  - React Compiler strict mode: avoid useState in useEffect, use derived state or callback patterns instead
+  - Use stable references (extract to variables) for useMemo dependencies when accessing nested properties
+  - CategorySelector uses click-outside detection with document.addEventListener('mousedown', ...)
+  - For async category ID lookup, use derived state pattern: track `hasUserSelectedCategory` to distinguish manual vs auto selection
 ---
