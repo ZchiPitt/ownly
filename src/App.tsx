@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage } from '@/pages'
+import { SignupPage, LoginPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -51,6 +51,7 @@ function App() {
           <Routes>
             {/* Auth routes - outside AppShell (no bottom nav) */}
             <Route path="/signup" element={<SignupPage />} />
+            <Route path="/login" element={<LoginPage />} />
 
             {/* Protected routes - inside AppShell (with bottom nav) */}
             <Route
