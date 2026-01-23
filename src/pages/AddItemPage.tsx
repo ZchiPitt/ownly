@@ -1,5 +1,5 @@
 /**
- * Add Item Page - Photo capture, selection, and preview for adding items
+ * Add Item Page - Photo capture, selection, preview, and AI analysis for adding items
  * Route: /add
  *
  * Features:
@@ -11,12 +11,18 @@
  * - Camera permission denied handling with alert and fallback
  * - Full-screen photo preview with pinch-to-zoom
  * - Retake/Continue buttons in preview mode
+ * - AI analysis with loading overlay and timeout handling
+ * - Success/failure states with appropriate navigation
  * - Toast notifications for errors
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Toast } from '@/components/Toast';
-import { validateImage } from '@/lib/imageUtils';
+import { validateImage, processAndUploadImage, deleteFromStorage } from '@/lib/imageUtils';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
+import type { DetectedItem, AnalyzeImageResponse } from '@/types/api';
 
 interface ToastState {
   message: string;
@@ -24,9 +30,24 @@ interface ToastState {
 }
 
 // View states for the Add Item flow
-type ViewState = 'capture' | 'preview';
+type ViewState = 'capture' | 'preview' | 'analyzing' | 'results' | 'error';
+
+// Analysis state phases
+type AnalysisPhase = 'uploading' | 'analyzing' | 'timeout';
+
+// Result from AI analysis
+interface AnalysisResult {
+  items: DetectedItem[];
+  imageUrl: string;
+  thumbnailUrl: string;
+  imagePath: string;
+  thumbnailPath: string;
+}
 
 export function AddItemPage() {
+  const navigate = useNavigate();
+  const { user, session } = useAuth();
+
   // References to hidden file inputs
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +59,14 @@ export function AddItemPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('capture');
+
+  // AI Analysis state
+  const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>('uploading');
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [analysisSecondsElapsed, setAnalysisSecondsElapsed] = useState(0);
+  const analysisAbortRef = useRef<AbortController | null>(null);
+  const analysisTimersRef = useRef<NodeJS.Timeout[]>([]);
 
   // Pinch-to-zoom state
   const [scale, setScale] = useState(1);
@@ -58,6 +87,48 @@ export function AddItemPage() {
       }
     };
   }, [imagePreviewUrl]);
+
+  // Cleanup analysis timers on unmount
+  useEffect(() => {
+    return () => {
+      // Clear all timers
+      analysisTimersRef.current.forEach((timer) => clearTimeout(timer));
+      analysisTimersRef.current = [];
+      // Abort any ongoing request
+      if (analysisAbortRef.current) {
+        analysisAbortRef.current.abort();
+      }
+    };
+  }, []);
+
+  // Track analysis elapsed time
+  useEffect(() => {
+    if (viewState !== 'analyzing' || analysisPhase !== 'analyzing') {
+      setAnalysisSecondsElapsed(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setAnalysisSecondsElapsed((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [viewState, analysisPhase]);
+
+  // Get loading text based on phase and elapsed time
+  const getAnalysisLoadingText = useCallback(() => {
+    if (analysisPhase === 'uploading') {
+      return 'Uploading photo...';
+    } else if (analysisPhase === 'analyzing') {
+      if (analysisSecondsElapsed >= 5) {
+        return 'Still analyzing, please wait...';
+      }
+      return 'Analyzing your photo...';
+    } else if (analysisPhase === 'timeout') {
+      return 'This is taking longer than expected...';
+    }
+    return 'Analyzing your photo...';
+  }, [analysisPhase, analysisSecondsElapsed]);
 
   /**
    * Reset zoom state
@@ -262,17 +333,176 @@ export function AddItemPage() {
   };
 
   /**
-   * Handle Continue button click
+   * Clear analysis timers
    */
-  const handleContinue = () => {
-    if (!selectedImage) return;
+  const clearAnalysisTimers = useCallback(() => {
+    analysisTimersRef.current.forEach((timer) => clearTimeout(timer));
+    analysisTimersRef.current = [];
+  }, []);
 
-    // TODO: US-027 will handle navigation to AI analysis
-    // For now, just show a message
-    setToast({
-      message: 'AI analysis coming in next update!',
-      type: 'info',
-    });
+  /**
+   * Handle Cancel button click during analysis
+   */
+  const handleCancelAnalysis = useCallback(async () => {
+    // Abort any ongoing request
+    if (analysisAbortRef.current) {
+      analysisAbortRef.current.abort();
+    }
+
+    // Clear timers
+    clearAnalysisTimers();
+
+    // If we uploaded images, clean them up
+    if (analysisResult) {
+      try {
+        await Promise.all([
+          deleteFromStorage(analysisResult.imagePath),
+          deleteFromStorage(analysisResult.thumbnailPath),
+        ]);
+      } catch (error) {
+        console.error('Failed to delete uploaded images:', error);
+      }
+    }
+
+    // Reset state
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    setViewState('preview');
+    setAnalysisPhase('uploading');
+  }, [analysisResult, clearAnalysisTimers]);
+
+  /**
+   * Call the analyze-image Edge Function
+   */
+  const analyzeImage = async (
+    imageUrl: string,
+    signal: AbortSignal
+  ): Promise<AnalyzeImageResponse> => {
+    const { data, error } = await supabase.functions.invoke<AnalyzeImageResponse>(
+      'analyze-image',
+      {
+        body: { image_url: imageUrl },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+      }
+    );
+
+    if (signal.aborted) {
+      throw new Error('Analysis cancelled');
+    }
+
+    if (error) {
+      throw new Error(error.message || 'Failed to analyze image');
+    }
+
+    if (!data) {
+      throw new Error('No data returned from analysis');
+    }
+
+    return data;
+  };
+
+  /**
+   * Handle Continue button click - starts AI analysis
+   */
+  const handleContinue = async () => {
+    if (!selectedImage || !user) return;
+
+    // Reset state
+    setAnalysisPhase('uploading');
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    setViewState('analyzing');
+
+    // Create abort controller
+    analysisAbortRef.current = new AbortController();
+    const signal = analysisAbortRef.current.signal;
+
+    try {
+      // Upload image to storage
+      const uploadResult = await processAndUploadImage(selectedImage, user.id);
+
+      if (signal.aborted) {
+        // Clean up uploaded files if cancelled during upload
+        await Promise.all([
+          deleteFromStorage(uploadResult.imagePath),
+          deleteFromStorage(uploadResult.thumbnailPath),
+        ]);
+        return;
+      }
+
+      // Store upload result for potential cleanup
+      setAnalysisResult({
+        items: [],
+        imageUrl: uploadResult.imageUrl,
+        thumbnailUrl: uploadResult.thumbnailUrl,
+        imagePath: uploadResult.imagePath,
+        thumbnailPath: uploadResult.thumbnailPath,
+      });
+
+      // Start analyzing phase
+      setAnalysisPhase('analyzing');
+
+      // Set up timeout handlers
+      // 5 seconds: still analyzing message (handled via analysisPhase duration)
+      const timeoutTimer = setTimeout(() => {
+        if (!signal.aborted) {
+          setAnalysisPhase('timeout');
+        }
+      }, 15000);
+      analysisTimersRef.current.push(timeoutTimer);
+
+      // Call AI analysis
+      const analysisResponse = await analyzeImage(uploadResult.imageUrl, signal);
+
+      // Clear timers on success
+      clearAnalysisTimers();
+
+      if (signal.aborted) return;
+
+      // Update result with detected items
+      const result: AnalysisResult = {
+        items: analysisResponse.detected_items,
+        imageUrl: uploadResult.imageUrl,
+        thumbnailUrl: uploadResult.thumbnailUrl,
+        imagePath: uploadResult.imagePath,
+        thumbnailPath: uploadResult.thumbnailPath,
+      };
+      setAnalysisResult(result);
+
+      // Handle results based on number of items detected
+      if (analysisResponse.detected_items.length === 0) {
+        // No items detected - show error state
+        setAnalysisError("Couldn't identify any items in this photo.");
+        setViewState('error');
+      } else if (analysisResponse.detected_items.length === 1) {
+        // Single item - navigate to Item Editor with pre-filled data
+        // US-029 will create the Item Editor, for now navigate with state
+        navigate('/add/edit', {
+          state: {
+            detectedItem: analysisResponse.detected_items[0],
+            imageUrl: uploadResult.imageUrl,
+            thumbnailUrl: uploadResult.thumbnailUrl,
+            imagePath: uploadResult.imagePath,
+            thumbnailPath: uploadResult.thumbnailPath,
+          },
+        });
+      } else {
+        // Multiple items - show selection UI (US-028)
+        setViewState('results');
+      }
+    } catch (error) {
+      clearAnalysisTimers();
+
+      if (signal.aborted) return;
+
+      console.error('Analysis error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Analysis failed. Please try again.';
+      setAnalysisError(errorMessage);
+      setViewState('error');
+    }
   };
 
   // Render capture view
@@ -557,9 +787,327 @@ export function AddItemPage() {
     </div>
   );
 
+  // Render analyzing view - full-screen loading overlay
+  const renderAnalyzingView = () => {
+    const loadingText = getAnalysisLoadingText();
+
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+        {/* Background image preview (blurred) */}
+        {imagePreviewUrl && (
+          <div
+            className="absolute inset-0 bg-cover bg-center opacity-30 blur-sm"
+            style={{ backgroundImage: `url(${imagePreviewUrl})` }}
+          />
+        )}
+
+        {/* Loading content */}
+        <div className="relative z-10 flex flex-col items-center">
+          {/* Spinner */}
+          <div className="mb-6">
+            <svg
+              className="animate-spin h-16 w-16 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+
+          {/* Loading text */}
+          <p className="text-lg font-medium text-white mb-2">{loadingText}</p>
+
+          {/* AI sparkle icon */}
+          <div className="flex items-center gap-2 text-white/70">
+            <svg
+              className="w-5 h-5"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z" />
+            </svg>
+            <span className="text-sm">AI-powered recognition</span>
+          </div>
+        </div>
+
+        {/* Timeout action buttons */}
+        {analysisPhase === 'timeout' && (
+          <div className="absolute bottom-8 left-4 right-4 flex gap-3">
+            <button
+              onClick={handleCancelAnalysis}
+              className="flex-1 py-3 px-4 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => setAnalysisPhase('analyzing')}
+              className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              Keep Waiting
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Render results view - multiple items detected (placeholder for US-028)
+  const renderResultsView = () => (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <button
+          onClick={handleCancelAnalysis}
+          className="p-2 -ml-2 text-gray-600 hover:text-gray-900"
+          aria-label="Go back"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold text-gray-900">Multiple Items Found</h2>
+        <div className="w-10" /> {/* Spacer for centering */}
+      </div>
+
+      {/* Image preview */}
+      <div className="flex-shrink-0 p-4 bg-gray-100">
+        {analysisResult && (
+          <img
+            src={analysisResult.imageUrl}
+            alt="Captured items"
+            className="w-full max-h-48 object-contain rounded-lg"
+          />
+        )}
+      </div>
+
+      {/* Items list placeholder */}
+      <div className="flex-1 overflow-y-auto p-4">
+        <p className="text-sm text-gray-500 mb-4">
+          We detected {analysisResult?.items.length || 0} items. Select which ones to add:
+        </p>
+
+        {/* Items list - US-028 will implement MultiItemSelection component */}
+        <div className="space-y-3">
+          {analysisResult?.items.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200"
+            >
+              {/* Checkbox placeholder */}
+              <div className="w-5 h-5 rounded border-2 border-blue-600 bg-blue-600 flex items-center justify-center">
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+
+              {/* Item info */}
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">{item.name}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  {item.category_suggestion && (
+                    <span className="text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">
+                      {item.category_suggestion}
+                    </span>
+                  )}
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full ${
+                      item.confidence >= 0.8
+                        ? 'bg-green-100 text-green-700'
+                        : item.confidence >= 0.6
+                        ? 'bg-yellow-100 text-yellow-700'
+                        : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {item.confidence >= 0.8 ? 'High' : item.confidence >= 0.6 ? 'Medium' : 'Low'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom action */}
+      <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200">
+        <button
+          onClick={() => {
+            // US-028 will implement proper multi-item handling
+            // For now, navigate with first item
+            if (analysisResult && analysisResult.items.length > 0) {
+              navigate('/add/edit', {
+                state: {
+                  detectedItem: analysisResult.items[0],
+                  imageUrl: analysisResult.imageUrl,
+                  thumbnailUrl: analysisResult.thumbnailUrl,
+                  imagePath: analysisResult.imagePath,
+                  thumbnailPath: analysisResult.thumbnailPath,
+                  remainingItems: analysisResult.items.slice(1),
+                },
+              });
+            }
+          }}
+          className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+        >
+          Add Selected Items ({analysisResult?.items.length || 0})
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render error view - analysis failed
+  const renderErrorView = () => (
+    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
+        <button
+          onClick={handleCancelAnalysis}
+          className="p-2 -ml-2 text-gray-600 hover:text-gray-900"
+          aria-label="Go back"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
+        <h2 className="text-lg font-semibold text-gray-900">Add Item</h2>
+        <div className="w-10" /> {/* Spacer for centering */}
+      </div>
+
+      {/* Error content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        {/* Error icon */}
+        <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mb-6">
+          <svg
+            className="w-10 h-10 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+
+        {/* Error message */}
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          Couldn't Identify Items
+        </h3>
+        <p className="text-gray-500 text-center mb-8 max-w-xs">
+          {analysisError || "We couldn't identify any items in this photo. You can try again or add the item manually."}
+        </p>
+
+        {/* Action buttons */}
+        <div className="w-full max-w-xs space-y-3">
+          <button
+            onClick={() => {
+              // Navigate to manual add with just the image
+              if (analysisResult) {
+                navigate('/add/edit', {
+                  state: {
+                    detectedItem: null,
+                    imageUrl: analysisResult.imageUrl,
+                    thumbnailUrl: analysisResult.thumbnailUrl,
+                    imagePath: analysisResult.imagePath,
+                    thumbnailPath: analysisResult.thumbnailPath,
+                  },
+                });
+              }
+            }}
+            className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+          >
+            Add Manually
+          </button>
+          <button
+            onClick={handleCancelAnalysis}
+            className="w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+          >
+            Try a Different Photo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render view based on current state
+  const renderCurrentView = () => {
+    switch (viewState) {
+      case 'capture':
+        return renderCaptureView();
+      case 'preview':
+        return renderPreviewView();
+      case 'analyzing':
+        return renderAnalyzingView();
+      case 'results':
+        return renderResultsView();
+      case 'error':
+        return renderErrorView();
+      default:
+        return renderCaptureView();
+    }
+  };
+
   return (
     <>
-      {viewState === 'capture' ? renderCaptureView() : renderPreviewView()}
+      {renderCurrentView()}
 
       {/* Hidden File Inputs */}
       {/* Camera Input - uses capture="environment" for rear camera */}

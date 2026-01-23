@@ -33,6 +33,9 @@
 - Auth pages (/signup, /login, /reset-password) are outside AppShell - no bottom navigation
 - Simple Toast component at `/src/components/Toast.tsx` - use `<Toast message="" type="error" onClose={() => {}} />` (to be expanded in US-083)
 - Image utilities at `/src/lib/imageUtils.ts` - use `validateImage()`, `compressImage()`, `convertHeicToJpeg()`, `generateThumbnail()`, `uploadToStorage()`, `processAndUploadImage()`
+- Supabase Edge Functions in `supabase/functions/{function-name}/index.ts` - use Deno runtime with esm.sh imports
+- Shared Edge Function utilities in `supabase/functions/_shared/` - e.g., cors.ts for CORS headers
+- Edge Function auth validation: create Supabase client with user token, call auth.getUser() to verify
 
 ---
 
@@ -658,4 +661,61 @@
   - Clean up URL.createObjectURL with URL.revokeObjectURL to prevent memory leaks
   - Use useCallback for touch handlers to prevent unnecessary re-renders
   - Track isFromCamera state to show appropriate button label (Retake vs Reselect)
+---
+
+## 2026-01-23 - US-026
+- What was implemented:
+  - Created Supabase Edge Function: analyze-image at `supabase/functions/analyze-image/index.ts`
+  - Created shared CORS headers at `supabase/functions/_shared/cors.ts`
+  - Accepts image URL in request body via POST
+  - Calls OpenAI GPT-4o Vision API with detailed prompt for item detection
+  - Extracts: item name(s), category suggestion (from predefined system categories), tags, brand (if visible), confidence score
+  - Returns JSON with detected_items array, analysis_model, and analyzed_at timestamp
+  - Handles API errors gracefully with appropriate error codes (CONFIGURATION_ERROR, UNAUTHORIZED, INVALID_REQUEST, INTERNAL_ERROR)
+  - Secures function with auth token validation using Supabase auth.getUser()
+  - Validates image_url format and required fields
+  - Uses lower temperature (0.3) for consistent results
+
+- Files changed:
+  - supabase/functions/analyze-image/index.ts (new - Edge Function)
+  - supabase/functions/_shared/cors.ts (new - shared CORS headers)
+
+- **Learnings for future iterations:**
+  - Supabase Edge Functions use Deno runtime with esm.sh imports
+  - Use `Deno.serve()` for the main handler (new Deno 2.0 pattern)
+  - Import Supabase client from 'https://esm.sh/@supabase/supabase-js@2'
+  - CORS headers should handle OPTIONS preflight requests first
+  - OpenAI Vision API accepts image URLs directly in the message content
+  - GPT-4o can handle JSON-only responses with proper prompting
+  - Handle potential markdown code blocks in OpenAI responses when parsing JSON
+  - Use `Deno.env.get()` to access environment variables (OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY)
+  - Validate auth by creating Supabase client with user's token and calling auth.getUser()
+  - Category suggestions should match existing system categories for consistency
+---
+
+## 2026-01-23 - US-027
+- What was implemented:
+  - Updated AddItemPage.tsx with AI analysis loading and results UI
+  - Added new view states: 'analyzing', 'results', 'error'
+  - Created full-screen loading overlay with spinner and dynamic text
+  - Implemented 5-second text change ('Still analyzing, please wait...')
+  - Implemented 15-second timeout with Cancel and Keep Waiting buttons
+  - Added image upload to storage before calling analyze-image Edge Function
+  - On success with single item: navigates to /add/edit with pre-filled data
+  - On success with multiple items: shows selection UI (placeholder for US-028)
+  - On failure: shows error UI with "Add Manually" and "Try a Different Photo" options
+  - Added proper cleanup for uploaded images when analysis is cancelled
+  - Added abort controller for cancelling in-flight requests
+
+- Files changed:
+  - src/pages/AddItemPage.tsx (updated - added AI analysis flow)
+
+- **Learnings for future iterations:**
+  - Use AbortController for cancellable async operations (fetch, Edge Function calls)
+  - Can't use hooks inside render functions - extract state to component level
+  - Use refs (analysisTimersRef) to track setTimeout IDs for cleanup
+  - Call supabase.functions.invoke() with Authorization header for authenticated Edge Functions
+  - Navigate with state object to pass data between routes (detectedItem, imageUrl, etc.)
+  - processAndUploadImage() returns imagePath and thumbnailPath for cleanup if needed
+  - Use useCallback for derived values that depend on state (getAnalysisLoadingText)
 ---
