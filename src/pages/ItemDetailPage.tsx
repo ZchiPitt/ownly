@@ -21,6 +21,13 @@
  * - Fields: Description, Quantity (if >1), Brand, Model, Price, Purchase Date, Expiration Date, Notes
  * - Date formatting: 'Jan 15, 2024'
  * - Smooth collapse animation (200ms)
+ *
+ * Features (US-055):
+ * - Metadata section with gray background, smaller text
+ * - Show: 'Added {date} at {time}', 'Modified {date}' (if different), 'Last viewed {relative}'
+ * - Sticky bottom action bar with Edit Item and Delete buttons
+ * - Edit button (primary) -> /item/{id}/edit
+ * - Delete button (red outline) -> triggers delete confirmation
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -35,6 +42,91 @@ import type { Item, Category, Location } from '@/types';
 interface ItemDetails extends Omit<Item, 'category_id' | 'location_id'> {
   category: Pick<Category, 'id' | 'name' | 'icon' | 'color'> | null;
   location: Pick<Location, 'id' | 'name' | 'path' | 'icon'> | null;
+}
+
+/**
+ * Raw item type from Supabase query (with nested objects using table names)
+ */
+interface RawItemDetails {
+  id: string;
+  user_id: string;
+  photo_url: string;
+  thumbnail_url: string | null;
+  name: string | null;
+  description: string | null;
+  category_id: string | null;
+  tags: string[];
+  location_id: string | null;
+  quantity: number;
+  price: number | null;
+  currency: string;
+  purchase_date: string | null;
+  expiration_date: string | null;
+  brand: string | null;
+  model: string | null;
+  notes: string | null;
+  is_favorite: boolean;
+  keep_forever: boolean;
+  ai_metadata: unknown | null;
+  last_viewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+  // Nested objects use table name (plural) from Supabase
+  categories: {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+  } | null;
+  locations: {
+    id: string;
+    name: string;
+    path: string;
+    icon: string;
+  } | null;
+}
+
+/**
+ * Transform raw Supabase data to ItemDetails format
+ */
+function transformRawItem(raw: RawItemDetails): ItemDetails {
+  return {
+    id: raw.id,
+    user_id: raw.user_id,
+    photo_url: raw.photo_url,
+    thumbnail_url: raw.thumbnail_url,
+    name: raw.name,
+    description: raw.description,
+    tags: raw.tags || [],
+    quantity: raw.quantity,
+    price: raw.price,
+    currency: raw.currency,
+    purchase_date: raw.purchase_date,
+    expiration_date: raw.expiration_date,
+    brand: raw.brand,
+    model: raw.model,
+    notes: raw.notes,
+    is_favorite: raw.is_favorite,
+    keep_forever: raw.keep_forever,
+    ai_metadata: raw.ai_metadata as ItemDetails['ai_metadata'],
+    last_viewed_at: raw.last_viewed_at,
+    created_at: raw.created_at,
+    updated_at: raw.updated_at,
+    deleted_at: raw.deleted_at,
+    category: raw.categories ? {
+      id: raw.categories.id,
+      name: raw.categories.name,
+      icon: raw.categories.icon,
+      color: raw.categories.color,
+    } : null,
+    location: raw.locations ? {
+      id: raw.locations.id,
+      name: raw.locations.name,
+      path: raw.locations.path,
+      icon: raw.locations.icon,
+    } : null,
+  };
 }
 
 /**
@@ -101,6 +193,39 @@ function ChevronDownIcon({ className = 'w-5 h-5' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+/**
+ * Edit/Pencil icon for edit button
+ */
+function EditIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+  );
+}
+
+/**
+ * Trash icon for delete button
+ */
+function TrashIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  );
+}
+
+/**
+ * Clock icon for metadata section
+ */
+function ClockIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
     </svg>
   );
 }
@@ -180,6 +305,70 @@ function formatPrice(price: number, currency: string): string {
   };
   const symbol = currencySymbols[currency] || currency + ' ';
   return `${symbol}${price.toFixed(2)}`;
+}
+
+/**
+ * Format a date string as 'Jan 15, 2024 at 2:30 PM'
+ */
+function formatDateTime(dateString: string): string {
+  const date = new Date(dateString);
+  const dateFormatted = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const timeFormatted = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return `${dateFormatted} at ${timeFormatted}`;
+}
+
+/**
+ * Format relative time (e.g., 'Just now', '2 hours ago', 'Yesterday')
+ */
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) {
+    return 'Just now';
+  } else if (diffMinutes < 60) {
+    return diffMinutes === 1 ? '1 minute ago' : `${diffMinutes} minutes ago`;
+  } else if (diffHours < 24) {
+    return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+  } else if (diffDays === 1) {
+    return 'Yesterday';
+  } else if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  } else if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return weeks === 1 ? '1 week ago' : `${weeks} weeks ago`;
+  } else if (diffDays < 365) {
+    const months = Math.floor(diffDays / 30);
+    return months === 1 ? '1 month ago' : `${months} months ago`;
+  } else {
+    const years = Math.floor(diffDays / 365);
+    return years === 1 ? '1 year ago' : `${years} years ago`;
+  }
+}
+
+/**
+ * Check if two dates are on different days
+ */
+function areDifferentDays(date1: string, date2: string): boolean {
+  const d1 = new Date(date1);
+  const d2 = new Date(date2);
+  return (
+    d1.getFullYear() !== d2.getFullYear() ||
+    d1.getMonth() !== d2.getMonth() ||
+    d1.getDate() !== d2.getDate()
+  );
 }
 
 /**
@@ -308,6 +497,79 @@ function DetailsSection({
             <DetailRow key={index} label={detail.label} value={detail.value} />
           ))}
         </dl>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Metadata section component (US-055)
+ * Shows timestamps: Added date/time, Modified date (if different), Last viewed (relative)
+ */
+function MetadataSection({
+  createdAt,
+  updatedAt,
+  lastViewedAt,
+}: {
+  createdAt: string;
+  updatedAt: string;
+  lastViewedAt: string | null;
+}) {
+  const showModified = areDifferentDays(createdAt, updatedAt);
+
+  return (
+    <div className="bg-gray-100 px-4 py-3 mt-4">
+      <div className="flex items-start gap-2 text-sm text-gray-500">
+        <ClockIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+        <div className="space-y-1">
+          {/* Added date/time */}
+          <p>Added {formatDateTime(createdAt)}</p>
+
+          {/* Modified date (only if different from created) */}
+          {showModified && (
+            <p>Modified {formatDate(updatedAt)}</p>
+          )}
+
+          {/* Last viewed (relative time) */}
+          {lastViewedAt && (
+            <p>Last viewed {formatRelativeTime(lastViewedAt)}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Sticky bottom action bar component (US-055)
+ */
+function ActionBar({
+  onEdit,
+  onDelete,
+}: {
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe-area-pb z-20">
+      <div className="flex gap-3 max-w-lg mx-auto">
+        {/* Edit Item button (primary) */}
+        <button
+          onClick={onEdit}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
+        >
+          <EditIcon className="w-5 h-5" />
+          <span>Edit Item</span>
+        </button>
+
+        {/* Delete button (red outline) */}
+        <button
+          onClick={onDelete}
+          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-500 text-red-600 font-medium rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors"
+        >
+          <TrashIcon className="w-5 h-5" />
+          <span>Delete</span>
+        </button>
       </div>
     </div>
   );
@@ -547,6 +809,7 @@ export function ItemDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const overflowMenuRef = useRef<HTMLDivElement>(null);
 
   // Fetch item details
@@ -564,12 +827,36 @@ export function ItemDetailPage() {
       const { data, error: fetchError } = await supabase
         .from('items')
         .select(`
-          *,
-          category:categories (id, name, icon, color),
-          location:locations (id, name, path, icon)
+          id,
+          user_id,
+          photo_url,
+          thumbnail_url,
+          name,
+          description,
+          category_id,
+          tags,
+          location_id,
+          quantity,
+          price,
+          currency,
+          purchase_date,
+          expiration_date,
+          brand,
+          model,
+          notes,
+          is_favorite,
+          keep_forever,
+          ai_metadata,
+          last_viewed_at,
+          created_at,
+          updated_at,
+          deleted_at,
+          categories (id, name, icon, color),
+          locations (id, name, path, icon)
         `)
         .eq('id', id)
         .is('deleted_at', null)
+        .returns<RawItemDetails[]>()
         .single();
 
       if (fetchError) {
@@ -588,7 +875,7 @@ export function ItemDetailPage() {
         return;
       }
 
-      setItem(data as unknown as ItemDetails);
+      setItem(transformRawItem(data));
     } catch (err) {
       console.error('Error fetching item:', err);
       setError("Couldn't load item details");
@@ -602,12 +889,13 @@ export function ItemDetailPage() {
     if (!id || !user?.id) return;
 
     // Fire and forget - don't await
-    supabase
-      .from('items')
+    // Cast is needed to work around Supabase TypeScript inference limitations
+    (supabase
+      .from('items') as ReturnType<typeof supabase.from>)
       .update({ last_viewed_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', user.id)
-      .then(({ error }) => {
+      .then(({ error }: { error: Error | null }) => {
         if (error) {
           console.error('Error updating last_viewed_at:', error);
         }
@@ -641,6 +929,18 @@ export function ItemDetailPage() {
       navigate('/inventory');
     }
   }, [navigate]);
+
+  // Handle edit navigation (US-055)
+  const handleEdit = useCallback(() => {
+    if (id) {
+      navigate(`/item/${id}/edit`);
+    }
+  }, [navigate, id]);
+
+  // Handle delete confirmation (US-055)
+  const handleDelete = useCallback(() => {
+    setShowDeleteConfirm(true);
+  }, []);
 
   // Loading state
   if (isLoading) {
@@ -796,10 +1096,72 @@ export function ItemDetailPage() {
       {/* Details Section (US-054) */}
       <DetailsSection item={item} />
 
-      {/* Placeholder for metadata and action buttons (US-055) */}
-      <div className="mt-4 p-4 mx-4 bg-gray-100 rounded-lg text-gray-500 text-sm text-center">
-        Metadata and action buttons will be implemented in US-055.
-      </div>
+      {/* Metadata Section (US-055) */}
+      <MetadataSection
+        createdAt={item.created_at}
+        updatedAt={item.updated_at}
+        lastViewedAt={item.last_viewed_at}
+      />
+
+      {/* Bottom spacer to account for sticky action bar */}
+      <div className="h-24" />
+
+      {/* Sticky Action Bar (US-055) */}
+      <ActionBar onEdit={handleEdit} onDelete={handleDelete} />
+
+      {/* Delete Confirmation Dialog (US-055) */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-white rounded-xl mx-4 max-w-sm w-full overflow-hidden shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Item thumbnail */}
+            <div className="flex justify-center pt-6 pb-4">
+              <img
+                src={item.thumbnail_url || item.photo_url}
+                alt={item.name || 'Item photo'}
+                className="w-20 h-20 rounded-lg object-cover"
+              />
+            </div>
+
+            {/* Dialog content */}
+            <div className="px-6 pb-4 text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete this item?
+              </h3>
+              <p className="text-gray-600 mb-1 font-medium">
+                {item.name || 'Unnamed Item'}
+              </p>
+              <p className="text-sm text-gray-500">
+                Permanently deleted after 30 days
+              </p>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex border-t border-gray-200">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  // Delete action to be implemented in US-058
+                  setShowDeleteConfirm(false);
+                }}
+                className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-gray-200"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full-screen photo viewer */}
       {isPhotoViewerOpen && (
