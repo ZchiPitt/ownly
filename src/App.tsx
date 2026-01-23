@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -12,15 +12,6 @@ function DashboardPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold text-gray-900 mb-4">Dashboard</h1>
       <p className="text-gray-600">Welcome to Clekee!</p>
-    </div>
-  )
-}
-
-function AddItemPage() {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Add Item</h1>
-      <p className="text-gray-600">Add a new item to your inventory.</p>
     </div>
   )
 }
