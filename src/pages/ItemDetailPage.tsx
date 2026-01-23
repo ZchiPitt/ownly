@@ -9,6 +9,11 @@
  * - Full-width hero image (max 300px height)
  * - Tap photo opens full-screen viewer with pinch-to-zoom
  * - Updates last_viewed_at on page load (fire-and-forget)
+ *
+ * Features (US-053):
+ * - Expiration banner below photo with color-coded status
+ * - Primary info section with name, category badge, location, tags
+ * - Category and location are tappable for filtering
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -57,6 +62,111 @@ function CloseIcon({ className = 'w-6 h-6' }: { className?: string }) {
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
+  );
+}
+
+/**
+ * Warning icon for expiration banner
+ */
+function WarningIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+  );
+}
+
+/**
+ * Chevron right icon for location path
+ */
+function ChevronRightIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+/**
+ * Calculate expiration status
+ */
+function getExpirationStatus(expirationDate: string): {
+  type: 'expired' | 'warning' | 'caution' | 'ok';
+  text: string;
+  daysAway: number;
+} {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expDate = new Date(expirationDate);
+  expDate.setHours(0, 0, 0, 0);
+
+  const diffTime = expDate.getTime() - today.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    const daysAgo = Math.abs(diffDays);
+    return {
+      type: 'expired',
+      text: daysAgo === 1 ? 'Expired 1 day ago' : `Expired ${daysAgo} days ago`,
+      daysAway: diffDays,
+    };
+  } else if (diffDays === 0) {
+    return {
+      type: 'expired',
+      text: 'Expires today',
+      daysAway: 0,
+    };
+  } else if (diffDays <= 7) {
+    return {
+      type: 'warning',
+      text: diffDays === 1 ? 'Expires in 1 day' : `Expires in ${diffDays} days`,
+      daysAway: diffDays,
+    };
+  } else if (diffDays <= 30) {
+    return {
+      type: 'caution',
+      text: `Expires in ${diffDays} days`,
+      daysAway: diffDays,
+    };
+  }
+
+  return {
+    type: 'ok',
+    text: `Expires in ${diffDays} days`,
+    daysAway: diffDays,
+  };
+}
+
+/**
+ * Expiration banner component
+ */
+function ExpirationBanner({ expirationDate }: { expirationDate: string }) {
+  const status = getExpirationStatus(expirationDate);
+
+  // Only show banner for expired, warning (<=7 days), or caution (8-30 days)
+  if (status.type === 'ok') {
+    return null;
+  }
+
+  const bannerStyles = {
+    expired: 'bg-red-50 border-red-200 text-red-700',
+    warning: 'bg-red-50 border-red-200 text-red-700',
+    caution: 'bg-orange-50 border-orange-200 text-orange-700',
+    ok: '',
+  };
+
+  const iconStyles = {
+    expired: 'text-red-500',
+    warning: 'text-red-500',
+    caution: 'text-orange-500',
+    ok: '',
+  };
+
+  return (
+    <div className={`flex items-center gap-2 px-4 py-3 border-b ${bannerStyles[status.type]}`}>
+      <WarningIcon className={`flex-shrink-0 ${iconStyles[status.type]}`} />
+      <span className="font-medium">{status.text}</span>
+    </div>
   );
 }
 
@@ -484,38 +594,64 @@ export function ItemDetailPage() {
         </button>
       </div>
 
-      {/* Content placeholder - to be implemented in US-053, US-054, US-055 */}
+      {/* Expiration Banner (US-053) */}
+      {item.expiration_date && (
+        <ExpirationBanner expirationDate={item.expiration_date} />
+      )}
+
+      {/* Primary Info Section (US-053) */}
       <div className="p-4">
-        {/* Item name */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+        {/* Item name - large */}
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">
           {item.name || 'Unnamed Item'}
         </h2>
 
-        {/* Category badge */}
+        {/* Category badge - tappable */}
         {item.category && (
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium mb-3"
-            style={{ backgroundColor: `${item.category.color}20`, color: item.category.color }}>
+          <button
+            onClick={() => navigate(`/inventory?categories=${item.category!.id}`)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium mb-3 transition-opacity hover:opacity-80 active:opacity-60"
+            style={{ backgroundColor: `${item.category.color}20`, color: item.category.color }}
+            aria-label={`Filter by category: ${item.category.name}`}
+          >
             <span>{item.category.icon}</span>
             <span>{item.category.name}</span>
-          </div>
+            <ChevronRightIcon className="w-3 h-3 ml-0.5" />
+          </button>
         )}
 
-        {/* Location */}
+        {/* Location path - tappable */}
         {item.location && (
-          <div className="flex items-center gap-2 text-gray-600 mb-4">
-            <span>{item.location.icon}</span>
-            <span>{item.location.path}</span>
+          <button
+            onClick={() => navigate(`/inventory?location=${item.location!.id}`)}
+            className="flex items-center gap-2 text-gray-600 mb-4 hover:text-blue-600 transition-colors group"
+            aria-label={`Filter by location: ${item.location.path}`}
+          >
+            <span className="flex-shrink-0">{item.location.icon}</span>
+            <span className="group-hover:underline">{item.location.path}</span>
+            <ChevronRightIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        )}
+
+        {/* Tags row - horizontal scroll */}
+        {item.tags && item.tags.length > 0 && (
+          <div className="mb-4 -mx-4 px-4">
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {item.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full whitespace-nowrap flex-shrink-0"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Description */}
-        {item.description && (
-          <p className="text-gray-600 mb-4">{item.description}</p>
-        )}
-
-        {/* Placeholder for additional details from US-053, US-054, US-055 */}
+        {/* Placeholder for additional details from US-054, US-055 */}
         <div className="mt-6 p-4 bg-gray-100 rounded-lg text-gray-500 text-sm text-center">
-          Additional details, expiration banner, and action buttons will be implemented in US-053, US-054, US-055.
+          Additional details and action buttons will be implemented in US-054, US-055.
         </div>
       </div>
 
