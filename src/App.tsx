@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -34,14 +34,6 @@ function InventoryPage() {
   )
 }
 
-function SettingsPage() {
-  return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold text-gray-900 mb-4">Settings</h1>
-      <p className="text-gray-600">Configure your preferences.</p>
-    </div>
-  )
-}
 
 function App() {
   return (
