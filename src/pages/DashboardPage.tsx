@@ -324,6 +324,54 @@ function RecentItemCard({ item, onClick }: RecentItemCardProps) {
   );
 }
 
+/**
+ * Empty state component for new users with 0 items
+ */
+interface EmptyStateProps {
+  onAddItem: () => void;
+}
+
+function EmptyState({ onAddItem }: EmptyStateProps) {
+  return (
+    <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
+      {/* Illustration - Box icon */}
+      <div className="w-24 h-24 mb-6 bg-blue-50 rounded-full flex items-center justify-center">
+        <svg
+          className="w-12 h-12 text-blue-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+          />
+        </svg>
+      </div>
+
+      {/* Heading */}
+      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        Your inventory is empty
+      </h2>
+
+      {/* Subtext */}
+      <p className="text-gray-500 mb-6 max-w-xs">
+        Take a photo of your first item to get started
+      </p>
+
+      {/* Primary button */}
+      <button
+        onClick={onAddItem}
+        className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors active:scale-95"
+      >
+        Add Your First Item
+      </button>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -344,6 +392,14 @@ export function DashboardPage() {
   const handleSearchClick = () => {
     navigate('/search');
   };
+
+  const handleAddItem = () => {
+    navigate('/add');
+  };
+
+  // Determine if user has no items (empty state)
+  // Show empty state when stats have loaded and totalItems is 0
+  const isEmptyInventory = !statsLoading && stats.totalItems === 0;
 
   return (
     <div className="min-h-full bg-gray-50">
@@ -366,7 +422,7 @@ export function DashboardPage() {
           </button>
         </div>
 
-        {/* Search bar */}
+        {/* Search bar - always visible */}
         <button
           onClick={handleSearchClick}
           className="w-full flex items-center gap-3 px-4 py-3 bg-gray-100 rounded-xl text-left hover:bg-gray-200 transition-colors"
@@ -390,7 +446,10 @@ export function DashboardPage() {
         </button>
       </div>
 
-      {/* Main content */}
+      {/* Main content - Empty state or regular content */}
+      {isEmptyInventory ? (
+        <EmptyState onAddItem={handleAddItem} />
+      ) : (
       <div className="p-4 space-y-6">
         {/* Quick Stats - Horizontal scrollable cards */}
         <section>
@@ -676,6 +735,7 @@ export function DashboardPage() {
           </div>
         </section>
       </div>
+      )}
     </div>
   );
 }
