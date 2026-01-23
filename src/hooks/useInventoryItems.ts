@@ -21,6 +21,7 @@ export interface InventoryItem {
   category_icon: string | null;
   location_id: string | null;
   location_name: string | null;
+  location_path: string | null;
   quantity: number;
   expiration_date: string | null;
   is_favorite: boolean;
@@ -89,7 +90,8 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
             icon
           ),
           locations (
-            name
+            name,
+            path
           )
         `)
         .eq('user_id', user.id)
@@ -150,6 +152,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         } | null;
         locations: {
           name: string;
+          path: string;
         } | null;
       }>>();
 
@@ -169,6 +172,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         category_icon: item.categories?.icon || null,
         location_id: item.location_id,
         location_name: item.locations?.name || null,
+        location_path: item.locations?.path || null,
         quantity: item.quantity,
         expiration_date: item.expiration_date,
         is_favorite: item.is_favorite,

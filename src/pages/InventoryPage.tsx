@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useInventoryItems } from '@/hooks/useInventoryItems';
 import { GalleryGrid } from '@/components/GalleryGrid';
+import { ItemList } from '@/components/ItemList';
 
 // View mode type
 type ViewMode = 'gallery' | 'list';
@@ -358,13 +359,13 @@ export function InventoryPage() {
               error={itemsError}
             />
           ) : (
-            /* List view placeholder - to be implemented in US-044 */
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="w-16 h-16 mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <ListIcon filled />
-              </div>
-              <p className="text-gray-500">List view coming soon...</p>
-            </div>
+            <ItemList
+              items={items}
+              isLoading={itemsLoading}
+              isRefreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              error={itemsError}
+            />
           )}
         </div>
       </div>
