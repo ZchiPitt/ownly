@@ -14,6 +14,13 @@
  * - Expiration banner below photo with color-coded status
  * - Primary info section with name, category badge, location, tags
  * - Category and location are tappable for filtering
+ *
+ * Features (US-054):
+ * - Collapsible details section (default expanded)
+ * - Only shows fields with values
+ * - Fields: Description, Quantity (if >1), Brand, Model, Price, Purchase Date, Expiration Date, Notes
+ * - Date formatting: 'Jan 15, 2024'
+ * - Smooth collapse animation (200ms)
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -88,6 +95,17 @@ function ChevronRightIcon({ className = 'w-4 h-4' }: { className?: string }) {
 }
 
 /**
+ * Chevron down icon for collapsible sections
+ */
+function ChevronDownIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+    </svg>
+  );
+}
+
+/**
  * Calculate expiration status
  */
 function getExpirationStatus(expirationDate: string): {
@@ -138,6 +156,33 @@ function getExpirationStatus(expirationDate: string): {
 }
 
 /**
+ * Format a date string as 'Jan 15, 2024'
+ */
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+/**
+ * Format price with currency symbol
+ */
+function formatPrice(price: number, currency: string): string {
+  const currencySymbols: Record<string, string> = {
+    CNY: '¥',
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    JPY: '¥',
+  };
+  const symbol = currencySymbols[currency] || currency + ' ';
+  return `${symbol}${price.toFixed(2)}`;
+}
+
+/**
  * Expiration banner component
  */
 function ExpirationBanner({ expirationDate }: { expirationDate: string }) {
@@ -166,6 +211,104 @@ function ExpirationBanner({ expirationDate }: { expirationDate: string }) {
     <div className={`flex items-center gap-2 px-4 py-3 border-b ${bannerStyles[status.type]}`}>
       <WarningIcon className={`flex-shrink-0 ${iconStyles[status.type]}`} />
       <span className="font-medium">{status.text}</span>
+    </div>
+  );
+}
+
+/**
+ * Detail row component for individual fields
+ */
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="py-3 border-b border-gray-100 last:border-b-0">
+      <dt className="text-sm text-gray-500 mb-1">{label}</dt>
+      <dd className="text-gray-900 whitespace-pre-wrap">{value}</dd>
+    </div>
+  );
+}
+
+/**
+ * Collapsible details section component (US-054)
+ */
+function DetailsSection({
+  item,
+}: {
+  item: ItemDetails;
+}) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  // Collect fields that have values
+  const details: { label: string; value: string }[] = [];
+
+  if (item.description) {
+    details.push({ label: 'Description', value: item.description });
+  }
+
+  if (item.quantity && item.quantity > 1) {
+    details.push({ label: 'Quantity', value: item.quantity.toString() });
+  }
+
+  if (item.brand) {
+    details.push({ label: 'Brand', value: item.brand });
+  }
+
+  if (item.model) {
+    details.push({ label: 'Model', value: item.model });
+  }
+
+  if (item.price !== null && item.price !== undefined) {
+    details.push({ label: 'Price', value: formatPrice(Number(item.price), item.currency || 'CNY') });
+  }
+
+  if (item.purchase_date) {
+    details.push({ label: 'Purchase Date', value: formatDate(item.purchase_date) });
+  }
+
+  if (item.expiration_date) {
+    details.push({ label: 'Expiration Date', value: formatDate(item.expiration_date) });
+  }
+
+  if (item.notes) {
+    details.push({ label: 'Notes', value: item.notes });
+  }
+
+  // Don't render section if no details to show
+  if (details.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="bg-white border-t border-gray-200">
+      {/* Header with expand/collapse toggle */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+        aria-expanded={isExpanded}
+        aria-controls="details-content"
+      >
+        <h3 className="text-base font-semibold text-gray-900">Details</h3>
+        <ChevronDownIcon
+          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+            isExpanded ? 'rotate-180' : ''
+          }`}
+        />
+      </button>
+
+      {/* Collapsible content with smooth animation */}
+      <div
+        id="details-content"
+        className="overflow-hidden transition-all duration-200 ease-in-out"
+        style={{
+          maxHeight: isExpanded ? `${details.length * 100}px` : '0px',
+          opacity: isExpanded ? 1 : 0,
+        }}
+      >
+        <dl className="px-4 pb-4">
+          {details.map((detail, index) => (
+            <DetailRow key={index} label={detail.label} value={detail.value} />
+          ))}
+        </dl>
+      </div>
     </div>
   );
 }
@@ -648,11 +791,14 @@ export function ItemDetailPage() {
             </div>
           </div>
         )}
+      </div>
 
-        {/* Placeholder for additional details from US-054, US-055 */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg text-gray-500 text-sm text-center">
-          Additional details and action buttons will be implemented in US-054, US-055.
-        </div>
+      {/* Details Section (US-054) */}
+      <DetailsSection item={item} />
+
+      {/* Placeholder for metadata and action buttons (US-055) */}
+      <div className="mt-4 p-4 mx-4 bg-gray-100 rounded-lg text-gray-500 text-sm text-center">
+        Metadata and action buttons will be implemented in US-055.
       </div>
 
       {/* Full-screen photo viewer */}
