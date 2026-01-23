@@ -10,6 +10,8 @@
 - Mobile-first design approach
 - Supabase client in `/src/lib/supabase.ts` - import { supabase } from '@/lib/supabase'
 - Use `import.meta.env.VITE_*` for environment variables (Vite pattern)
+- SQL migrations in `supabase/migrations/` with timestamp prefix (YYYYMMDDHHMMSS_description.sql)
+- The `update_updated_at_column()` function exists and is reusable for other tables needing updated_at triggers
 
 ---
 
@@ -56,4 +58,25 @@
   - Use `import.meta.env.VITE_*` for Vite environment variables
   - Always validate env vars exist at runtime with meaningful error messages
   - The Database type will be expanded in US-011 with full schema
+---
+
+## 2026-01-23 - US-003
+- What was implemented:
+  - Created SQL migration file for profiles table at `supabase/migrations/20260123000001_create_profiles_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK to auth.users, unique), display_name (varchar 50), avatar_url (text nullable), created_at, updated_at
+  - Enabled RLS on profiles table
+  - Added RLS policies: users can only read/update/insert their own profile
+  - Added trigger `on_auth_user_created` to create profile on auth.users insert
+  - Added `update_updated_at_column` function and trigger for automatic updated_at maintenance
+  - Added documentation comments on table and columns
+
+- Files changed:
+  - supabase/migrations/20260123000001_create_profiles_table.sql (new)
+
+- **Learnings for future iterations:**
+  - Supabase migrations go in `supabase/migrations/` folder with timestamp prefix
+  - Use `SECURITY DEFINER` on trigger functions that need to access auth.users
+  - Extract display_name from email with `split_part(email, '@', 1)` as fallback
+  - Include INSERT policy for RLS when using triggers that insert data
+  - The `update_updated_at_column()` function is reusable for other tables
 ---
