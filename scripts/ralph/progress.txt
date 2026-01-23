@@ -55,6 +55,8 @@
 - SORT_OPTIONS array in useInventoryItems exports sort configuration (key, label, urlParam)
 - Use `useSearchParams` from react-router-dom for URL param handling (sort, filter, etc.)
 - Use `setSearchParams(params, { replace: true })` to update URL without adding to history
+- useInventoryItems supports `categoryIds: string[]` for multi-select filter (uses Supabase `.in()` operator)
+- Inventory URL filter format: /inventory?location={id}&categories={id1,id2}&sort={key} - location AND categories combine with AND logic
 
 ---
 
@@ -1356,4 +1358,85 @@
   - Category sorting: systemCategories by sort_order, userCategories by name (alphabetical)
   - Empty array passed to onApplyFilter when all/none selected (clears the filter)
   - useCategories hook provides: categories, systemCategories, userCategories arrays
+---
+
+## 2026-01-23 - US-050
+- What was implemented:
+  - Updated useInventoryItems hook to support multiple category IDs via new `categoryIds` parameter
+  - Uses Supabase `.in()` operator for filtering by multiple categories
+  - Integrated URL params with useInventoryItems in InventoryPage: passes locationId and categoryIds from URL
+  - URL format: /inventory?location={id}&categories={id1,id2}&sort={key}
+  - Location AND Categories combine with AND logic (both filters applied to query)
+  - Clear All removes categories and location params while preserving sort param
+  - Filter changes update URL using setSearchParams with { replace: true } (no history push)
+  - Item count now shows filtered totalCount from useInventoryItems instead of separate hook
+  - Removed unused useItemCount hook from InventoryPage
+  - Scroll position cleared when filters change (location, categories, sort)
+  - Fixed TypeScript type error in CategoryFilterBottomSheet by adding `.returns<>()` type assertion
+
+- Files changed:
+  - src/hooks/useInventoryItems.ts (added categoryIds support, updated buildQuery, fetchTotalCount, options tracking)
+  - src/pages/InventoryPage.tsx (integrated filters, removed useItemCount, updated count display)
+  - src/components/CategoryFilterBottomSheet.tsx (fixed TypeScript type error)
+
+- **Learnings for future iterations:**
+  - useInventoryItems now supports `categoryIds: string[]` parameter for multi-select category filtering
+  - Use Supabase `.in('column', array)` for filtering with multiple values (OR within the filter)
+  - Filters combine with AND logic: location filter AND categories filter both apply
+  - `.returns<Type>()` method on Supabase query chain provides proper TypeScript type inference for complex queries
+  - Scroll position clearing should include all filter dependencies, not just sort
+  - totalCount from useInventoryItems automatically reflects current filter state, no separate count hook needed
+---
+
+## 2026-01-23 - US-051
+- What was implemented:
+  - Added FilteredEmptyState component to GalleryGrid and ItemList for when filters are active but no results match
+  - FilteredEmptyState shows filter icon with X overlay, "No items match your filters" message, and Clear Filters button
+  - Updated EmptyState (new user) messages to match acceptance criteria: "No items yet", "Start by adding your first item", "Add First Item" button
+  - Updated error state messages to "Couldn't load your items" per acceptance criteria
+  - Added hasActiveFilters and onClearFilters props to GalleryGrid and ItemList interfaces
+  - Updated InventoryPage to pass hasAnyActiveFilter and handleClearAllFilters to both view components
+  - Empty state detection logic: filtered empty state shown when items.length === 0 AND hasActiveFilters AND onClearFilters provided
+
+- Files changed:
+  - src/components/GalleryGrid.tsx (added FilteredEmptyState, updated EmptyState, error text, props)
+  - src/components/ItemList.tsx (added FilteredEmptyState, updated EmptyState, error text, props)
+  - src/pages/InventoryPage.tsx (pass hasActiveFilters and onClearFilters to view components)
+
+- **Learnings for future iterations:**
+  - Empty state detection order matters: filtered empty state should be checked BEFORE generic empty state
+  - Both GalleryGrid and ItemList now export FilteredEmptyState for potential reuse
+  - hasAnyActiveFilter already computed in InventoryPage for "Clear All" button visibility
+  - handleClearAllFilters already exists in InventoryPage, reused for empty state's Clear Filters button
+---
+
+## 2026-01-23 - US-052
+- What was implemented:
+  - Created /src/pages/ItemDetailPage.tsx at route /item/:id
+  - Added header with back arrow (history back), 'Item Details' title, overflow menu
+  - Created full-width hero image display (max 300px height with object-contain)
+  - Implemented PhotoViewer component with full-screen viewer and pinch-to-zoom support
+  - Added double-tap gesture to toggle between 1x and 2x zoom
+  - Added tap-to-close when not zoomed, zoom percentage indicator when zoomed
+  - Implemented fire-and-forget last_viewed_at update on page load
+  - Added ItemDetailSkeleton for loading state with proper layout
+  - Added ItemDetailError for error states (404, permission denied, network errors)
+  - Added placeholder overflow menu with Share, Favorites, Keep Forever options (to be implemented in US-056)
+  - Added basic item info display (name, category badge, location path, description)
+  - Updated pages/index.ts to export ItemDetailPage
+  - Updated App.tsx to add /item/:id route inside AppShell
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (new - 420+ lines)
+  - src/pages/index.ts (updated - added ItemDetailPage export)
+  - src/App.tsx (updated - added route, imported ItemDetailPage)
+
+- **Learnings for future iterations:**
+  - ItemDetailPage uses Supabase join syntax for related tables: `.select('*, category:categories(...), location:locations(...)')`
+  - Use type assertion `data as unknown as ItemDetails` when query result type doesn't match TypeScript exactly
+  - Fire-and-forget pattern: call `.then()` on promise without awaiting for non-blocking updates
+  - PhotoViewer uses z-[60] to appear above the z-10 header and z-50 from other modals
+  - Overflow menu uses `ref` and `mousedown` event listener for click-outside detection
+  - Error handling: PGRST116 code indicates "no rows returned" from Supabase (item deleted or not found)
+  - Touch handling: use refs for mutable values that don't trigger re-renders (lastTouchDistanceRef, lastTapRef)
 ---

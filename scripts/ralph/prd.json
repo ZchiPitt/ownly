@@ -879,7 +879,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 50,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -895,7 +895,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 51,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -912,7 +912,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 52,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
