@@ -443,3 +443,102 @@
   - Toast component positioned at bottom-20 to account for BottomNav (h-14 = 56px)
   - Loading spinner uses Tailwind animate-spin class with SVG circle and path
 ---
+
+## 2026-01-23 - US-018
+- What was implemented:
+  - Created /src/pages/LoginPage.tsx at route /login with login form UI
+  - Email input with real-time validation (email format check)
+  - Password input with "Forgot password?" link to /reset-password
+  - Log in button with loading state (spinner + "Logging in..." text during submission)
+  - Form inputs disabled during submission to prevent double-submit
+  - Footer link: "Don't have an account? Sign up" -> /signup
+  - Updated /src/pages/index.ts to export LoginPage
+  - Updated App.tsx to add /login route outside AppShell (no bottom nav for auth pages)
+
+- Files changed:
+  - src/pages/LoginPage.tsx (new)
+  - src/pages/index.ts (updated - added LoginPage export)
+  - src/App.tsx (updated - added /login route)
+
+- **Learnings for future iterations:**
+  - Login form is simpler than signup - only email and password fields (no confirm password)
+  - "Forgot password?" link positioned inline with password label using flexbox justify-between
+  - Form submission logic placeholder added (actual API call to be implemented in US-019)
+  - Consistent UI patterns with SignupPage: same input styling, button states, layout structure
+---
+
+## 2026-01-23 - US-019
+- What was implemented:
+  - Connected LoginPage form to AuthContext signIn function via useAuth hook
+  - Added redirect handling for successful login using useNavigate
+  - On success: redirect to /dashboard or ?redirect= param if present (using decodeURIComponent)
+  - On invalid credentials: show inline error "Invalid email or password" with red background box
+  - On email not confirmed: show "Please verify your email address before logging in"
+  - On network error: show toast notification "Network connection failed"
+  - Added useEffect to redirect authenticated users visiting /login to /dashboard
+  - Added loginError state for inline credential errors, toast state for network errors
+
+- Files changed:
+  - src/pages/LoginPage.tsx (updated - added signIn integration, error handling, redirect logic)
+
+- **Learnings for future iterations:**
+  - Supabase auth error message for invalid credentials is "Invalid login credentials" (case-insensitive check)
+  - Use useSearchParams() from react-router-dom to read query params like ?redirect=
+  - decodeURIComponent() should be used when reading redirect param since it was encoded during redirect
+  - Separate inline error display (loginError state) from toast notifications (toast state) for better UX
+  - The useEffect handles both initial load redirect and post-login redirect (when user state changes)
+---
+
+## 2026-01-23 - US-020
+- What was implemented:
+  - Created /src/pages/SettingsPage.tsx at route /settings
+  - Added red Log out button fixed at bottom of settings page (above BottomNav)
+  - Created inline confirmation dialog with "Log out?" heading and "Are you sure you want to log out?" text
+  - Connected to AuthContext signOut function via useAuth hook
+  - On confirm: calls signOut, shows "Logged out successfully" toast, redirects to /login
+  - Shows loading state during logout with spinner animation
+  - Dialog has backdrop that closes on click, and both Cancel and Log out buttons
+  - Updated pages index.ts to export SettingsPage
+  - Removed placeholder SettingsPage from App.tsx and imported from pages
+
+- Files changed:
+  - src/pages/SettingsPage.tsx (new)
+  - src/pages/index.ts (updated - added SettingsPage export)
+  - src/App.tsx (updated - removed placeholder, imported SettingsPage from pages)
+
+- **Learnings for future iterations:**
+  - Logout button positioned fixed at bottom-20 (above BottomNav h-14) with px-4 for padding
+  - Confirmation dialogs use fixed inset-0 z-50 with backdrop (bg-black/50) and centered card
+  - Use setTimeout before navigate to allow user to see success toast briefly
+  - Dialog buttons should be disabled during async operation to prevent double-click
+  - Use animate-in classes for dialog entry animations (zoom-in, fade-in)
+---
+
+## 2026-01-23 - US-021
+- What was implemented:
+  - Created /src/pages/ResetPasswordPage.tsx at route /reset-password
+  - Form with email input and "Send Reset Email" button
+  - Helper text explaining the password reset process
+  - Email validation with real-time error display
+  - On submit: calls AuthContext resetPassword (which calls supabase.auth.resetPasswordForEmail)
+  - Always shows success view after submission (security: doesn't reveal if email exists)
+  - Success view shows masked email (e.g., te***@example.com)
+  - Resend button with 60-second cooldown timer that counts down
+  - Tips section for users who don't receive the email
+  - Network error handling with toast notification
+  - Navigation links: "Remember your password? Log in" and "Back to Log in"
+  - Updated pages index.ts to export ResetPasswordPage
+  - Updated App.tsx to add /reset-password route outside AppShell
+
+- Files changed:
+  - src/pages/ResetPasswordPage.tsx (new)
+  - src/pages/index.ts (updated - added ResetPasswordPage export)
+  - src/App.tsx (updated - added /reset-password route)
+
+- **Learnings for future iterations:**
+  - Password reset should always show success message for security (don't reveal if email exists)
+  - Use useEffect with setInterval for countdown timers, clean up with clearInterval
+  - Mask email for display: show first 2 chars of local part + "***" + "@" + domain
+  - The resetPassword function in AuthContext includes redirectTo parameter pointing to /reset-password/confirm
+  - Cooldown pattern: track remaining seconds in state, disable button when > 0
+---
