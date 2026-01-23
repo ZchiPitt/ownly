@@ -12,7 +12,7 @@ import {
 } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AuthContext } from './authContext';
+import { AuthContext } from './auth-context';
 
 // ============================================
 // Provider
