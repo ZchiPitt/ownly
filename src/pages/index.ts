@@ -13,3 +13,4 @@ export { ItemEditorPage } from './ItemEditorPage';
 export { DashboardPage } from './DashboardPage';
 export { InventoryPage } from './InventoryPage';
 export { ItemDetailPage } from './ItemDetailPage';
+export { EditItemPage } from './EditItemPage';
