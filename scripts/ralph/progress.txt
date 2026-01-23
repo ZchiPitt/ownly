@@ -13,6 +13,12 @@
 - SQL migrations in `supabase/migrations/` with timestamp prefix (YYYYMMDDHHMMSS_description.sql)
 - The `update_updated_at_column()` function exists and is reusable for other tables needing updated_at triggers
 - Trigger chain for new users: auth.users -> profiles (via handle_new_user) -> user_settings (via handle_new_profile)
+- The `update_location_item_count()` function maintains location.item_count on items table changes (handles insert, delete, soft-delete, restore, location changes)
+- pgvector extension enabled for vector similarity search with HNSW indexing
+- Use `search_similar_items()` function for client-side similarity search (uses auth.uid() for RLS)
+- Types exported from `/src/types/index.ts` - import { Item, Profile, etc. } from '@/types'
+- Database type from `/src/types/database.ts` - use with createClient<Database>()
+- API request/response types from `/src/types/api.ts` for Edge Functions and client-side data fetching
 
 ---
 
@@ -99,4 +105,171 @@
   - The user_settings trigger listens to profiles table insert, not auth.users directly - this ensures proper chain: auth.users -> profiles -> user_settings
   - Reference user_id from NEW.user_id when trigger is on profiles table (not NEW.id)
   - The `update_updated_at_column()` function created in US-003 is shared across all tables
+---
+
+## 2026-01-23 - US-005
+- What was implemented:
+  - Created SQL migration file for categories table at `supabase/migrations/20260123000003_create_categories_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK nullable), name (varchar 50), icon (varchar 10 default box emoji), color (varchar 7 default gray), is_system (bool default false), sort_order (int default 0), created_at
+  - Enabled RLS on categories table
+  - Added RLS policies: system categories readable by all authenticated users, user categories only by owner
+  - Added separate policies for SELECT, INSERT, UPDATE, DELETE on user categories
+  - Inserted 10 system preset categories: Clothing, Food & Beverage, Electronics, Kitchen, Sports & Fitness, Tools, Books & Documents, Personal Care, Home Decor, Other
+  - Each system category has unique icon, color, and sort_order
+
+- Files changed:
+  - supabase/migrations/20260123000003_create_categories_table.sql (new)
+
+- **Learnings for future iterations:**
+  - System categories have user_id = NULL and is_system = true
+  - User categories have user_id set and is_system = false
+  - RLS policies need to check is_system flag to prevent users from modifying system categories
+  - Categories table doesn't need updated_at since category changes are rare
+---
+
+## 2026-01-23 - US-006
+- What was implemented:
+  - Created SQL migration file for locations table at `supabase/migrations/20260123000004_create_locations_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK), name (varchar 100), parent_id (uuid FK self-ref nullable), path (text), depth (int default 1), icon (varchar 10 default pin emoji), photo_url (text nullable), item_count (int default 0), created_at, updated_at, deleted_at (nullable)
+  - Enabled RLS on locations table with user-only access policies
+  - Added separate policies for SELECT, INSERT, UPDATE, DELETE operations
+  - SELECT policy filters out soft-deleted locations (deleted_at IS NULL)
+  - Added indexes on user_id, parent_id, and deleted_at columns
+  - Reused `update_updated_at_column` function from profiles migration for updated_at trigger
+  - Created `update_location_path` function and trigger to auto-maintain path and depth fields
+  - Added comprehensive documentation comments on table and columns
+
+- Files changed:
+  - supabase/migrations/20260123000004_create_locations_table.sql (new)
+
+- **Learnings for future iterations:**
+  - Locations table uses self-referential FK (parent_id references locations.id) for hierarchy
+  - ON DELETE SET NULL for parent_id allows graceful handling when parent location is deleted
+  - The path field is auto-maintained by trigger using format "Parent > Child > Grandchild"
+  - The depth field is auto-calculated (1 for root, increments per level)
+  - item_count will be maintained by triggers on the items table (US-009)
+  - Soft delete pattern: deleted_at is nullable, SELECT policy filters out non-null deleted_at
+---
+
+## 2026-01-23 - US-007
+- What was implemented:
+  - Created SQL migration file for items table at `supabase/migrations/20260123000005_create_items_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK), photo_url (text NOT NULL), thumbnail_url (text nullable), name (varchar 200 nullable), description (text nullable), category_id (uuid FK nullable), tags (text[] default {}), location_id (uuid FK nullable), quantity (int default 1 with check 1-999), price (decimal 10,2 nullable), currency (varchar 3 default CNY), purchase_date (date nullable), expiration_date (date nullable), brand (varchar 100 nullable), model (varchar 100 nullable), notes (text nullable), is_favorite (bool default false), keep_forever (bool default false), ai_metadata (jsonb nullable), last_viewed_at (timestamptz nullable), created_at, updated_at, deleted_at (nullable)
+  - Enabled RLS on items table with user-only access policies
+  - Added separate policies for SELECT, INSERT, UPDATE, DELETE operations
+  - SELECT policy filters out soft-deleted items (deleted_at IS NULL)
+  - Added indexes on user_id, category_id, location_id, deleted_at columns
+  - Reused `update_updated_at_column` function from profiles migration for updated_at trigger
+  - Added comprehensive documentation comments on table and columns
+
+- Files changed:
+  - supabase/migrations/20260123000005_create_items_table.sql (new)
+
+- **Learnings for future iterations:**
+  - Items table uses ON DELETE SET NULL for category_id and location_id to allow graceful handling when category/location is deleted
+  - The tags field uses PostgreSQL array type (text[]) with default empty array '{}'
+  - Added CHECK constraint on quantity (1-999) for data validation
+  - The ai_metadata field is JSONB for storing AI analysis results flexibly
+  - keep_forever=true excludes items from unused item reminders
+  - The location.item_count field will be maintained by triggers in US-009
+---
+
+## 2026-01-23 - US-008
+- What was implemented:
+  - Created SQL migration file for notifications table at `supabase/migrations/20260123000006_create_notifications_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK), type (varchar 30 with CHECK constraint: unused_item, expiring_item, system), title (varchar 200 NOT NULL), body (text), item_id (uuid FK nullable), is_read (bool default false), is_pushed (bool default false), pushed_at (timestamptz nullable), created_at
+  - Enabled RLS on notifications table with user-only access policies
+  - Added separate policies for SELECT, INSERT, UPDATE, DELETE operations
+  - Added indexes on user_id, is_read, and composite (user_id, is_read) for query performance
+  - Used ON DELETE CASCADE for item_id FK (notifications deleted when item is deleted)
+  - Added comprehensive documentation comments on table and columns
+
+- Files changed:
+  - supabase/migrations/20260123000006_create_notifications_table.sql (new)
+
+- **Learnings for future iterations:**
+  - Notifications table uses CHECK constraint for type enum rather than PostgreSQL ENUM type (simpler migrations)
+  - ON DELETE CASCADE for item_id ensures notifications are cleaned up when items are deleted
+  - Composite index on (user_id, is_read) optimizes common query pattern for unread notification counts
+  - No updated_at column needed since notifications are typically write-once (only is_read changes)
+---
+
+## 2026-01-23 - US-009
+- What was implemented:
+  - Created SQL migration file for location item_count trigger at `supabase/migrations/20260123000007_create_location_item_count_trigger.sql`
+  - Created `update_location_item_count()` function to handle all item count changes
+  - Handles INSERT: increment new location's count if location_id is set and item is not soft-deleted
+  - Handles DELETE (hard delete): decrement location's count if location_id was set
+  - Handles UPDATE with soft-delete: decrement count when deleted_at changes from NULL to a value
+  - Handles UPDATE with restore: increment count when deleted_at changes from a value to NULL
+  - Handles UPDATE location_id change: decrement old location, increment new location
+  - All operations use GREATEST(item_count - 1, 0) to prevent negative counts
+  - Trigger fires AFTER INSERT OR UPDATE OR DELETE for each row
+
+- Files changed:
+  - supabase/migrations/20260123000007_create_location_item_count_trigger.sql (new)
+
+- **Learnings for future iterations:**
+  - Use AFTER trigger (not BEFORE) when updating related tables since it fires after the main operation completes
+  - Use `IS DISTINCT FROM` for null-safe comparison of location_id changes
+  - Use GREATEST(item_count - 1, 0) to prevent negative item counts (defensive programming)
+  - Need to check both location_id and deleted_at status when calculating whether to update counts
+  - The trigger handles restore from soft-delete (deleted_at NULL -> value -> NULL cycle)
+---
+
+## 2026-01-23 - US-010
+- What was implemented:
+  - Created SQL migration file at `supabase/migrations/20260123000008_add_pgvector_embedding.sql`
+  - Enabled pgvector extension with `CREATE EXTENSION IF NOT EXISTS vector`
+  - Added embedding column to items table: vector(1536) nullable for OpenAI text-embedding-3-small compatibility
+  - Created HNSW index on embedding column using vector_cosine_ops for cosine similarity
+  - Created `search_items_by_embedding()` function (SECURITY DEFINER) for server-side similarity search with explicit user_id parameter
+  - Created `search_similar_items()` function (SECURITY INVOKER) for client-side use that respects RLS via auth.uid()
+  - Both functions support configurable match_threshold and match_count parameters
+
+- Files changed:
+  - supabase/migrations/20260123000008_add_pgvector_embedding.sql (new)
+
+- **Learnings for future iterations:**
+  - pgvector extension is pre-installed in Supabase but needs to be explicitly enabled
+  - HNSW (Hierarchical Navigable Small World) index is preferred over IVFFlat for better query performance without training
+  - Use `<=>` operator for cosine distance in pgvector (returns distance, so similarity = 1 - distance)
+  - SECURITY DEFINER functions bypass RLS - use explicit user_id parameter for server-side calls
+  - SECURITY INVOKER functions respect RLS - use auth.uid() for client-side calls
+  - HNSW parameters: m=16 (connections per layer), ef_construction=64 (construction quality) are good defaults
+---
+
+## 2026-01-23 - US-011
+- What was implemented:
+  - Updated /src/types/database.ts with comprehensive TypeScript interfaces matching database schema:
+    - Profile: User profile extending auth.users
+    - UserSettings: User personalization preferences with default_view union type
+    - Category: Category with nullable user_id for system vs user categories
+    - Location: Storage location with hierarchical support (parent_id, path, depth)
+    - Item: Core inventory item with tags array, ai_metadata JSONB, and pgvector embedding
+    - Notification: User notification with NotificationType union type
+    - ItemAIMetadata: Flexible JSON interface for AI analysis results
+  - Created Supabase Database type definition with Row, Insert, Update types for each table
+  - Added Functions type definitions for search_similar_items and search_items_by_embedding
+  - Added utility types: TableRow, TableInsert, TableUpdate for type extraction
+  - Created /src/types/api.ts with comprehensive request/response types:
+    - Generic API types (ApiResponse, ApiError, PaginatedResponse)
+    - Auth request/response types
+    - CRUD types for all entities (Create, Update, Response types)
+    - AI analysis types (DetectedItem, AnalyzeImageResponse, ShoppingAnalyzeResponse)
+    - Dashboard and search types
+  - Created /src/types/index.ts as central export point for all types
+
+- Files changed:
+  - src/types/database.ts (updated with full schema types)
+  - src/types/api.ts (new)
+  - src/types/index.ts (new)
+
+- **Learnings for future iterations:**
+  - Use union types for constrained string fields like `default_view: 'gallery' | 'list'`
+  - pgvector embedding is typed as `number[] | null` since TypeScript doesn't have a native vector type
+  - ItemAIMetadata uses index signature `[key: string]: unknown` for flexible AI response storage
+  - Supabase Database type uses Row/Insert/Update pattern for table type definitions
+  - Insert types make auto-generated fields optional (id, created_at, etc.)
+  - Update types use Partial and exclude fields that shouldn't be updated (id, user_id, etc.)
 ---
