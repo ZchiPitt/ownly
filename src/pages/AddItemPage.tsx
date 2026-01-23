@@ -19,6 +19,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Toast } from '@/components/Toast';
+import { MultiItemSelection } from '@/components/MultiItemSelection';
+import type { ImageInfo } from '@/components/MultiItemSelection';
 import { validateImage, processAndUploadImage, deleteFromStorage } from '@/lib/imageUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
@@ -486,6 +488,10 @@ export function AddItemPage() {
             thumbnailUrl: uploadResult.thumbnailUrl,
             imagePath: uploadResult.imagePath,
             thumbnailPath: uploadResult.thumbnailPath,
+            // No queue for single item
+            itemQueue: [],
+            totalItems: 1,
+            currentItemIndex: 1,
           },
         });
       } else {
@@ -864,141 +870,49 @@ export function AddItemPage() {
     );
   };
 
-  // Render results view - multiple items detected (placeholder for US-028)
-  const renderResultsView = () => (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <button
-          onClick={handleCancelAnalysis}
-          className="p-2 -ml-2 text-gray-600 hover:text-gray-900"
-          aria-label="Go back"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </button>
-        <h2 className="text-lg font-semibold text-gray-900">Multiple Items Found</h2>
-        <div className="w-10" /> {/* Spacer for centering */}
-      </div>
+  /**
+   * Handle proceeding with selected items from MultiItemSelection
+   * Navigates to Item Editor with first item and queues remaining items
+   */
+  const handleMultiItemProceed = useCallback(
+    (selectedItems: DetectedItem[], imageInfo: ImageInfo) => {
+      if (selectedItems.length === 0) return;
 
-      {/* Image preview */}
-      <div className="flex-shrink-0 p-4 bg-gray-100">
-        {analysisResult && (
-          <img
-            src={analysisResult.imageUrl}
-            alt="Captured items"
-            className="w-full max-h-48 object-contain rounded-lg"
-          />
-        )}
-      </div>
-
-      {/* Items list placeholder */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <p className="text-sm text-gray-500 mb-4">
-          We detected {analysisResult?.items.length || 0} items. Select which ones to add:
-        </p>
-
-        {/* Items list - US-028 will implement MultiItemSelection component */}
-        <div className="space-y-3">
-          {analysisResult?.items.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200"
-            >
-              {/* Checkbox placeholder */}
-              <div className="w-5 h-5 rounded border-2 border-blue-600 bg-blue-600 flex items-center justify-center">
-                <svg
-                  className="w-3 h-3 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={3}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-
-              {/* Item info */}
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{item.name}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  {item.category_suggestion && (
-                    <span className="text-xs px-2 py-0.5 bg-gray-200 rounded-full text-gray-600">
-                      {item.category_suggestion}
-                    </span>
-                  )}
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full ${
-                      item.confidence >= 0.8
-                        ? 'bg-green-100 text-green-700'
-                        : item.confidence >= 0.6
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {item.confidence >= 0.8 ? 'High' : item.confidence >= 0.6 ? 'Medium' : 'Low'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Bottom action */}
-      <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200">
-        <button
-          onClick={() => {
-            // US-028 will implement proper multi-item handling
-            // For now, navigate with first item
-            if (analysisResult && analysisResult.items.length > 0) {
-              navigate('/add/edit', {
-                state: {
-                  detectedItem: analysisResult.items[0],
-                  imageUrl: analysisResult.imageUrl,
-                  thumbnailUrl: analysisResult.thumbnailUrl,
-                  imagePath: analysisResult.imagePath,
-                  thumbnailPath: analysisResult.thumbnailPath,
-                  remainingItems: analysisResult.items.slice(1),
-                },
-              });
-            }
-          }}
-          className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-        >
-          Add Selected Items ({analysisResult?.items.length || 0})
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M13 7l5 5m0 0l-5 5m5-5H6"
-            />
-          </svg>
-        </button>
-      </div>
-    </div>
+      // Navigate to Item Editor with the first selected item
+      // Pass remaining items as queue for sequential editing
+      navigate('/add/edit', {
+        state: {
+          detectedItem: selectedItems[0],
+          imageUrl: imageInfo.imageUrl,
+          thumbnailUrl: imageInfo.thumbnailUrl,
+          imagePath: imageInfo.imagePath,
+          thumbnailPath: imageInfo.thumbnailPath,
+          // Queue remaining items for sequential editing (US-035)
+          itemQueue: selectedItems.slice(1),
+          totalItems: selectedItems.length,
+          currentItemIndex: 1,
+        },
+      });
+    },
+    [navigate]
   );
+
+  // Render results view - multiple items detected using MultiItemSelection component
+  const renderResultsView = () => {
+    if (!analysisResult) return null;
+
+    return (
+      <MultiItemSelection
+        imageUrl={analysisResult.imageUrl}
+        thumbnailUrl={analysisResult.thumbnailUrl}
+        imagePath={analysisResult.imagePath}
+        thumbnailPath={analysisResult.thumbnailPath}
+        detectedItems={analysisResult.items}
+        onBack={handleCancelAnalysis}
+        onProceed={handleMultiItemProceed}
+      />
+    );
+  };
 
   // Render error view - analysis failed
   const renderErrorView = () => (
@@ -1068,6 +982,10 @@ export function AddItemPage() {
                     thumbnailUrl: analysisResult.thumbnailUrl,
                     imagePath: analysisResult.imagePath,
                     thumbnailPath: analysisResult.thumbnailPath,
+                    // No queue for manual add
+                    itemQueue: [],
+                    totalItems: 1,
+                    currentItemIndex: 1,
                   },
                 });
               }
