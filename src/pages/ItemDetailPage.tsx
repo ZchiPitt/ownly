@@ -28,6 +28,12 @@
  * - Sticky bottom action bar with Edit Item and Delete buttons
  * - Edit button (primary) -> /item/{id}/edit
  * - Delete button (red outline) -> triggers delete confirmation
+ *
+ * Features (US-056):
+ * - Overflow menu (three dots) with Share, Favorites, and Keep Forever options
+ * - Share: uses Web Share API, fallback to copy URL
+ * - Add to Favorites / Remove from Favorites: toggle is_favorite, heart icon changes
+ * - Mark as Keep Forever / Unmark: toggle keep_forever, toast explains effect
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -226,6 +232,58 @@ function ClockIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
     <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
+/**
+ * Share icon for overflow menu (US-056)
+ */
+function ShareIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+    </svg>
+  );
+}
+
+/**
+ * Heart icon for favorites (US-056)
+ * Supports outline (not favorited) and filled (favorited) variants
+ */
+function HeartIcon({ className = 'w-5 h-5', filled = false }: { className?: string; filled?: boolean }) {
+  if (filled) {
+    return (
+      <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+        <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    </svg>
+  );
+}
+
+/**
+ * Infinity icon for Keep Forever (US-056)
+ */
+function InfinityIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12.5 6.5c2-2 5.5-2 7.5 0s2 5.5 0 7.5c-2 2-5.5 2-7.5 0m-1 0c-2 2-5.5 2-7.5 0s-2-5.5 0-7.5c2-2 5.5-2 7.5 0" transform="translate(0, 2)" />
+    </svg>
+  );
+}
+
+/**
+ * Checkmark icon for success toast (US-056)
+ */
+function CheckIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
     </svg>
   );
 }
@@ -812,6 +870,10 @@ export function ItemDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const overflowMenuRef = useRef<HTMLDivElement>(null);
 
+  // Toast state for overflow menu actions (US-056)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // Fetch item details
   const fetchItem = useCallback(async () => {
     if (!id) {
@@ -942,6 +1004,143 @@ export function ItemDetailPage() {
     setShowDeleteConfirm(true);
   }, []);
 
+  /**
+   * Handle Share action (US-056)
+   * Uses Web Share API if available, otherwise falls back to clipboard copy
+   */
+  const handleShare = useCallback(async () => {
+    setIsOverflowMenuOpen(false);
+
+    const shareUrl = window.location.href;
+    const shareTitle = item?.name || 'Item';
+    const shareText = `Check out my item: ${shareTitle}`;
+
+    /**
+     * Copy URL to clipboard helper
+     */
+    const copyToClipboard = async (text: string) => {
+      try {
+        await navigator.clipboard.writeText(text);
+        setToast({ message: 'Link copied to clipboard', type: 'success' });
+      } catch (err) {
+        console.error('Clipboard copy failed:', err);
+        setToast({ message: 'Failed to copy link', type: 'error' });
+      }
+    };
+
+    // Try Web Share API first (supported on mobile and some desktop browsers)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        setToast({ message: 'Shared successfully', type: 'success' });
+      } catch (err) {
+        // User cancelled or share failed
+        // AbortError means user cancelled, don't show error for that
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Share failed:', err);
+          // Fallback to clipboard
+          await copyToClipboard(shareUrl);
+        }
+      }
+    } else {
+      // Fallback to clipboard copy
+      await copyToClipboard(shareUrl);
+    }
+  }, [item?.name]);
+
+  /**
+   * Handle Favorites toggle (US-056)
+   * Toggles is_favorite and shows heart icon state change
+   */
+  const handleToggleFavorite = useCallback(async () => {
+    if (!id || !item || isUpdating) return;
+
+    setIsOverflowMenuOpen(false);
+    setIsUpdating(true);
+
+    const newFavoriteStatus = !item.is_favorite;
+
+    try {
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({ is_favorite: newFavoriteStatus })
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setItem(prev => prev ? { ...prev, is_favorite: newFavoriteStatus } : null);
+
+      setToast({
+        message: newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error('Error toggling favorite:', err);
+      setToast({ message: 'Failed to update favorite status', type: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [id, item, user?.id, isUpdating]);
+
+  /**
+   * Handle Keep Forever toggle (US-056)
+   * Toggles keep_forever and shows toast explaining the effect
+   */
+  const handleToggleKeepForever = useCallback(async () => {
+    if (!id || !item || isUpdating) return;
+
+    setIsOverflowMenuOpen(false);
+    setIsUpdating(true);
+
+    const newKeepForeverStatus = !item.keep_forever;
+
+    try {
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({ keep_forever: newKeepForeverStatus })
+        .eq('id', id)
+        .eq('user_id', user?.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setItem(prev => prev ? { ...prev, keep_forever: newKeepForeverStatus } : null);
+
+      // Show toast with explanation of the effect
+      setToast({
+        message: newKeepForeverStatus
+          ? 'Marked as Keep Forever - won\'t receive unused item reminders'
+          : 'Unmarked - will receive unused item reminders',
+        type: 'info',
+      });
+    } catch (err) {
+      console.error('Error toggling keep forever:', err);
+      setToast({ message: 'Failed to update item', type: 'error' });
+    } finally {
+      setIsUpdating(false);
+    }
+  }, [id, item, user?.id, isUpdating]);
+
+  // Auto-hide toast after 3 seconds
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   // Loading state
   if (isLoading) {
     return <ItemDetailSkeleton />;
@@ -986,35 +1185,43 @@ export function ItemDetailPage() {
               <OverflowIcon />
             </button>
 
-            {/* Dropdown menu (placeholder - to be implemented in US-056) */}
+            {/* Dropdown menu (US-056) */}
             {isOverflowMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+                {/* Share option */}
                 <button
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setIsOverflowMenuOpen(false);
-                    // Share functionality to be implemented in US-056
-                  }}
+                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                  onClick={handleShare}
                 >
-                  Share
+                  <ShareIcon className="w-5 h-5 text-gray-500" />
+                  <span>Share</span>
                 </button>
+
+                {/* Favorites toggle */}
                 <button
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setIsOverflowMenuOpen(false);
-                    // Favorite toggle to be implemented in US-056
-                  }}
+                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${
+                    item.is_favorite ? 'text-red-500' : 'text-gray-700'
+                  }`}
+                  onClick={handleToggleFavorite}
+                  disabled={isUpdating}
                 >
-                  {item.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
+                  <HeartIcon
+                    className={`w-5 h-5 ${item.is_favorite ? 'text-red-500' : 'text-gray-500'}`}
+                    filled={item.is_favorite}
+                  />
+                  <span>{item.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}</span>
                 </button>
+
+                {/* Keep Forever toggle */}
                 <button
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
-                  onClick={() => {
-                    setIsOverflowMenuOpen(false);
-                    // Keep forever toggle to be implemented in US-056
-                  }}
+                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${
+                    item.keep_forever ? 'text-blue-600' : 'text-gray-700'
+                  }`}
+                  onClick={handleToggleKeepForever}
+                  disabled={isUpdating}
                 >
-                  {item.keep_forever ? 'Unmark as Keep Forever' : 'Mark as Keep Forever'}
+                  <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <span>{item.keep_forever ? 'Unmark Keep Forever' : 'Mark as Keep Forever'}</span>
                 </button>
               </div>
             )}
@@ -1169,6 +1376,23 @@ export function ItemDetailPage() {
           imageUrl={item.photo_url}
           onClose={() => setIsPhotoViewerOpen(false)}
         />
+      )}
+
+      {/* Toast notification (US-056) */}
+      {toast && (
+        <div
+          className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 flex items-center justify-center gap-2 animate-fade-in ${
+            toast.type === 'success'
+              ? 'bg-green-600'
+              : toast.type === 'error'
+              ? 'bg-red-600'
+              : 'bg-blue-600'
+          }`}
+          role="alert"
+        >
+          {toast.type === 'success' && <CheckIcon className="w-5 h-5 flex-shrink-0" />}
+          <span>{toast.message}</span>
+        </div>
       )}
     </div>
   );
