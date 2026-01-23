@@ -1,6 +1,7 @@
 /**
  * Inventory Page - Browse all user items
  * Shows inventory with header, search icon, view toggle, item count, and FAB
+ * Supports infinite scroll pagination with scroll position restoration
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -18,6 +19,9 @@ import {
 import { GalleryGrid } from '@/components/GalleryGrid';
 import { ItemList } from '@/components/ItemList';
 import { SortBottomSheet } from '@/components/SortBottomSheet';
+
+// Key for storing scroll position in sessionStorage
+const SCROLL_POSITION_KEY = 'inventory-scroll-position';
 
 // View mode type
 type ViewMode = 'gallery' | 'list';
@@ -188,9 +192,17 @@ export function InventoryPage() {
     items,
     isLoading: itemsLoading,
     isRefreshing,
+    isLoadingMore,
+    hasMore,
+    totalCount,
     error: itemsError,
     refresh: refreshItems,
+    loadMore,
   } = useInventoryItems({ sortBy: sortFromUrl });
+
+  // Track if we should restore scroll position
+  const shouldRestoreScrollRef = useRef(true);
+  const hasRestoredScrollRef = useRef(false);
 
   // Track if user has explicitly changed the view (to avoid overriding with settings)
   const [userSelectedView, setUserSelectedView] = useState<ViewMode | null>(null);
@@ -273,6 +285,61 @@ export function InventoryPage() {
     refreshItems();
     refetchCount();
   }, [refreshItems, refetchCount]);
+
+  // Save scroll position before navigating away
+  useEffect(() => {
+    const saveScrollPosition = () => {
+      if (scrollContainerRef.current) {
+        sessionStorage.setItem(SCROLL_POSITION_KEY, String(window.scrollY));
+      }
+    };
+
+    // Save scroll on navigation
+    window.addEventListener('beforeunload', saveScrollPosition);
+
+    return () => {
+      window.removeEventListener('beforeunload', saveScrollPosition);
+      // Save position when component unmounts (navigation away)
+      saveScrollPosition();
+    };
+  }, []);
+
+  // Restore scroll position when coming back from item detail
+  useEffect(() => {
+    if (!itemsLoading && items.length > 0 && shouldRestoreScrollRef.current && !hasRestoredScrollRef.current) {
+      const savedPosition = sessionStorage.getItem(SCROLL_POSITION_KEY);
+      if (savedPosition) {
+        // Use requestAnimationFrame to ensure DOM has updated
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(savedPosition, 10));
+          hasRestoredScrollRef.current = true;
+        });
+      }
+    }
+  }, [itemsLoading, items.length]);
+
+  // Reset scroll restore flag when navigating to item detail
+  useEffect(() => {
+    // Check if navigation is going to an item detail page
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const link = target.closest('a, button');
+      if (link) {
+        // Items are navigated via onClick, so we check if we're currently on inventory page
+        // The scroll position is saved on unmount
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
+  // Clear scroll position when sort/filter changes
+  useEffect(() => {
+    sessionStorage.removeItem(SCROLL_POSITION_KEY);
+    shouldRestoreScrollRef.current = false;
+    hasRestoredScrollRef.current = false;
+  }, [sortFromUrl]);
 
   return (
     <div className="min-h-full bg-gray-50 pb-20">
@@ -425,7 +492,11 @@ export function InventoryPage() {
               items={items}
               isLoading={itemsLoading}
               isRefreshing={isRefreshing}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+              totalCount={totalCount}
               onRefresh={handleRefresh}
+              onLoadMore={loadMore}
               error={itemsError}
             />
           ) : (
@@ -433,7 +504,11 @@ export function InventoryPage() {
               items={items}
               isLoading={itemsLoading}
               isRefreshing={isRefreshing}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMore}
+              totalCount={totalCount}
               onRefresh={handleRefresh}
+              onLoadMore={loadMore}
               error={itemsError}
             />
           )}

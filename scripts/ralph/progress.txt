@@ -46,6 +46,15 @@
 - useRecentItems hook at `/src/hooks/useRecentItems.ts` - use `const { items, isLoading, refetch } = useRecentItems(limit)` for recently added items
 - Use `.returns<Type[]>()` method on Supabase query chain for proper TypeScript type inference
 - useUserSettings hook at `/src/hooks/useUserSettings.ts` - use `const { settings, updateSettings, isLoading } = useUserSettings()` for user preferences
+- useInventoryItems hook at `/src/hooks/useInventoryItems.ts` - use `const { items, isLoading, isLoadingMore, hasMore, totalCount, loadMore, refresh } = useInventoryItems(options)` for inventory with pagination
+- PAGE_SIZE constant (20) exported from useInventoryItems for consistent pagination
+- GalleryGrid component at `/src/components/GalleryGrid.tsx` - use `<GalleryGrid items={items} isLoading={...} isLoadingMore={...} hasMore={...} totalCount={...} onRefresh={...} onLoadMore={...} />` for 2-column item grid with infinite scroll
+- ItemList component at `/src/components/ItemList.tsx` - use `<ItemList items={items} isLoading={...} isLoadingMore={...} hasMore={...} totalCount={...} onRefresh={...} onLoadMore={...} />` for list view with infinite scroll
+- Use Intersection Observer with rootMargin: '200px' for "load before visible" infinite scroll trigger
+- SortBottomSheet component at `/src/components/SortBottomSheet.tsx` - use `<SortBottomSheet isOpen={...} onClose={...} currentSort={...} onSortChange={...} />`
+- SORT_OPTIONS array in useInventoryItems exports sort configuration (key, label, urlParam)
+- Use `useSearchParams` from react-router-dom for URL param handling (sort, filter, etc.)
+- Use `setSearchParams(params, { replace: true })` to update URL without adding to history
 
 ---
 
@@ -1138,4 +1147,129 @@
   - React Compiler: Avoid setState in useEffect - use derived state pattern instead: `const viewMode = userSelectedView ?? settings?.default_view ?? 'gallery'`
   - ViewToggle component uses bg-gray-100 container with p-1, active state uses bg-white shadow-sm
   - Filled/outline icons controlled via `filled` prop with conditional SVG path rendering
+---
+
+## 2026-01-23 - US-043
+- What was implemented:
+  - Created /src/hooks/useInventoryItems.ts hook for fetching all inventory items
+  - Hook provides: items, isLoading, isRefreshing, error, refetch, refresh
+  - Supports filtering by categoryId, locationId, showExpiringSoon
+  - Supports sorting: newest, oldest, name_asc, name_desc
+  - Created /src/components/GalleryGrid.tsx component with 2-column responsive grid
+  - ItemCard component displays: thumbnail (1:1 aspect ratio), name (2 lines truncate), category badge
+  - Category badge shows icon and name with semi-transparent background
+  - Favorite indicator (heart icon) on top-right when item is favorited
+  - Quantity badge (×N) on top-left when quantity > 1
+  - Location name shown below item name with pin icon
+  - ItemCardSkeleton for loading state with pulse animation
+  - EmptyState component for when no items exist
+  - Error state with "Try Again" button
+  - Added pull-to-refresh functionality to InventoryPage
+  - Integrated GalleryGrid into InventoryPage for gallery view mode
+  - List view shows placeholder (to be implemented in US-044)
+
+- Files changed:
+  - src/hooks/useInventoryItems.ts (new)
+  - src/components/GalleryGrid.tsx (new)
+  - src/pages/InventoryPage.tsx (updated - integrated GalleryGrid, pull-to-refresh)
+
+- **Learnings for future iterations:**
+  - useInventoryItems hook at `/src/hooks/useInventoryItems.ts` - use `const { items, isLoading, isRefreshing, refresh } = useInventoryItems(options)` for inventory with filtering
+  - GalleryGrid component at `/src/components/GalleryGrid.tsx` - use `<GalleryGrid items={items} isLoading={...} onRefresh={...} />` for 2-column item grid
+  - Pull-to-refresh uses touch events: onTouchStart, onTouchMove, onTouchEnd with rubber-band resistance effect
+  - ItemCard uses `aspect-square` class for 1:1 thumbnail ratio with `object-cover`
+  - Category badge positioned with `absolute bottom-2 left-2` on the thumbnail
+  - Use `backdrop-blur-sm` for semi-transparent overlays on images
+  - Use `line-clamp-2` for 2-line text truncation
+  - Item navigation: `navigate(/item/${id})` for item detail page
+---
+
+## 2026-01-23 - US-044
+- What was implemented:
+  - Created /src/components/ItemList.tsx component for list view
+  - ItemRow component displays: 60x60 thumbnail, name (bold), location path (gray), category badge, chevron
+  - Full-width rows with 72px height per acceptance criteria
+  - Quantity badge shown on thumbnail when quantity > 1
+  - Favorite indicator (heart) shown on thumbnail when is_favorite is true
+  - Subtle dividers between rows using divide-y divide-gray-100
+  - ItemRowSkeleton for loading state with pulse animation
+  - EmptyState component matching GalleryGrid's empty state
+  - Error state with "Try Again" button
+  - Pull-to-refresh indicator integration
+  - Updated useInventoryItems hook to fetch location.path in addition to location.name
+  - Added location_path field to InventoryItem interface
+  - Integrated ItemList into InventoryPage replacing the placeholder
+  - Tap row navigates to /item/{id}
+
+- Files changed:
+  - src/components/ItemList.tsx (new)
+  - src/hooks/useInventoryItems.ts (added location_path to InventoryItem, fetches path from locations)
+  - src/pages/InventoryPage.tsx (replaced list view placeholder with ItemList component)
+
+- **Learnings for future iterations:**
+  - ItemList component at `/src/components/ItemList.tsx` - use `<ItemList items={items} isLoading={...} onRefresh={...} />` for list view
+  - List view uses 72px row height with 60x60 thumbnails as per mobile UX best practices
+  - Location path shows full hierarchical path (e.g., "Home > Kitchen > Pantry") from locations.path field
+  - Use `divide-y divide-gray-100` class on container for subtle dividers between rows (no need for manual border-b)
+  - ItemRow uses flex layout: thumbnail (flex-shrink-0), name/location (flex-1 min-w-0), badge/chevron (flex-shrink-0)
+  - Use `min-w-0` on flex items that need truncation to work properly
+---
+
+## 2026-01-23 - US-045
+- What was implemented:
+  - Added Sort chip to filter bar in InventoryPage header, showing current sort (e.g., 'Sort: Newest')
+  - Created SortBottomSheet component for selecting sort options
+  - Bottom sheet displays all 6 sort options with current selection highlighted and checkmark
+  - Sort options: Newest First, Oldest First, Name A-Z, Name Z-A, Expiring Soon, Recently Viewed
+  - Added 'expiring' and 'viewed' sort options to useInventoryItems hook
+  - Sort by expiration date ascending (soonest first) for 'expiring' option
+  - Sort by last_viewed_at descending (most recent first) for 'viewed' option
+  - Sort persists in URL param: ?sort=newest|oldest|az|za|expiring|viewed
+  - Uses replaceState to update URL without polluting browser history
+  - Added helper functions: getSortFromUrlParam, getUrlParamFromSort, getSortLabel
+  - Added SORT_OPTIONS config array with key, label, and urlParam mappings
+  - Added last_viewed_at to InventoryItem interface and query
+
+- Files changed:
+  - src/hooks/useInventoryItems.ts (added sort options, helper functions, last_viewed_at)
+  - src/components/SortBottomSheet.tsx (new - bottom sheet component)
+  - src/pages/InventoryPage.tsx (added Sort chip, URL param handling, SortBottomSheet integration)
+
+- **Learnings for future iterations:**
+  - SortBottomSheet component at `/src/components/SortBottomSheet.tsx` - use `<SortBottomSheet isOpen={...} onClose={...} currentSort={...} onSortChange={...} />`
+  - SORT_OPTIONS array in useInventoryItems for consistent sort option configuration
+  - Use `useSearchParams` from react-router-dom for URL param handling
+  - Use `setSearchParams(params, { replace: true })` to update URL without history push
+  - Sort chip uses conditional styling: filled blue when non-default sort, outlined when default
+  - Type-only imports needed for TypeScript verbatimModuleSyntax: `import type { X } from '...'`
+---
+
+## 2026-01-23 - US-046
+- What was implemented:
+  - Added infinite scroll pagination to Inventory page
+  - Updated useInventoryItems hook with pagination support (PAGE_SIZE=20, loadMore, hasMore, totalCount, isLoadingMore)
+  - Uses Supabase range() method for offset-based pagination
+  - Added Intersection Observer to GalleryGrid and ItemList for automatic load triggering
+  - Trigger loads when user scrolls within 200px of bottom (using rootMargin: '200px')
+  - Shows loading spinner at bottom while loading more items
+  - Shows "You've seen all {n} items" message with checkmark when all items loaded
+  - Implemented scroll position preservation using sessionStorage
+  - Scroll position saved on component unmount and restored when returning from item detail
+  - Scroll position is cleared when sort/filter options change
+  - Added LoadingMoreSpinner and EndOfListMessage components to both GalleryGrid and ItemList
+
+- Files changed:
+  - src/hooks/useInventoryItems.ts (added pagination: PAGE_SIZE, loadMore, hasMore, totalCount, isLoadingMore, buildQuery helper)
+  - src/components/GalleryGrid.tsx (added Intersection Observer, LoadingMoreSpinner, EndOfListMessage)
+  - src/components/ItemList.tsx (added Intersection Observer, LoadingMoreSpinner, EndOfListMessage)
+  - src/pages/InventoryPage.tsx (integrated pagination props, added scroll restoration logic)
+
+- **Learnings for future iterations:**
+  - PAGE_SIZE constant exported from useInventoryItems for consistent pagination (20 items per page)
+  - Use Intersection Observer API with rootMargin for "load before visible" trigger (e.g., rootMargin: '200px')
+  - Use sessionStorage for scroll position preservation (survives navigation, cleared on tab close)
+  - Supabase range(offset, offset + limit - 1) is inclusive on both ends
+  - Track hasMore by comparing fetched count to totalCount to avoid extra empty fetches
+  - isLoadingMore separate from isLoading to differentiate initial load from pagination loads
+  - Use requestAnimationFrame when restoring scroll to ensure DOM has updated
 ---
