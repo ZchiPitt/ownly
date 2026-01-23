@@ -89,6 +89,7 @@ export function getSortLabel(sort: InventorySortOption): string {
 interface UseInventoryItemsOptions {
   sortBy?: InventorySortOption;
   categoryId?: string | null;
+  categoryIds?: string[]; // Support multiple category IDs for multi-select filter
   locationId?: string | null;
   showExpiringSoon?: boolean;
 }
@@ -152,7 +153,7 @@ function transformRawItem(item: RawInventoryItem): InventoryItem {
  */
 export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
   const { user } = useAuth();
-  const { sortBy = 'newest', categoryId, locationId, showExpiringSoon } = options;
+  const { sortBy = 'newest', categoryId, categoryIds, locationId, showExpiringSoon } = options;
 
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -163,7 +164,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
   const [totalCount, setTotalCount] = useState(0);
 
   // Track the last sort/filter options to detect changes
-  const lastOptionsRef = useRef({ sortBy, categoryId, locationId, showExpiringSoon });
+  const lastOptionsRef = useRef({ sortBy, categoryId, categoryIds, locationId, showExpiringSoon });
 
   /**
    * Build the base query with filters applied
@@ -198,7 +199,10 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       .is('deleted_at', null);
 
     // Apply filters
-    if (categoryId) {
+    // Support both single categoryId and multiple categoryIds (multi-select filter)
+    if (categoryIds && categoryIds.length > 0) {
+      query = query.in('category_id', categoryIds);
+    } else if (categoryId) {
       query = query.eq('category_id', categoryId);
     }
 
@@ -240,7 +244,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
     }
 
     return query;
-  }, [user?.id, sortBy, categoryId, locationId, showExpiringSoon]);
+  }, [user?.id, sortBy, categoryId, categoryIds, locationId, showExpiringSoon]);
 
   /**
    * Fetch total count for the current filters
@@ -254,7 +258,10 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       .eq('user_id', user.id)
       .is('deleted_at', null);
 
-    if (categoryId) {
+    // Support both single categoryId and multiple categoryIds
+    if (categoryIds && categoryIds.length > 0) {
+      query = query.in('category_id', categoryIds);
+    } else if (categoryId) {
       query = query.eq('category_id', categoryId);
     }
 
@@ -274,7 +281,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
 
     const { count } = await query;
     return count ?? 0;
-  }, [user, categoryId, locationId, showExpiringSoon]);
+  }, [user, categoryId, categoryIds, locationId, showExpiringSoon]);
 
   /**
    * Fetch initial page of items
@@ -312,7 +319,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       setHasMore(inventoryItems.length >= PAGE_SIZE && inventoryItems.length < count);
 
       // Update the last options ref
-      lastOptionsRef.current = { sortBy, categoryId, locationId, showExpiringSoon };
+      lastOptionsRef.current = { sortBy, categoryId, categoryIds, locationId, showExpiringSoon };
     } catch (err) {
       console.error('Error fetching inventory items:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch items');
@@ -320,7 +327,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, sortBy, categoryId, locationId, showExpiringSoon, buildQuery, fetchTotalCount]);
+  }, [user, sortBy, categoryId, categoryIds, locationId, showExpiringSoon, buildQuery, fetchTotalCount]);
 
   /**
    * Load more items (next page)
@@ -354,18 +361,23 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
     }
   }, [user, isLoadingMore, hasMore, isLoading, isRefreshing, items.length, totalCount, buildQuery]);
 
+  // Helper to compare category arrays
+  const categoryIdsString = categoryIds?.sort().join(',') ?? '';
+  const lastCategoryIdsString = lastOptionsRef.current.categoryIds?.sort().join(',') ?? '';
+
   // Initial fetch and refetch on option changes
   useEffect(() => {
     const optionsChanged =
       lastOptionsRef.current.sortBy !== sortBy ||
       lastOptionsRef.current.categoryId !== categoryId ||
+      lastCategoryIdsString !== categoryIdsString ||
       lastOptionsRef.current.locationId !== locationId ||
       lastOptionsRef.current.showExpiringSoon !== showExpiringSoon;
 
     if (optionsChanged || items.length === 0) {
       fetchItems();
     }
-  }, [fetchItems, sortBy, categoryId, locationId, showExpiringSoon, items.length]);
+  }, [fetchItems, sortBy, categoryId, categoryIdsString, lastCategoryIdsString, locationId, showExpiringSoon, items.length]);
 
   const refetch = useCallback(() => fetchItems(false), [fetchItems]);
   const refresh = useCallback(() => fetchItems(true), [fetchItems]);

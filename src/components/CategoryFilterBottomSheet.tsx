@@ -45,7 +45,8 @@ function useCategoryItemCounts() {
           .select('category_id')
           .eq('user_id', user.id)
           .is('deleted_at', null)
-          .not('category_id', 'is', null);
+          .not('category_id', 'is', null)
+          .returns<{ category_id: string }[]>();
 
         if (error) {
           console.error('Error fetching category counts:', error);

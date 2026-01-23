@@ -2,12 +2,11 @@
  * Inventory Page - Browse all user items
  * Shows inventory with header, search icon, view toggle, item count, and FAB
  * Supports infinite scroll pagination with scroll position restoration
+ * Filter state persisted in URL: /inventory?location={id}&categories={id1,id2}&sort={key}
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import type { InventorySortOption } from '@/hooks/useInventoryItems';
 import {
@@ -28,51 +27,6 @@ const SCROLL_POSITION_KEY = 'inventory-scroll-position';
 
 // View mode type
 type ViewMode = 'gallery' | 'list';
-
-/**
- * Hook for fetching inventory item count
- */
-function useItemCount() {
-  const { user } = useAuth();
-  const [count, setCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchCount = useCallback(async () => {
-    if (!user) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { count: itemCount, error: fetchError } = await supabase
-        .from('items')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .is('deleted_at', null);
-
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
-
-      setCount(itemCount ?? 0);
-    } catch (err) {
-      console.error('Error fetching item count:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load item count');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchCount();
-  }, [fetchCount]);
-
-  return { count, isLoading, error, refetch: fetchCount };
-}
 
 /**
  * Grid icon for gallery view toggle
@@ -182,7 +136,6 @@ function ViewToggle({
 export function InventoryPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { count, isLoading: countLoading, refetch: refetchCount } = useItemCount();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
 
   // Get sort from URL param, default to 'newest'
@@ -218,7 +171,11 @@ export function InventoryPage() {
     error: itemsError,
     refresh: refreshItems,
     loadMore,
-  } = useInventoryItems({ sortBy: sortFromUrl });
+  } = useInventoryItems({
+    sortBy: sortFromUrl,
+    categoryIds: selectedCategoryIds.length > 0 ? selectedCategoryIds : undefined,
+    locationId: locationIdFromUrl ?? undefined,
+  });
 
   // Track if we should restore scroll position
   const shouldRestoreScrollRef = useRef(true);
@@ -347,19 +304,17 @@ export function InventoryPage() {
     if (pullDistance >= pullThreshold && !isRefreshing) {
       // Trigger refresh
       refreshItems();
-      refetchCount();
     }
 
     // Reset pull state
     setPullStartY(null);
     setPullDistance(0);
     setIsPulling(false);
-  }, [pullDistance, isRefreshing, refreshItems, refetchCount]);
+  }, [pullDistance, isRefreshing, refreshItems]);
 
   const handleRefresh = useCallback(() => {
     refreshItems();
-    refetchCount();
-  }, [refreshItems, refetchCount]);
+  }, [refreshItems]);
 
   // Save scroll position before navigating away
   useEffect(() => {
@@ -414,7 +369,7 @@ export function InventoryPage() {
     sessionStorage.removeItem(SCROLL_POSITION_KEY);
     shouldRestoreScrollRef.current = false;
     hasRestoredScrollRef.current = false;
-  }, [sortFromUrl]);
+  }, [sortFromUrl, locationIdFromUrl, categoriesFromUrl]);
 
   return (
     <div className="min-h-full bg-gray-50 pb-20">
@@ -425,10 +380,10 @@ export function InventoryPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900">My Inventory</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              {countLoading ? (
+              {itemsLoading ? (
                 <span className="inline-block w-16 h-4 bg-gray-200 rounded animate-pulse" />
               ) : (
-                `${count} item${count !== 1 ? 's' : ''}`
+                `${totalCount} item${totalCount !== 1 ? 's' : ''}`
               )}
             </p>
           </div>
