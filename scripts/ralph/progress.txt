@@ -31,6 +31,7 @@
 - Layout exports from `/src/components/layout/index.ts` - import { AppShell, BottomNav } from '@/components/layout'
 - Pages exported from `/src/pages/index.ts` - import { SignupPage, LoginPage, etc. } from '@/pages'
 - Auth pages (/signup, /login, /reset-password) are outside AppShell - no bottom navigation
+- Simple Toast component at `/src/components/Toast.tsx` - use `<Toast message="" type="error" onClose={() => {}} />` (to be expanded in US-083)
 
 ---
 
@@ -417,4 +418,28 @@
   - Use `useMemo` for computing validation errors to avoid recalculating on every render
   - Email validation regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` covers most common cases
   - Button disabled state: combine isFormValid check with Tailwind conditional classes
+---
+
+## 2026-01-23 - US-017
+- What was implemented:
+  - Connected SignupPage form to AuthContext signUp function using useAuth hook
+  - Added isSubmitting state to track form submission in progress
+  - Button shows loading spinner (SVG animated) during submission with "Creating Account..." text
+  - Form inputs are disabled during submission to prevent double-submit
+  - On success: auto-login via Supabase, navigate to /dashboard with replace
+  - On email exists error: show inline error "This email is already registered" with "Log in" link
+  - On network error: show toast notification "Network connection failed"
+  - On other errors: show toast notification "Registration failed. Please try again later"
+  - Created /src/components/Toast.tsx - simple toast notification component (to be expanded in US-083)
+
+- Files changed:
+  - src/pages/SignupPage.tsx (updated - added form submission, loading state, error handling)
+  - src/components/Toast.tsx (new - simple toast component)
+
+- **Learnings for future iterations:**
+  - Supabase error messages can be checked with .includes() for specific error types (e.g., 'user already registered')
+  - Use try/catch to handle unexpected errors like network failures
+  - Form inputs should be disabled during submission to prevent double-submit
+  - Toast component positioned at bottom-20 to account for BottomNav (h-14 = 56px)
+  - Loading spinner uses Tailwind animate-spin class with SVG circle and path
 ---
