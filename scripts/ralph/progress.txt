@@ -12,6 +12,7 @@
 - Use `import.meta.env.VITE_*` for environment variables (Vite pattern)
 - SQL migrations in `supabase/migrations/` with timestamp prefix (YYYYMMDDHHMMSS_description.sql)
 - The `update_updated_at_column()` function exists and is reusable for other tables needing updated_at triggers
+- Trigger chain for new users: auth.users -> profiles (via handle_new_user) -> user_settings (via handle_new_profile)
 
 ---
 
@@ -79,4 +80,23 @@
   - Extract display_name from email with `split_part(email, '@', 1)` as fallback
   - Include INSERT policy for RLS when using triggers that insert data
   - The `update_updated_at_column()` function is reusable for other tables
+---
+
+## 2026-01-23 - US-004
+- What was implemented:
+  - Created SQL migration file for user_settings table at `supabase/migrations/20260123000002_create_user_settings_table.sql`
+  - Fields: id (uuid PK), user_id (uuid FK unique), reminder_enabled (bool default true), reminder_threshold_days (int default 90), expiration_reminder_days (int default 7), push_notifications_enabled (bool default false), default_view (varchar 20 default 'gallery'), created_at, updated_at
+  - Enabled RLS on user_settings table
+  - Added RLS policies: users can only read/update/insert their own settings
+  - Added trigger `on_profile_created` to create user_settings when profile is inserted
+  - Reused `update_updated_at_column` function from profiles migration for updated_at trigger
+  - Added documentation comments on table and columns
+
+- Files changed:
+  - supabase/migrations/20260123000002_create_user_settings_table.sql (new)
+
+- **Learnings for future iterations:**
+  - The user_settings trigger listens to profiles table insert, not auth.users directly - this ensures proper chain: auth.users -> profiles -> user_settings
+  - Reference user_id from NEW.user_id when trigger is on profiles table (not NEW.id)
+  - The `update_updated_at_column()` function created in US-003 is shared across all tables
 ---
