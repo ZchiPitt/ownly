@@ -12,3 +12,4 @@ export { AddItemPage } from './AddItemPage';
 export { ItemEditorPage } from './ItemEditorPage';
 export { DashboardPage } from './DashboardPage';
 export { InventoryPage } from './InventoryPage';
+export { ItemDetailPage } from './ItemDetailPage';
