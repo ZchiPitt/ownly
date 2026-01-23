@@ -56,13 +56,12 @@ export interface ItemEditorValues {
   categoryId: string | null;
   locationId: string | null;
   tags: string[];
-  // These will be added in future stories:
-  // price: number | null;
-  // currency: string;
-  // purchaseDate: string | null;
-  // expirationDate: string | null;
-  // brand: string | null;
-  // model: string | null;
+  price: number | null;
+  currency: string;
+  purchaseDate: string | null;
+  expirationDate: string | null;
+  brand: string;
+  model: string;
 }
 
 /**
@@ -73,7 +72,19 @@ interface AIFilledFields {
   description: boolean;
   category: boolean;
   tags: boolean;
+  brand: boolean;
 }
+
+/**
+ * Supported currencies for price input
+ */
+const CURRENCIES = [
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+] as const;
 
 /**
  * AI Sparkle icon component
@@ -591,12 +602,27 @@ export function ItemEditor({
     [detectedItem?.tags]
   );
 
+  // Additional fields state
+  const [price, setPrice] = useState<number | null>(null);
+  const [currency, setCurrency] = useState('CNY');
+  const [purchaseDate, setPurchaseDate] = useState<string | null>(null);
+  const [expirationDate, setExpirationDate] = useState<string | null>(null);
+  const [brand, setBrand] = useState(detectedItem?.brand || '');
+  const [model, setModel] = useState('');
+
+  // Control expansion of additional fields section
+  const [isAdditionalFieldsExpanded, setIsAdditionalFieldsExpanded] = useState(() => {
+    // Auto-expand if any additional field has a value
+    return !!(detectedItem?.brand);
+  });
+
   // Track which fields are still AI-filled (sparkle shown until user modifies)
   const [aiFilledFields, setAIFilledFields] = useState<AIFilledFields>(() => ({
     name: !!detectedItem?.name,
     description: false, // AI doesn't provide description
     category: !!detectedItem?.category_suggestion,
     tags: (detectedItem?.tags || []).length > 0,
+    brand: !!detectedItem?.brand,
   }));
 
   // Track if full image viewer is open
@@ -678,6 +704,90 @@ export function ItemEditor({
   }, [aiFilledFields.tags]);
 
   /**
+   * Handle price change
+   */
+  const handlePriceChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setPrice(null);
+    } else {
+      const numValue = parseFloat(value);
+      if (!isNaN(numValue) && numValue >= 0) {
+        setPrice(numValue);
+      }
+    }
+  }, []);
+
+  /**
+   * Handle currency change
+   */
+  const handleCurrencyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrency(e.target.value);
+  }, []);
+
+  /**
+   * Handle purchase date change
+   */
+  const handlePurchaseDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPurchaseDate(value || null);
+  }, []);
+
+  /**
+   * Handle expiration date change
+   */
+  const handleExpirationDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setExpirationDate(value || null);
+  }, []);
+
+  /**
+   * Handle brand change
+   */
+  const handleBrandChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.slice(0, 100);
+    setBrand(value);
+    // Clear AI indicator when user modifies
+    if (aiFilledFields.brand) {
+      setAIFilledFields((prev) => ({ ...prev, brand: false }));
+    }
+  }, [aiFilledFields.brand]);
+
+  /**
+   * Handle model change
+   */
+  const handleModelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.slice(0, 100);
+    setModel(value);
+  }, []);
+
+  /**
+   * Toggle additional fields expansion
+   */
+  const toggleAdditionalFields = useCallback(() => {
+    setIsAdditionalFieldsExpanded((prev) => !prev);
+  }, []);
+
+  /**
+   * Check if expiration date is in the past
+   */
+  const isExpirationDatePast = useMemo(() => {
+    if (!expirationDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expDate = new Date(expirationDate);
+    return expDate < today;
+  }, [expirationDate]);
+
+  /**
+   * Get today's date string for max purchase date
+   */
+  const todayString = useMemo(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }, []);
+
+  /**
    * Open location picker modal
    */
   const openLocationPicker = useCallback(() => {
@@ -732,7 +842,13 @@ export function ItemEditor({
     categoryId,
     locationId,
     tags,
-  }), [name, description, quantity, categoryId, locationId, tags]);
+    price,
+    currency,
+    purchaseDate,
+    expirationDate,
+    brand,
+    model,
+  }), [name, description, quantity, categoryId, locationId, tags, price, currency, purchaseDate, expirationDate, brand, model]);
 
   // Notify parent of form changes
   useMemo(() => {
@@ -948,8 +1064,172 @@ export function ItemEditor({
               onAIFieldModified={handleTagsAIModified}
             />
 
-            {/* Placeholder sections for future fields (US-033) */}
-            {/* Additional fields (price, dates, brand, model) - US-033 */}
+            {/* Additional Fields Section (collapsible) */}
+            <div className="border-t border-gray-200 pt-4">
+              <button
+                type="button"
+                onClick={toggleAdditionalFields}
+                className="w-full flex items-center justify-between py-2 text-left"
+              >
+                <span className="text-sm font-medium text-gray-700">
+                  Additional Details
+                  {(price !== null || purchaseDate || expirationDate || brand || model) && (
+                    <span className="ml-2 text-xs text-gray-400">(has values)</span>
+                  )}
+                </span>
+                <svg
+                  className={`w-5 h-5 text-gray-400 transition-transform ${
+                    isAdditionalFieldsExpanded ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Expandable additional fields */}
+              {isAdditionalFieldsExpanded && (
+                <div className="mt-4 space-y-6">
+                  {/* Price Field with Currency Selector */}
+                  <div>
+                    <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                      Price
+                    </label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          id="item-price"
+                          type="number"
+                          value={price ?? ''}
+                          onChange={handlePriceChange}
+                          placeholder="0.00"
+                          min="0"
+                          step="0.01"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                      </div>
+                      <select
+                        value={currency}
+                        onChange={handleCurrencyChange}
+                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        aria-label="Currency"
+                      >
+                        {CURRENCIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.symbol} {c.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Purchase Date Field */}
+                  <div>
+                    <label htmlFor="item-purchase-date" className="block text-sm font-medium text-gray-700 mb-2">
+                      Purchase Date
+                    </label>
+                    <input
+                      id="item-purchase-date"
+                      type="date"
+                      value={purchaseDate ?? ''}
+                      onChange={handlePurchaseDateChange}
+                      max={todayString}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                    />
+                    <p className="mt-1 text-xs text-gray-400">
+                      When did you purchase this item?
+                    </p>
+                  </div>
+
+                  {/* Expiration Date Field */}
+                  <div>
+                    <label htmlFor="item-expiration-date" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                      Expiration Date
+                      {isExpirationDatePast && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              fillRule="evenodd"
+                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                          Past date
+                        </span>
+                      )}
+                    </label>
+                    <input
+                      id="item-expiration-date"
+                      type="date"
+                      value={expirationDate ?? ''}
+                      onChange={handleExpirationDateChange}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${
+                        isExpirationDatePast ? 'border-amber-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {isExpirationDatePast && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        This item has already expired
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Brand Field */}
+                  <div>
+                    <label htmlFor="item-brand" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                      Brand
+                      {aiFilledFields.brand && (
+                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                          <SparkleIcon className="w-3 h-3" />
+                          AI
+                        </span>
+                      )}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="item-brand"
+                        type="text"
+                        value={brand}
+                        onChange={handleBrandChange}
+                        placeholder="e.g., Apple, Samsung, Nike"
+                        maxLength={100}
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                          aiFilledFields.brand
+                            ? 'border-blue-300 bg-blue-50/50'
+                            : 'border-gray-300 bg-white'
+                        }`}
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        {brand.length}/100
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Model Field */}
+                  <div>
+                    <label htmlFor="item-model" className="block text-sm font-medium text-gray-700 mb-2">
+                      Model
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="item-model"
+                        type="text"
+                        value={model}
+                        onChange={handleModelChange}
+                        placeholder="e.g., iPhone 15 Pro, Galaxy S24"
+                        maxLength={100}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        {model.length}/100
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

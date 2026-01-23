@@ -819,3 +819,87 @@
   - CategorySelector uses click-outside detection with document.addEventListener('mousedown', ...)
   - For async category ID lookup, use derived state pattern: track `hasUserSelectedCategory` to distinguish manual vs auto selection
 ---
+
+## 2026-01-23 - US-031
+- What was implemented:
+  - Created /src/hooks/useLocations.ts hook for fetching and managing user locations
+  - Hook provides: locations (flat), locationTree (hierarchical), createLocation, getLocationById, getLocationPath, getPotentialParents
+  - Created LocationNode interface extending Location with children array for tree structure
+  - buildLocationTree function converts flat locations to hierarchical tree sorted by name
+  - Created /src/components/LocationPickerModal.tsx modal component
+  - Modal shows hierarchical tree with expand/collapse chevrons
+  - Each location shows icon, name, and item count badge
+  - "No location assigned" option at top of list
+  - "Add New Location" button with inline form for creating locations
+  - Inline form includes name input and optional parent selector
+  - Added Location field to ItemEditor that opens modal on tap
+  - Shows full location path when selected (icon + path string)
+  - Updated ItemEditorValues to include locationId field
+
+- Files changed:
+  - src/hooks/useLocations.ts (new)
+  - src/components/LocationPickerModal.tsx (new)
+  - src/components/ItemEditor.tsx (updated - added location field and LocationPickerModal integration)
+
+- **Learnings for future iterations:**
+  - useLocations hook at `/src/hooks/useLocations.ts` - use `const { locations, locationTree, createLocation } = useLocations()`
+  - LocationPickerModal uses inner content component pattern - when modal is closed (!isOpen), it returns null and unmounts inner component, naturally resetting state
+  - React Compiler ESLint rules are strict: avoid setState in useEffect, avoid reading refs during render
+  - For modal state reset, unmount/remount pattern (returning null when closed) is cleaner than using keys or useEffect
+  - Hierarchical tree building: first pass creates node map, second pass links parent-child relationships
+  - Use `getPotentialParents(excludeId)` to filter out descendants when selecting parent location
+---
+
+## 2026-01-23 - US-032
+- What was implemented:
+  - Created /src/hooks/useTags.ts hook for fetching user's existing tags from items
+  - Hook provides: tags (unique sorted list), isLoading, error, refetch, getSuggestions
+  - getSuggestions filters tags based on input text and excludes already selected tags
+  - Created /src/components/TagsInput.tsx component with chip-based tag display
+  - AI-suggested tags shown with blue background and sparkle indicator
+  - User can remove tags by clicking X on each chip
+  - Type to add new tags - Enter or comma confirms the tag
+  - Autocomplete dropdown suggests from user's existing tags as you type
+  - Keyboard navigation for suggestions (ArrowUp/ArrowDown/Enter/Escape)
+  - Max 20 tags per item, max 50 chars per tag
+  - Backspace on empty input removes last tag
+  - Integrated tags field into ItemEditor with AIFilledFields tracking
+  - Updated ItemEditorValues to include tags array
+
+- Files changed:
+  - src/hooks/useTags.ts (new)
+  - src/components/TagsInput.tsx (new)
+  - src/components/ItemEditor.tsx (updated - added tags state, TagsInput integration)
+
+- **Learnings for future iterations:**
+  - useTags hook at `/src/hooks/useTags.ts` - use `const { getSuggestions, tags } = useTags()`
+  - For Supabase queries selecting specific columns like `tags`, may need type assertion for proper TypeScript inference
+  - React Compiler ESLint: use regular functions instead of useCallback when dependencies are complex or state setters are involved
+  - Using useMemo for derived values like `suggestions` and `aiTagsSet` is cleaner than useCallback for functions that access them
+  - TagsInput follows same inner component pattern as other modals for state management
+  - Comma handling: split on comma, add all parts except last (which may be partial), keep last in input
+---
+
+## 2026-01-23 - US-033
+- What was implemented:
+  - Added additional fields section to ItemEditor with expand/collapse functionality
+  - Price input with number field and currency selector dropdown (CNY default, also USD, EUR, GBP, JPY)
+  - Purchase Date picker with max constraint to today's date (cannot be future date)
+  - Expiration Date picker with warning indicator when past date is selected
+  - Brand input with max 100 chars, AI pre-fill support with sparkle indicator
+  - Model input with max 100 chars and character counter
+  - Fields are shown in collapsible "Additional Details" section
+  - Auto-expands when any additional field has a value (e.g., AI-detected brand)
+  - Updated ItemEditorValues interface to include all new fields
+
+- Files changed:
+  - src/components/ItemEditor.tsx (updated - added additional fields section with price, dates, brand, model)
+
+- **Learnings for future iterations:**
+  - Use collapsible sections for optional fields to reduce visual clutter
+  - Date input type="date" supports max attribute to prevent future dates
+  - For currency selector, use a const array with code/symbol/name for type safety
+  - Auto-expand sections when they have values from AI detection (brand in this case)
+  - Warning badges (amber color) work well for past expiration date indication
+  - Number inputs need [appearance:textfield] and webkit pseudo-element overrides to hide spinners
+---
