@@ -185,8 +185,28 @@ export function InventoryPage() {
   // Get sort from URL param, default to 'newest'
   const sortFromUrl = getSortFromUrlParam(searchParams.get('sort'));
 
+  // Get filters from URL params
+  const locationIdFromUrl = searchParams.get('location');
+  const categoriesFromUrl = searchParams.get('categories');
+
+  // Parse categories from URL (comma-separated IDs)
+  const selectedCategoryIds = categoriesFromUrl ? categoriesFromUrl.split(',').filter(Boolean) : [];
+
   // Bottom sheet state for sorting
   const [isSortSheetOpen, setIsSortSheetOpen] = useState(false);
+
+  // Placeholder states for category and location bottom sheets (to be implemented in US-048/US-049)
+  const [_isCategorySheetOpen, setIsCategorySheetOpen] = useState(false);
+  const [_isLocationSheetOpen, setIsLocationSheetOpen] = useState(false);
+  // Temporary: Use these states so they're not flagged as unused by tsc
+  // The actual bottom sheets will be added in US-048 and US-049
+  void _isCategorySheetOpen;
+  void _isLocationSheetOpen;
+
+  // Compute filter active states
+  const hasActiveCategories = selectedCategoryIds.length > 0;
+  const hasActiveLocation = locationIdFromUrl !== null;
+  const hasAnyActiveFilter = hasActiveCategories || hasActiveLocation;
 
   const {
     items,
@@ -247,6 +267,35 @@ export function InventoryPage() {
     }
     setSearchParams(newParams, { replace: true });
   };
+
+  // Clear all filters
+  const handleClearAllFilters = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('categories');
+    newParams.delete('location');
+    // Note: We keep sort as it's not considered a "filter"
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Chip click handlers - open respective bottom sheets (to be implemented in US-048/US-049)
+  const onCategoryChipClick = () => {
+    setIsCategorySheetOpen(true);
+  };
+
+  const onLocationChipClick = () => {
+    setIsLocationSheetOpen(true);
+  };
+
+  // Compute chip labels
+  const categoryChipLabel = hasActiveCategories
+    ? selectedCategoryIds.length === 1
+      ? '1 Category'
+      : `${selectedCategoryIds.length} Categories`
+    : 'All Categories';
+
+  const locationChipLabel = hasActiveLocation
+    ? 'Location' // Will be replaced with actual location name in US-048
+    : 'All Locations';
 
   // Pull-to-refresh handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -390,8 +439,94 @@ export function InventoryPage() {
           </div>
         </div>
 
-        {/* Filter bar with Sort chip */}
-        <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 -mx-4 px-4">
+        {/* Filter bar with chips */}
+        <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+          {/* All Categories chip */}
+          <button
+            onClick={onCategoryChipClick}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              hasActiveCategories
+                ? 'bg-blue-600 text-white'
+                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {/* Category icon */}
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
+            </svg>
+            <span>{categoryChipLabel}</span>
+            {/* Dropdown indicator */}
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* All Locations chip */}
+          <button
+            onClick={onLocationChipClick}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+              hasActiveLocation
+                ? 'bg-blue-600 text-white'
+                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {/* Location icon */}
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+            <span>{locationChipLabel}</span>
+            {/* Dropdown indicator */}
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
           {/* Sort chip */}
           <button
             onClick={() => setIsSortSheetOpen(true)}
@@ -431,6 +566,16 @@ export function InventoryPage() {
               />
             </svg>
           </button>
+
+          {/* Clear All link - only shown when filters are active */}
+          {hasAnyActiveFilter && (
+            <button
+              onClick={handleClearAllFilters}
+              className="ml-auto flex-shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
+            >
+              Clear All
+            </button>
+          )}
         </div>
       </div>
 
