@@ -7,10 +7,14 @@
  * - Log in button with loading state during submission
  * - Forgot password? link to /reset-password
  * - Footer link to signup page
+ * - Redirect to dashboard on successful login (or redirect param if present)
+ * - Redirect authenticated users to dashboard
  */
 
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Toast } from '@/components/Toast';
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -31,6 +35,10 @@ interface FormTouched {
 }
 
 export function LoginPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { signIn, user, loading: authLoading } = useAuth();
+
   const [formData, setFormData] = useState<FormData>({
     email: '',
     password: '',
@@ -42,6 +50,16 @@ export function LoginPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'info' } | null>(null);
+
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      const redirectTo = searchParams.get('redirect');
+      navigate(redirectTo ? decodeURIComponent(redirectTo) : '/dashboard', { replace: true });
+    }
+  }, [user, authLoading, navigate, searchParams]);
 
   // Compute validation errors based on current form data
   const errors = useMemo<FormErrors>(() => {
@@ -103,12 +121,39 @@ export function LoginPage() {
     }
 
     setIsSubmitting(true);
+    setLoginError(null);
+    setToast(null);
 
-    // Login submission will be implemented in US-019
-    // For now, just simulate a delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const { error } = await signIn(formData.email, formData.password);
 
-    setIsSubmitting(false);
+      if (error) {
+        // Check for invalid credentials error
+        if (
+          error.message.toLowerCase().includes('invalid login credentials') ||
+          error.message.toLowerCase().includes('invalid email or password')
+        ) {
+          setLoginError('Invalid email or password');
+        } else if (
+          error.message.toLowerCase().includes('email not confirmed') ||
+          error.message.toLowerCase().includes('email_not_confirmed')
+        ) {
+          setLoginError('Please verify your email address before logging in');
+        } else {
+          // Other errors - show as toast
+          setToast({ message: error.message, type: 'error' });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Success: redirect to dashboard or redirect param
+      // The useEffect will handle the redirect when user state updates
+    } catch {
+      // Network or unexpected error
+      setToast({ message: 'Network connection failed', type: 'error' });
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -190,6 +235,13 @@ export function LoginPage() {
             )}
           </div>
 
+          {/* Login Error Message */}
+          {loginError && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{loginError}</p>
+            </div>
+          )}
+
           {/* Submit Button */}
           <button
             type="submit"
@@ -244,6 +296,15 @@ export function LoginPage() {
           </Link>
         </p>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
