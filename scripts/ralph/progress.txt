@@ -1440,3 +1440,51 @@
   - Error handling: PGRST116 code indicates "no rows returned" from Supabase (item deleted or not found)
   - Touch handling: use refs for mutable values that don't trigger re-renders (lastTouchDistanceRef, lastTapRef)
 ---
+
+## 2026-01-23 - US-053
+- What was implemented:
+  - Added ExpirationBanner component to ItemDetailPage
+  - Banner displays below hero image when expiration_date exists
+  - Color-coded status: red for expired/warning (<=7 days), orange for caution (8-30 days), hidden for >30 days
+  - getExpirationStatus helper function calculates days away and returns appropriate text
+  - Made category badge tappable - navigates to /inventory?categories={id}
+  - Made location path tappable - navigates to /inventory?location={id}
+  - Added horizontal scrolling tags row with # prefix
+  - Added ChevronRightIcon for visual cue on tappable elements
+  - Added WarningIcon for expiration banner
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (modified)
+
+- **Learnings for future iterations:**
+  - Expiration date calculation uses date-only comparison (setHours 0,0,0,0) for accurate day calculation
+  - Expiration status types: 'expired' (past), 'warning' (<=7 days), 'caution' (8-30 days), 'ok' (>30 days)
+  - Tags render with # prefix and use scrollbar-hide class for clean horizontal scrolling
+  - Category and location clicks use navigate() to go to inventory with filter params
+---
+
+## 2026-01-23 - US-054
+- What was implemented:
+  - Added collapsible DetailsSection component to ItemDetailPage
+  - Section starts expanded by default (useState(true))
+  - Toggle button with chevron icon rotates smoothly on expand/collapse
+  - Only shows fields that have values (checks for null/undefined/empty)
+  - Displays: Description, Quantity (only if >1), Brand, Model, Price, Purchase Date, Expiration Date, Notes
+  - Added formatDate helper: formats dates as 'Jan 15, 2024' using toLocaleDateString
+  - Added formatPrice helper: formats prices with currency symbols (¥, $, €, £)
+  - Added ChevronDownIcon for the expand/collapse toggle
+  - Added DetailRow component for consistent field display (label + value)
+  - Smooth 200ms collapse animation using max-height and opacity transitions
+  - Returns null if no detail fields have values (section hidden entirely)
+
+- Files changed:
+  - src/pages/ItemDetailPage.tsx (modified - added ~150 lines for details section)
+
+- **Learnings for future iterations:**
+  - Use `transition-all duration-200 ease-in-out` for smooth collapse/expand animations
+  - Calculate dynamic maxHeight based on content (details.length * 100px) for proper animation
+  - Use `rotate-180` transform on chevron icon to indicate expanded state
+  - Price field stored as decimal in database, use Number() conversion before formatting
+  - Use aria-expanded and aria-controls for accessibility on collapsible sections
+  - DetailRow uses definition list (dl/dt/dd) for semantic markup of label-value pairs
+---
