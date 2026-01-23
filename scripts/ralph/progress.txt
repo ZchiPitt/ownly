@@ -601,3 +601,61 @@
   - heic2any returns Blob or Blob[] (for multi-frame images), handle array case
   - Use Promise-based wrappers for canvas.toBlob() and image loading for async/await compatibility
 ---
+
+## 2026-01-23 - US-024
+- What was implemented:
+  - Created /src/pages/AddItemPage.tsx at route /add
+  - Page title "Add Item" at the top
+  - Two action cards: Take Photo (camera icon) and Choose from Gallery (image icon)
+  - Helper text: "Take a photo of your item and AI will help identify it"
+  - Take Photo triggers hidden input with capture="environment" for rear camera
+  - Choose from Gallery triggers hidden file input accepting image/*
+  - Camera permission handling with toast notification fallback
+  - Image validation using existing validateImage utility from imageUtils
+  - Processing indicator while validating images
+  - Tips section for best photo results
+  - Toast notifications for errors
+  - Updated pages/index.ts to export AddItemPage
+  - Removed placeholder AddItemPage from App.tsx
+
+- Files changed:
+  - src/pages/AddItemPage.tsx (new)
+  - src/pages/index.ts (updated - added AddItemPage export)
+  - src/App.tsx (updated - removed placeholder, imported from @/pages)
+
+- **Learnings for future iterations:**
+  - Use useRef for hidden file inputs and trigger with .click()
+  - capture="environment" attribute requests rear camera on mobile devices
+  - Reset input.value after file selection to allow selecting the same file again
+  - Check navigator.mediaDevices existence before attempting camera access
+  - The AddItemPage will navigate to preview step (US-025) after image validation
+---
+
+## 2026-01-23 - US-025
+- What was implemented:
+  - Added full-screen photo preview step to AddItemPage after image capture/selection
+  - Implemented pinch-to-zoom support with touch events for mobile devices
+  - Added double-tap gesture to toggle between 100% and 200% zoom
+  - Zoom indicator shows current zoom percentage when zoomed in
+  - Bottom action buttons: Retake/Reselect (left) and Continue (right, primary)
+  - Button shows "Retake" when image was from camera, "Reselect" when from gallery
+  - Retake/Reselect returns to capture options, cleaning up preview URL
+  - Continue button ready for AI analysis integration (US-027)
+  - Validates image before showing preview (uses existing validateImage utility)
+  - Shows error toast for invalid images
+  - Helper text shows "Pinch to zoom • Double-tap to reset" instructions
+  - Clean URL.createObjectURL/revokeObjectURL lifecycle management
+
+- Files changed:
+  - src/pages/AddItemPage.tsx (updated - added preview view with pinch-to-zoom)
+
+- **Learnings for future iterations:**
+  - Use React.TouchEvent handlers for pinch-to-zoom: onTouchStart, onTouchMove, onTouchEnd
+  - Calculate distance between two touch points with Math.hypot()
+  - Use refs for mutable values that don't trigger re-renders (lastTouchDistanceRef, lastTapRef)
+  - CSS `touch-none` class prevents default browser gestures on the preview container
+  - Transform with translate inside scale needs to divide by scale for correct positioning
+  - Clean up URL.createObjectURL with URL.revokeObjectURL to prevent memory leaks
+  - Use useCallback for touch handlers to prevent unnecessary re-renders
+  - Track isFromCamera state to show appropriate button label (Retake vs Reselect)
+---
