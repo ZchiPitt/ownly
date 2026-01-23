@@ -3,11 +3,13 @@
  * Shows inventory with header, search icon, view toggle, item count, and FAB
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
+import { useInventoryItems } from '@/hooks/useInventoryItems';
+import { GalleryGrid } from '@/components/GalleryGrid';
 
 // View mode type
 type ViewMode = 'gallery' | 'list';
@@ -164,12 +166,26 @@ function ViewToggle({
 
 export function InventoryPage() {
   const navigate = useNavigate();
-  const { count, isLoading: countLoading } = useItemCount();
+  const { count, isLoading: countLoading, refetch: refetchCount } = useItemCount();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
+  const {
+    items,
+    isLoading: itemsLoading,
+    isRefreshing,
+    error: itemsError,
+    refresh: refreshItems,
+  } = useInventoryItems();
 
   // Track if user has explicitly changed the view (to avoid overriding with settings)
   const [userSelectedView, setUserSelectedView] = useState<ViewMode | null>(null);
   const [isUpdatingView, setIsUpdatingView] = useState(false);
+
+  // Pull-to-refresh state
+  const [pullStartY, setPullStartY] = useState<number | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const pullThreshold = 80;
 
   // Compute effective view mode: user selection takes precedence over settings
   const viewMode: ViewMode = userSelectedView ?? settings?.default_view ?? 'gallery';
@@ -191,6 +207,44 @@ export function InventoryPage() {
     await updateSettings({ default_view: mode });
     setIsUpdatingView(false);
   };
+
+  // Pull-to-refresh handlers
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const scrollTop = scrollContainerRef.current?.scrollTop ?? 0;
+    if (scrollTop <= 0 && !isRefreshing) {
+      setPullStartY(e.touches[0].clientY);
+    }
+  }, [isRefreshing]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (pullStartY === null || isRefreshing) return;
+
+    const currentY = e.touches[0].clientY;
+    const distance = Math.max(0, currentY - pullStartY);
+
+    // Apply resistance to pull distance (rubber band effect)
+    const resistedDistance = Math.min(distance * 0.5, pullThreshold * 1.5);
+    setPullDistance(resistedDistance);
+    setIsPulling(resistedDistance > 10);
+  }, [pullStartY, isRefreshing]);
+
+  const handleTouchEnd = useCallback(() => {
+    if (pullDistance >= pullThreshold && !isRefreshing) {
+      // Trigger refresh
+      refreshItems();
+      refetchCount();
+    }
+
+    // Reset pull state
+    setPullStartY(null);
+    setPullDistance(0);
+    setIsPulling(false);
+  }, [pullDistance, isRefreshing, refreshItems, refetchCount]);
+
+  const handleRefresh = useCallback(() => {
+    refreshItems();
+    refetchCount();
+  }, [refreshItems, refetchCount]);
 
   return (
     <div className="min-h-full bg-gray-50 pb-20">
@@ -242,23 +296,76 @@ export function InventoryPage() {
         </div>
       </div>
 
-      {/* Main content area - placeholder for inventory list/grid */}
-      <div className="p-4">
-        {/* Placeholder content - shows current view mode */}
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-16 h-16 mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-            {viewMode === 'gallery' ? (
-              <GridIcon filled />
-            ) : (
-              <ListIcon filled />
-            )}
+      {/* Main content area with pull-to-refresh */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-y-auto"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          // Add pull distance offset during pull
+          transform: isPulling ? `translateY(${pullDistance}px)` : undefined,
+          transition: isPulling ? undefined : 'transform 0.3s ease-out',
+        }}
+      >
+        {/* Pull-to-refresh indicator */}
+        {isPulling && (
+          <div
+            className="absolute left-0 right-0 flex items-center justify-center z-0"
+            style={{
+              top: -pullThreshold,
+              height: pullThreshold,
+              transform: `translateY(${pullDistance}px)`,
+            }}
+          >
+            <div
+              className={`flex items-center gap-2 transition-opacity ${
+                pullDistance >= pullThreshold ? 'opacity-100' : 'opacity-50'
+              }`}
+            >
+              <svg
+                className={`w-5 h-5 text-blue-600 transition-transform ${
+                  pullDistance >= pullThreshold ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                />
+              </svg>
+              <span className="text-sm text-gray-600">
+                {pullDistance >= pullThreshold
+                  ? 'Release to refresh'
+                  : 'Pull to refresh'}
+              </span>
+            </div>
           </div>
-          <p className="text-gray-500">
-            {viewMode === 'gallery' ? 'Gallery' : 'List'} view coming soon...
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            Selected view: {viewMode}
-          </p>
+        )}
+
+        <div className="p-4">
+          {viewMode === 'gallery' ? (
+            <GalleryGrid
+              items={items}
+              isLoading={itemsLoading}
+              isRefreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              error={itemsError}
+            />
+          ) : (
+            /* List view placeholder - to be implemented in US-044 */
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                <ListIcon filled />
+              </div>
+              <p className="text-gray-500">List view coming soon...</p>
+            </div>
+          )}
         </div>
       </div>
 
