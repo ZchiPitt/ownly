@@ -45,6 +45,7 @@
 - useExpiringItems hook at `/src/hooks/useExpiringItems.ts` - use `const { items, isLoading, refetch } = useExpiringItems(days, limit)` for expiring items
 - useRecentItems hook at `/src/hooks/useRecentItems.ts` - use `const { items, isLoading, refetch } = useRecentItems(limit)` for recently added items
 - Use `.returns<Type[]>()` method on Supabase query chain for proper TypeScript type inference
+- useUserSettings hook at `/src/hooks/useUserSettings.ts` - use `const { settings, updateSettings, isLoading } = useUserSettings()` for user preferences
 
 ---
 
@@ -1064,4 +1065,77 @@
   - Relative time calculation: compare timestamps with Math.floor for seconds/minutes/hours/days
   - Category badge overlay positioned with `absolute bottom-1.5 right-1.5` inside relative container
   - Use `line-clamp-2` Tailwind class for 2-line text truncation
+---
+
+## 2026-01-23 - US-040
+- What was implemented:
+  - Added EmptyState component to DashboardPage for new users with 0 items
+  - EmptyState shows centered illustration (box icon in blue-50 circle)
+  - Heading: "Your inventory is empty"
+  - Subtext: "Take a photo of your first item to get started"
+  - Primary button "Add Your First Item" that navigates to /add
+  - Conditional rendering: when stats have loaded and totalItems === 0, show EmptyState
+  - Otherwise shows the regular dashboard with stats, expiring items, and recent items sections
+  - Search bar remains visible above empty state (part of sticky header)
+  - All acceptance criteria met
+
+- Files changed:
+  - src/pages/DashboardPage.tsx (added EmptyState component, isEmptyInventory logic, conditional rendering)
+
+- **Learnings for future iterations:**
+  - Empty state detection: `!statsLoading && stats.totalItems === 0` ensures we wait for data before showing empty state
+  - Use conditional rendering with ternary operator for mutually exclusive UI states (empty vs populated)
+  - Keep search bar in sticky header so it's always visible regardless of empty state
+  - EmptyState component follows centered layout pattern with illustration, heading, subtext, and CTA button
+---
+
+## 2026-01-23 - US-041
+- What was implemented:
+  - Created /src/pages/InventoryPage.tsx at route /inventory
+  - Header with 'My Inventory' title and search icon button that navigates to /search
+  - Subtitle showing item count (e.g., "5 items") with loading skeleton state
+  - useItemCount hook to fetch count of non-deleted items from database
+  - FAB (Floating Action Button) fixed at bottom-right with + icon navigating to /add
+  - FAB positioned above bottom nav (bottom-20) with blue-600 background
+  - Placeholder content area for future inventory views (grid/list)
+  - Updated pages/index.ts to export InventoryPage
+  - Updated App.tsx to import InventoryPage from @/pages and removed placeholder
+  - All acceptance criteria met
+
+- Files changed:
+  - src/pages/InventoryPage.tsx (new)
+  - src/pages/index.ts (updated - added InventoryPage export)
+  - src/App.tsx (updated - imported InventoryPage from @/pages, removed placeholder)
+
+- **Learnings for future iterations:**
+  - useItemCount hook at `/src/pages/InventoryPage.tsx` (inline) - use for fetching item count with filters
+  - FAB position: `bottom-20` places it above the 56px bottom nav (h-14)
+  - Header sticky pattern: `sticky top-0 z-10 bg-white border-b border-gray-200`
+  - Item count uses `{ count: 'exact', head: true }` for efficient count queries
+  - Grammar: `${count} item${count !== 1 ? 's' : ''}` handles singular/plural
+---
+
+## 2026-01-23 - US-042
+- What was implemented:
+  - Created /src/hooks/useUserSettings.ts hook for fetching and updating user settings
+  - Hook provides: settings (UserSettings), isLoading, error, updateSettings, refetch
+  - updateSettings saves partial settings to user_settings table
+  - Added ViewToggle component to InventoryPage header with grid and list icon buttons
+  - GridIcon and ListIcon components with filled/outline states
+  - Active view button highlighted with white background and blue-600 text
+  - Default view: Gallery (loaded from user_settings.default_view)
+  - Toggle updates view immediately without page reload
+  - View preference persisted to user_settings.default_view on toggle
+  - Used derived state pattern to avoid setState in useEffect (React Compiler compliant)
+
+- Files changed:
+  - src/hooks/useUserSettings.ts (new)
+  - src/pages/InventoryPage.tsx (updated - added view toggle, useUserSettings integration)
+
+- **Learnings for future iterations:**
+  - useUserSettings hook at `/src/hooks/useUserSettings.ts` - use `const { settings, updateSettings, isLoading } = useUserSettings()` for user preferences
+  - For Supabase update type issues, use type assertion: `(supabase.from('table') as ReturnType<typeof supabase.from>).update(data as Record<string, unknown>)`
+  - React Compiler: Avoid setState in useEffect - use derived state pattern instead: `const viewMode = userSelectedView ?? settings?.default_view ?? 'gallery'`
+  - ViewToggle component uses bg-gray-100 container with p-1, active state uses bg-white shadow-sm
+  - Filled/outline icons controlled via `filled` prop with conditional SVG path rendering
 ---
