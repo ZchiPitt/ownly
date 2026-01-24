@@ -21,6 +21,7 @@ import { SortBottomSheet } from '@/components/SortBottomSheet';
 import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomSheet';
 import { CategoryFilterBottomSheet } from '@/components/CategoryFilterBottomSheet';
 import { useLocations } from '@/hooks/useLocations';
+import { NotificationBell } from '@/components/NotificationBell';
 
 // Key for storing scroll position in sessionStorage
 const SCROLL_POSITION_KEY = 'inventory-scroll-position';
@@ -388,7 +389,7 @@ export function InventoryPage() {
             </p>
           </div>
 
-          {/* Right side: View toggle + Search */}
+          {/* Right side: View toggle + Notification bell + Search */}
           <div className="flex items-center gap-2">
             {/* View toggle */}
             <ViewToggle
@@ -396,6 +397,9 @@ export function InventoryPage() {
               onViewChange={handleViewChange}
               isLoading={settingsLoading || isUpdatingView}
             />
+
+            {/* Notification bell */}
+            <NotificationBell />
 
             {/* Search icon button */}
             <button

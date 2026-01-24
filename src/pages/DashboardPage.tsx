@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useExpiringItems, type ExpiringItem } from '@/hooks/useExpiringItems';
 import { useRecentItems, type RecentItem } from '@/hooks/useRecentItems';
+import { NotificationBell } from '@/components/NotificationBell';
 
 /**
  * Get time-based greeting message
@@ -412,14 +413,20 @@ export function DashboardPage() {
             <h1 className="text-xl font-semibold text-gray-900">{displayName}</h1>
           </div>
 
-          {/* User avatar */}
-          <button
-            onClick={() => navigate('/settings')}
-            className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium text-sm hover:bg-blue-700 transition-colors"
-            aria-label="Go to settings"
-          >
-            {initials}
-          </button>
+          {/* Right side: Notification bell + User avatar */}
+          <div className="flex items-center gap-1">
+            {/* Notification bell */}
+            <NotificationBell />
+
+            {/* User avatar */}
+            <button
+              onClick={() => navigate('/settings')}
+              className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium text-sm hover:bg-blue-700 transition-colors"
+              aria-label="Go to settings"
+            >
+              {initials}
+            </button>
+          </div>
         </div>
 
         {/* Search bar - always visible */}
