@@ -19,9 +19,50 @@ import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { SearchResult, SearchResultSkeleton } from '@/components/SearchResult';
 
 /**
- * Type declaration for Web Speech API (not included in standard TypeScript lib)
+ * Type declarations for Web Speech API (not included in standard TypeScript lib)
  */
-type SpeechRecognitionConstructor = new () => unknown;
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
 declare global {
   interface Window {
@@ -145,6 +186,87 @@ function NoResultsIcon() {
         d="M8.5 8.5l3 3m0-3l-3 3"
       />
     </svg>
+  );
+}
+
+/**
+ * Pulsing microphone for listening state
+ */
+function PulsingMicIcon() {
+  return (
+    <div className="relative">
+      {/* Pulsing rings */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute w-24 h-24 bg-red-500/20 rounded-full animate-ping" />
+        <div className="absolute w-20 h-20 bg-red-500/30 rounded-full animate-pulse" />
+      </div>
+      {/* Microphone icon */}
+      <div className="relative w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+        <svg
+          className="w-8 h-8 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+          />
+        </svg>
+        {/* Red pulsing dot */}
+        <div className="absolute top-0 right-0 w-4 h-4 bg-red-600 rounded-full animate-pulse border-2 border-white" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Voice search listening overlay
+ */
+interface VoiceSearchOverlayProps {
+  isListening: boolean;
+  transcript: string;
+  onCancel: () => void;
+}
+
+function VoiceSearchOverlay({ isListening, transcript, onCancel }: VoiceSearchOverlayProps) {
+  if (!isListening) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center px-6"
+      onClick={onCancel}
+    >
+      {/* Pulsing microphone */}
+      <div className="mb-8">
+        <PulsingMicIcon />
+      </div>
+
+      {/* Listening text */}
+      <p className="text-xl font-medium text-gray-900 mb-4">
+        Listening...
+      </p>
+
+      {/* Real-time transcription */}
+      <div className="min-h-[48px] w-full max-w-sm">
+        {transcript ? (
+          <p className="text-lg text-gray-700 text-center px-4 py-2 bg-gray-100 rounded-lg">
+            {transcript}
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500 text-center">
+            Speak now...
+          </p>
+        )}
+      </div>
+
+      {/* Cancel hint */}
+      <p className="mt-8 text-sm text-gray-400">
+        Tap anywhere to cancel
+      </p>
+    </div>
   );
 }
 
@@ -373,6 +495,12 @@ export function SearchPage() {
   // Track speech recognition support
   const [speechSupported] = useState(() => isSpeechRecognitionSupported());
 
+  // Voice search state
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const noSpeechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // State for showing clear all confirmation dialog
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -417,10 +545,151 @@ export function SearchPage() {
     setQuery(e.target.value);
   };
 
+  /**
+   * Stop voice search and clean up
+   */
+  const stopVoiceSearch = useCallback(() => {
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.abort();
+      speechRecognitionRef.current = null;
+    }
+    if (noSpeechTimeoutRef.current) {
+      clearTimeout(noSpeechTimeoutRef.current);
+      noSpeechTimeoutRef.current = null;
+    }
+    setIsListening(false);
+    setVoiceTranscript('');
+  }, []);
+
+  /**
+   * Handle voice search via Web Speech API
+   */
   const handleMicrophoneClick = () => {
-    // Microphone functionality will be implemented in US-062
-    console.log('Voice search clicked - to be implemented in US-062');
+    // Don't start if already listening
+    if (isListening) {
+      stopVoiceSearch();
+      return;
+    }
+
+    // Get the SpeechRecognition constructor
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionClass) {
+      return;
+    }
+
+    // Create new recognition instance
+    const recognition = new SpeechRecognitionClass();
+    speechRecognitionRef.current = recognition;
+
+    // Configure recognition
+    recognition.continuous = false; // Stop after first result
+    recognition.interimResults = true; // Get real-time transcription
+    recognition.lang = 'en-US'; // Default to English
+
+    // Handle start - listening has begun
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceTranscript('');
+
+      // Set timeout for no speech detected (5 seconds)
+      noSpeechTimeoutRef.current = setTimeout(() => {
+        stopVoiceSearch();
+        // Show toast - using alert as placeholder (Toast component to be implemented in US-083)
+        // In production, this would use the Toast component
+        alert("Didn't catch that. Please try again.");
+      }, 5000);
+    };
+
+    // Handle results - real-time transcription
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // Clear the no-speech timeout since we got speech
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+        noSpeechTimeoutRef.current = null;
+      }
+
+      // Get the transcript from the results
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      // Update the transcript display (prefer final, fallback to interim)
+      const currentTranscript = finalTranscript || interimTranscript;
+      setVoiceTranscript(currentTranscript);
+
+      // If we have a final result, execute the search
+      if (finalTranscript) {
+        setQuery(finalTranscript.trim());
+        stopVoiceSearch();
+      }
+    };
+
+    // Handle end - recognition stopped
+    recognition.onend = () => {
+      // Only stop listening if we haven't already (to avoid double-cleanup)
+      if (isListening) {
+        setIsListening(false);
+      }
+    };
+
+    // Handle errors
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      // Clear timeout
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+        noSpeechTimeoutRef.current = null;
+      }
+
+      // Handle specific errors
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        // Permission denied
+        alert('Microphone access required. Please allow microphone access in your browser settings.');
+      } else if (event.error === 'no-speech') {
+        // No speech detected (handled by our timeout, but browser may also trigger this)
+        alert("Didn't catch that. Please try again.");
+      } else if (event.error !== 'aborted') {
+        // Other errors (not aborted - which is our intentional cancel)
+        console.error('Speech recognition error:', event.error);
+      }
+
+      stopVoiceSearch();
+    };
+
+    // Start listening
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      stopVoiceSearch();
+    }
   };
+
+  /**
+   * Cancel voice search when overlay is tapped
+   */
+  const handleVoiceSearchCancel = () => {
+    stopVoiceSearch();
+  };
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.abort();
+      }
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Handle tapping a recent search to execute it
@@ -664,6 +933,13 @@ export function SearchPage() {
         isOpen={showClearConfirm}
         onConfirm={confirmClearAll}
         onCancel={cancelClearAll}
+      />
+
+      {/* Voice search listening overlay */}
+      <VoiceSearchOverlay
+        isListening={isListening}
+        transcript={voiceTranscript}
+        onCancel={handleVoiceSearchCancel}
       />
     </div>
   );
