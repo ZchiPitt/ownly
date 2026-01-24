@@ -2453,3 +2453,23 @@ Created a comprehensive reusable Skeleton component library that provides buildi
   - Toggle button group pattern works better than a switch for view preference (two mutually exclusive options)
   - Changes apply immediately without page reload due to React Query caching
 ---
+
+## 2026-01-24 - US-086
+- What was implemented:
+  - Verified that Item Detail loading and error states were already fully implemented
+  - Loading state uses `ItemDetailSkeleton` component with photo placeholder and text lines
+  - 404 state shows "This item no longer exists" with Back to Inventory button
+  - Network error shows "Couldn't load item details" with Try Again button
+  - Permission errors redirect to /inventory with appropriate error message
+  - All error states meet the <500ms load time target
+
+- Files changed:
+  - scripts/ralph/prd.json (updated US-086 passes status)
+
+- **Learnings for future iterations:**
+  - The ItemDetailPage.tsx already contains comprehensive error handling and loading states
+  - All four required states are implemented: loading, 404, network error, and permission error
+  - The skeleton loader matches the final layout for smooth transition
+  - Error states provide clear messaging and actionable options (retry, back to inventory)
+  - This story was already completed as part of the Item Detail feature implementation
+---
