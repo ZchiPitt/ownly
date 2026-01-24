@@ -66,6 +66,11 @@
 - usePushNotifications hook at `/src/hooks/usePushNotifications.ts` - use `const { permissionState, isSupported, isRequesting, requestPermission, unsubscribe } = usePushNotifications()` for Web Push API permission flow
 - push_subscriptions table stores Web Push subscription endpoints (endpoint, p256dh, auth keys)
 - VAPID public key configured via `VITE_VAPID_PUBLIC_KEY` environment variable for Web Push
+- useOnlineStatus hook at `/src/hooks/useOnlineStatus.ts` - use `const { isOnline, isOffline } = useOnlineStatus()` for tracking connection status
+- useOffline hook at `/src/hooks/useOffline.ts` - use `const { isOnline, requireOnline, showOfflineToast } = useOffline()` for offline state and actions
+- OfflineProvider at `/src/contexts/OfflineProvider.tsx` - provides offline context; wrap app with `<OfflineProvider>`
+- OfflineBanner at `/src/components/OfflineBanner.tsx` - shows "You're offline" banner at top when disconnected
+- requireOnline(actionName) returns true if online, false if offline (also shows toast with action message)
 
 ---
 
@@ -1998,4 +2003,44 @@
   - Page view and time tracking are shared with Android hook via same localStorage keys
   - ESLint strict mode requires avoiding setState in useEffect body - use lazy initializers
   - Use storage event listener for cross-tab sync of localStorage values
+---
+
+## 2026-01-24 - US-072
+- What was implemented:
+  - Created useOnlineStatus hook at /src/hooks/useOnlineStatus.ts
+  - Hook tracks online/offline status using Navigator.onLine API
+  - Listens to window 'online' and 'offline' events for real-time updates
+  - Returns isOnline and isOffline convenience properties
+  - Created OfflineBanner component at /src/components/OfflineBanner.tsx
+  - Banner shows "You're offline" with wifi-off icon at top of screen
+  - Fixed position with amber/yellow background for visibility
+  - Automatically shows/hides based on connection status
+  - Created OfflineContext and OfflineProvider at /src/contexts/
+  - Provider offers requireOnline() helper for network-required actions
+  - showOfflineToast() for custom offline messages
+  - Shows toast "This requires an internet connection" when action attempted offline
+  - Created useOffline hook at /src/hooks/useOffline.ts to consume context
+  - Integrated OfflineBanner into AppShell (renders at top, above header)
+  - Wrapped App with OfflineProvider for global offline state access
+
+- Files changed:
+  - src/hooks/useOnlineStatus.ts (new - 48 lines)
+  - src/hooks/useOffline.ts (new - 33 lines)
+  - src/components/OfflineBanner.tsx (new - 56 lines)
+  - src/contexts/offline-context.ts (new - 21 lines)
+  - src/contexts/OfflineProvider.tsx (new - 63 lines)
+  - src/contexts/index.ts (modified - added OfflineContext and OfflineProvider exports)
+  - src/components/layout/AppShell.tsx (modified - added OfflineBanner import and render)
+  - src/App.tsx (modified - wrapped with OfflineProvider)
+
+- **Learnings for future iterations:**
+  - useOnlineStatus hook at `/src/hooks/useOnlineStatus.ts` - use `const { isOnline, isOffline } = useOnlineStatus()`
+  - useOffline hook at `/src/hooks/useOffline.ts` - use `const { isOnline, requireOnline, showOfflineToast } = useOffline()`
+  - OfflineProvider wraps app for global offline state; OfflineContext for context value
+  - navigator.onLine returns true for online, false for offline (may be optimistic in some cases)
+  - window 'online'/'offline' events fire when connection status changes
+  - ESLint react-hooks/set-state-in-effect rule prevents setState sync calls in useEffect
+  - Use lazy initializer in useState for reading navigator.onLine on mount instead
+  - requireOnline(actionName) returns true if online, false if offline (also shows toast)
+  - type-only imports required for TypeScript verbatimModuleSyntax compatibility
 ---
