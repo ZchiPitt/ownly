@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BottomNav } from './BottomNav'
 import { InstallBanner } from '../InstallBanner'
+import { IOSInstallBanner } from '../IOSInstallBanner'
 import { Toast } from '../Toast'
 
 interface AppShellProps {
@@ -54,6 +55,11 @@ export function AppShell({
       {/* Install banner for Android/Chrome */}
       {showBottomNav && (
         <InstallBanner onInstalled={handleInstalled} />
+      )}
+
+      {/* Install instructions banner for iOS Safari */}
+      {showBottomNav && (
+        <IOSInstallBanner />
       )}
 
       {/* Bottom navigation */}
