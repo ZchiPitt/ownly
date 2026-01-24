@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AuthProvider, OfflineProvider, ToastProvider } from '@/contexts'
+import { AuthProvider, OfflineProvider, ToastProvider, ConfirmProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
 import { ToastContainer } from '@/components/Toast'
 import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage } from '@/pages'
@@ -11,7 +11,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ToastProvider maxToasts={5}>
-        <AppContent />
+        <ConfirmProvider>
+          <AppContent />
+        </ConfirmProvider>
       </ToastProvider>
     </QueryClientProvider>
   )

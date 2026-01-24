@@ -90,10 +90,10 @@ export function SettingsPage() {
     if (result === 'granted') {
       // Update user settings in database
       setIsUpdating(true);
-      const success = await updateSettings({ push_notifications_enabled: true });
+      const updateSuccess = await updateSettings({ push_notifications_enabled: true });
       setIsUpdating(false);
 
-      if (success) {
+      if (updateSuccess) {
         success('Push notifications enabled');
       } else {
         error('Failed to save notification setting');
