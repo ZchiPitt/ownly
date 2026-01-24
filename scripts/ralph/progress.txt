@@ -1901,3 +1901,36 @@
   - Apple devices need apple-touch-icon and apple-mobile-web-app-* meta tags
   - Supabase type inference issues can be fixed with `as ReturnType<typeof supabase.from>` and `as Record<string, unknown>` casting
 ---
+
+## 2026-01-23 - US-069
+- What was implemented:
+  - Installed vite-plugin-pwa for Workbox-based service worker generation
+  - Configured vite.config.ts with PWA plugin and caching strategies:
+    - App shell (HTML, CSS, JS, fonts) cached on install with cache-first strategy
+    - Supabase REST API responses use network-first with 24h cache fallback
+    - Supabase Edge Functions use network-first with 1h cache fallback
+    - Supabase Storage images use cache-first with 30-day expiration
+    - Images and fonts use cache-first for optimal performance
+  - Cache includes version (`clekee-v1`) for controlled updates
+  - Service worker registered on app load in main.tsx with:
+    - onNeedRefresh: dispatches custom 'pwa-update-available' event for UI (US-090)
+    - onOfflineReady: logs when app can work offline
+    - onRegistered/onRegisterError: logging for debugging
+  - Added TypeScript declarations for vite-plugin-pwa virtual modules
+  - Added global type for custom PWA update event
+
+- Files changed:
+  - package.json, package-lock.json (added vite-plugin-pwa)
+  - vite.config.ts (added VitePWA plugin configuration)
+  - src/main.tsx (added service worker registration)
+  - src/types/vite-pwa.d.ts (new - PWA type declarations)
+
+- **Learnings for future iterations:**
+  - vite-plugin-pwa generates sw.js and workbox-*.js in dist/ during build
+  - Use `registerType: 'prompt'` for manual control over service worker updates
+  - Use `manifest: false` to use existing manifest.json from public folder
+  - Workbox runtimeCaching patterns use regex to match URLs
+  - NetworkFirst with networkTimeoutSeconds provides cache fallback on slow networks
+  - CacheFirst is ideal for immutable assets (images, fonts, storage files)
+  - Custom events can be used to communicate between SW registration and app UI
+---
