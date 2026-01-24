@@ -68,9 +68,9 @@ export function useNotifications(): UseNotificationsReturn {
     if (!user) return;
 
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
+      const { error: updateError } = await (supabase
+        .from('notifications') as ReturnType<typeof supabase.from>)
+        .update({ is_read: true } as Record<string, unknown>)
         .eq('id', notificationId)
         .eq('user_id', user.id);
 
@@ -94,9 +94,9 @@ export function useNotifications(): UseNotificationsReturn {
     if (!user) return;
 
     try {
-      const { error: updateError } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
+      const { error: updateError } = await (supabase
+        .from('notifications') as ReturnType<typeof supabase.from>)
+        .update({ is_read: true } as Record<string, unknown>)
         .eq('user_id', user.id)
         .eq('is_read', false);
 

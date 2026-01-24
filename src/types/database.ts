@@ -258,12 +258,23 @@ export type Database = {
           is_pushed?: boolean;
           created_at?: string;
         };
-        Update: Partial<Omit<Notification, 'id' | 'user_id' | 'created_at' | 'type'>>;
+        Update: {
+          title?: string;
+          body?: string | null;
+          item_id?: string | null;
+          is_read?: boolean;
+          is_pushed?: boolean;
+          pushed_at?: string | null;
+        };
         Relationships: [];
       };
       push_subscriptions: {
         Row: PushSubscription;
-        Insert: Omit<PushSubscription, 'id' | 'created_at' | 'updated_at'> & {
+        Insert: {
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
           id?: string;
           device_name?: string | null;
           user_agent?: string | null;
@@ -272,7 +283,16 @@ export type Database = {
           updated_at?: string;
           last_used_at?: string | null;
         };
-        Update: Partial<Omit<PushSubscription, 'id' | 'user_id' | 'created_at'>>;
+        Update: {
+          endpoint?: string;
+          p256dh?: string;
+          auth?: string;
+          device_name?: string | null;
+          user_agent?: string | null;
+          is_active?: boolean;
+          updated_at?: string;
+          last_used_at?: string | null;
+        };
         Relationships: [];
       };
     };

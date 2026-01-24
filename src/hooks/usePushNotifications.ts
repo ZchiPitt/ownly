@@ -126,8 +126,8 @@ export function usePushNotifications(): UsePushNotificationsReturn {
         throw new Error('Invalid subscription data');
       }
 
-      const { error: upsertError } = await supabase
-        .from('push_subscriptions')
+      const { error: upsertError } = await (supabase
+        .from('push_subscriptions') as ReturnType<typeof supabase.from>)
         .upsert(
           {
             user_id: user.id,
@@ -136,7 +136,7 @@ export function usePushNotifications(): UsePushNotificationsReturn {
             auth: subscriptionData.keys.auth || '',
             user_agent: navigator.userAgent,
             is_active: true,
-          },
+          } as Record<string, unknown>,
           {
             onConflict: 'user_id,endpoint',
           }
@@ -217,9 +217,10 @@ export function usePushNotifications(): UsePushNotificationsReturn {
       // If not subscribed and we have a VAPID key, create new subscription
       if (!subscription && VAPID_PUBLIC_KEY) {
         try {
+          const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
           });
         } catch (subscribeError) {
           console.error('Failed to subscribe to push:', subscribeError);
