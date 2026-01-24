@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -45,6 +46,9 @@ export function SettingsPage() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [editingName, setEditingName] = useState(user?.user_metadata?.display_name || '');
+  const [isSavingName, setIsSavingName] = useState(false);
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true);
@@ -124,6 +128,51 @@ export function SettingsPage() {
     setShowLogoutDialog(false);
   };
 
+  const handleEditProfileClick = () => {
+    setEditingName(user?.user_metadata?.display_name || '');
+    setShowEditProfile(true);
+  };
+
+  const handleCancelEditProfile = () => {
+    setShowEditProfile(false);
+    setEditingName(user?.user_metadata?.display_name || '');
+  };
+
+  const handleSaveEditProfile = async () => {
+    // Validate input
+    const name = editingName.trim();
+    if (!name) {
+      error('Display name cannot be empty');
+      return;
+    }
+
+    if (name.length > 50) {
+      error('Display name must be 50 characters or less');
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      // Update the user metadata in Supabase
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { display_name: name },
+      });
+
+      if (updateError) {
+        console.error('Error updating display name:', updateError);
+        error('Failed to update display name');
+      } else {
+        success('Display name updated successfully');
+        setShowEditProfile(false);
+      }
+    } catch (err) {
+      console.error('Error updating display name:', err);
+      error('Failed to update display name');
+    } finally {
+      setIsSavingName(false);
+    }
+  };
+
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
     try {
@@ -150,17 +199,64 @@ export function SettingsPage() {
 
       {/* Settings Content */}
       <div className="p-4 space-y-6">
-        {/* Account Section Placeholder - will be expanded in US-088 */}
+        {/* Account Section - US-088 */}
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Account
           </h2>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-4 py-3">
-              <p className="text-sm text-gray-600">
-                Signed in as <span className="font-medium text-gray-900">{user?.email}</span>
-              </p>
+            {/* User Profile Info */}
+            <div className="px-4 py-4 border-b border-gray-100">
+              <div className="flex items-center space-x-4">
+                {/* User Avatar or Initials */}
+                <div className="h-14 w-14 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                  {user?.user_metadata?.display_name
+                    ? user.user_metadata.display_name
+                        .split(' ')
+                        .map((n: string) => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()
+                    : user?.email?.[0]?.toUpperCase() || '?'}
+                </div>
+                <div className="flex-1">
+                  {/* Display Name */}
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {user?.user_metadata?.display_name || 'User'}
+                  </h3>
+                  {/* Email */}
+                  <p className="text-sm text-gray-500">{user?.email}</p>
+                </div>
+              </div>
             </div>
+
+            {/* Edit Profile Button */}
+            <button
+              onClick={handleEditProfileClick}
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-b-0"
+            >
+              <div>
+                <p className="text-base font-medium text-gray-900">Edit Profile</p>
+                <p className="text-sm text-gray-500">Change your display name</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            {/* Change Password Link */}
+            <button
+              onClick={() => navigate('/reset-password')}
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
+            >
+              <div>
+                <p className="text-base font-medium text-gray-900">Change Password</p>
+                <p className="text-sm text-gray-500">Reset your password</p>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         </section>
 
@@ -461,6 +557,94 @@ export function SettingsPage() {
                   </>
                 ) : (
                   'Log out'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Profile Dialog */}
+      {showEditProfile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50" onClick={handleCancelEditProfile} />
+
+          {/* Dialog */}
+          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Edit Profile
+            </h2>
+
+            {/* Display Name Input */}
+            <div className="mb-4">
+              <label htmlFor="display-name" className="block text-sm font-medium text-gray-700 mb-2">
+                Display Name
+              </label>
+              <input
+                id="display-name"
+                type="text"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                maxLength={50}
+                placeholder="Enter your display name"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">Up to 50 characters</p>
+            </div>
+
+            {/* Email (read-only) */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <p className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 border border-gray-200">
+                {user?.email}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleCancelEditProfile}
+                disabled={isSavingName}
+                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditProfile}
+                disabled={isSavingName || !editingName.trim() || editingName.trim().length > 50}
+                className="flex-1 py-2.5 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              >
+                {isSavingName ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  'Save'
                 )}
               </button>
             </div>
