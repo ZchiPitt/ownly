@@ -63,6 +63,9 @@
 - Use AbortController with Supabase `.abortSignal()` to cancel in-flight requests when new search initiated
 - For Web Speech API types, add global Window declarations: `interface Window { SpeechRecognition?: ...; webkitSpeechRecognition?: ...; }`
 - useRecentSearches hook at `/src/hooks/useRecentSearches.ts` - use `const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()` for localStorage-persisted search history
+- usePushNotifications hook at `/src/hooks/usePushNotifications.ts` - use `const { permissionState, isSupported, isRequesting, requestPermission, unsubscribe } = usePushNotifications()` for Web Push API permission flow
+- push_subscriptions table stores Web Push subscription endpoints (endpoint, p256dh, auth keys)
+- VAPID public key configured via `VITE_VAPID_PUBLIC_KEY` environment variable for Web Push
 
 ---
 
@@ -1727,4 +1730,174 @@
   - Search feature empty/loading states were implemented holistically with the main search functionality
   - When implementing features, consider implementing related UX states in the same PR
   - AbortController pattern works well with Supabase's .abortSignal() method
+---
+
+## 2026-01-24 - US-064
+- What was implemented:
+  - Added "Reminders & Notifications" section to SettingsPage
+  - Master toggle "Enable Reminders" (reminder_enabled) with helper text
+  - When enabled, shows indented sub-options:
+    - Unused Item Reminder dropdown: 30/60/90/180/365 days (reminder_threshold_days)
+    - Expiration Reminder dropdown: 3/7/14/30 days before (expiration_reminder_days)
+    - Push Notifications toggle (push_notifications_enabled)
+  - All settings save to user_settings via useUserSettings hook on change
+  - Loading state with pulse animation while settings are being fetched
+  - Error toast "Failed to update setting" when save fails
+  - Proper accessibility: aria-checked, role="switch", label associations
+
+- Files changed:
+  - src/pages/SettingsPage.tsx (updated - added reminder settings section with 168 new lines)
+
+- **Learnings for future iterations:**
+  - Custom toggle switch: Use button with role="switch" and aria-checked for accessibility
+  - Toggle animation: translate-x-5 for ON, translate-x-0 for OFF with smooth transition
+  - Indentation pattern: pl-8 creates visual hierarchy for sub-options
+  - Settings update pattern: handleSettingChange function with isUpdating guard to prevent double-submit
+  - Optional chaining with nullish coalescing (settings?.field ?? default) handles undefined state gracefully
+---
+
+## 2026-01-24 - US-065
+- What was implemented:
+  - Created SQL migration for push_subscriptions table to store Web Push API endpoints
+  - Table fields: id, user_id, endpoint, p256dh, auth, device_name, user_agent, is_active, timestamps
+  - RLS policies: users can only manage their own subscriptions
+  - Added PushSubscription type to TypeScript types
+  - Created usePushNotifications hook with:
+    - Browser Push API support detection
+    - Permission state tracking (granted/denied/default/unsupported)
+    - requestPermission() function that requests browser permission and creates subscription
+    - unsubscribe() function to remove push subscription
+    - Subscription storage in Supabase push_subscriptions table
+  - Updated SettingsPage to use push notification hook:
+    - Shows loading spinner in toggle while requesting permission
+    - Shows "Notifications blocked" warning when permission denied
+    - Provides "How to enable" help link
+    - Toast messages for success/error states
+  - Added VITE_VAPID_PUBLIC_KEY to .env.example
+
+- Files changed:
+  - supabase/migrations/20260123000010_create_push_subscriptions_table.sql (new)
+  - src/types/database.ts (added PushSubscription type and table definition)
+  - src/types/index.ts (exported PushSubscription)
+  - src/hooks/usePushNotifications.ts (new)
+  - src/pages/SettingsPage.tsx (integrated push notification permission flow)
+  - .env.example (added VAPID public key)
+
+- **Learnings for future iterations:**
+  - Web Push API requires service worker registration via navigator.serviceWorker.ready
+  - PushSubscription.toJSON() returns { endpoint, keys: { p256dh, auth } } for server storage
+  - VAPID public key must be converted from base64 URL-safe to Uint8Array for applicationServerKey
+  - Permission can be 'default' (not asked yet), 'granted', or 'denied'
+  - Use document.visibilitychange event to detect if user changed permissions in browser settings
+  - Push subscription upsert with onConflict handles re-registering same device
+---
+
+## 2026-01-24 - US-066
+- What was implemented:
+  - Created NotificationsPage at /notifications with full notification list UI
+  - Created useNotifications hook for fetching and managing notifications
+  - Created NotificationBell component with unread count badge
+  - Added bell icon to Dashboard header (next to avatar)
+  - Added bell icon to Inventory header (next to search icon)
+  - Badge shows red indicator with unread count (or 9+ if >9)
+  - Notifications list with type icons (unused_item, expiring_item, system)
+  - Unread notifications highlighted with blue background and blue dot
+  - Mark All Read link in header when unread exist
+  - Tap notification marks as read and navigates to linked item
+  - Loading skeletons and empty/error states
+
+- Files changed:
+  - src/hooks/useNotifications.ts (new)
+  - src/components/NotificationBell.tsx (new)
+  - src/pages/NotificationsPage.tsx (new)
+  - src/pages/index.ts (exported NotificationsPage)
+  - src/App.tsx (added /notifications route)
+  - src/pages/DashboardPage.tsx (added NotificationBell)
+  - src/pages/InventoryPage.tsx (added NotificationBell)
+
+- **Learnings for future iterations:**
+  - NotificationBell component is reusable across pages with useNotifications hook
+  - Badge uses min-width 18px for consistent sizing with 9+ text
+  - Notification type icons: clock for unused_item, warning for expiring_item, info for system
+  - Unread indicator is a blue dot on right side of notification title
+  - Mark as read is fire-and-forget on click, updates local state immediately
+---
+
+## 2026-01-24 - US-067
+- What was implemented:
+  - Created Supabase Edge Function at supabase/functions/generate-reminders/index.ts
+  - Background job to generate reminder notifications for users
+  - Intended to be triggered daily via pg_cron, Supabase scheduled functions, or external scheduler
+  - Finds users with reminder_enabled = true in user_settings
+  - Finds unused items: last_viewed_at < (now - threshold) AND keep_forever=false AND deleted_at IS NULL
+  - Finds expiring items: expiration_date BETWEEN now AND (now + days)
+  - Creates notification records with duplicate prevention (checks for existing notifications within 7 days for unused, 24 hours for expiring)
+  - Friendly notification titles and body text with days ago/until formatting
+  - Optional secret key validation for external schedulers (X-Reminder-Secret header)
+  - Uses SUPABASE_SERVICE_ROLE_KEY to bypass RLS for processing all users
+  - Returns JSON response with: users_processed, unused_notifications_created, expiring_notifications_created, errors
+
+- Files changed:
+  - supabase/functions/generate-reminders/index.ts (new)
+
+- **Learnings for future iterations:**
+  - Scheduled Edge Functions can use SUPABASE_SERVICE_ROLE_KEY to bypass RLS
+  - For batch operations across users, service role key is required
+  - Duplicate prevention uses time-based checks (7 days for unused, 24 hours for expiring)
+  - Use optional secret key (REMINDER_SECRET_KEY) for external scheduler security
+  - Supabase .or() filter syntax: `.or('field.is.null,field.lt.value')`
+  - Date comparisons with Supabase use ISO format strings
+  - Include recently expired items (within 7 days) in expiring notifications
+---
+
+## 2026-01-24 - US-068
+- What was implemented:
+  - Created /public/manifest.json with PWA configuration:
+    - name: "Clekee - Smart Home Inventory"
+    - short_name: "Clekee"
+    - description: App description
+    - start_url: "/"
+    - display: "standalone"
+    - theme_color: "#3B82F6" (blue)
+    - background_color: "#FFFFFF"
+    - orientation: "portrait-primary"
+    - Icons array referencing 192x192, 512x512, and maskable versions
+  - Created app icons using sharp library:
+    - icon-192x192.png and icon-512x512.png (standard)
+    - icon-192x192-maskable.png and icon-512x512-maskable.png (with safe zone)
+    - favicon.png, favicon.ico, apple-touch-icon.png
+    - icon.svg (source SVG design)
+  - Created scripts/generate-icons.mjs for regenerating icons
+  - Updated index.html with:
+    - PWA meta tags (theme-color, description, apple-mobile-web-app-*)
+    - Favicon links (PNG and ICO)
+    - Apple touch icon link
+    - Manifest link
+    - Updated title to "Clekee - Smart Home Inventory"
+  - Fixed pre-existing TypeScript errors in hooks (type casting for Supabase calls)
+
+- Files changed:
+  - public/manifest.json (new)
+  - public/icons/icon-192x192.png (new)
+  - public/icons/icon-512x512.png (new)
+  - public/icons/icon-192x192-maskable.png (new)
+  - public/icons/icon-512x512-maskable.png (new)
+  - public/icons/favicon.png (new)
+  - public/icons/apple-touch-icon.png (new)
+  - public/icons/icon.svg (new)
+  - public/favicon.ico (new)
+  - index.html (modified)
+  - scripts/generate-icons.mjs (new)
+  - package.json, package-lock.json (added sharp dependency)
+  - src/hooks/useNotifications.ts (fixed type casting)
+  - src/hooks/usePushNotifications.ts (fixed type casting)
+  - src/types/database.ts (fixed Update type definitions)
+
+- **Learnings for future iterations:**
+  - Use sharp library (npm install sharp --save-dev) for programmatic PNG generation from SVG
+  - Maskable icons need 10% padding on all sides for safe zone (Android adaptive icons)
+  - PWA manifest requires at least 192x192 and 512x512 icons
+  - theme_color in manifest should match meta[name="theme-color"] in HTML
+  - Apple devices need apple-touch-icon and apple-mobile-web-app-* meta tags
+  - Supabase type inference issues can be fixed with `as ReturnType<typeof supabase.from>` and `as Record<string, unknown>` casting
 ---

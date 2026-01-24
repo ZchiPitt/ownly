@@ -1132,7 +1132,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 64,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1149,7 +1149,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 65,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1169,7 +1169,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 66,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1187,7 +1187,7 @@
         "Typecheck passes"
       ],
       "priority": 67,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1202,7 +1202,7 @@
         "Typecheck passes"
       ],
       "priority": 68,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
