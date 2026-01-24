@@ -309,11 +309,22 @@ export interface ShoppingAnalyzeRequest {
   image_url: string;
 }
 
+/**
+ * Shopping usage tracking
+ */
+export interface ShoppingUsage {
+  photo_count: number;
+  photo_limit: number;
+  text_count?: number;
+  text_limit?: number;
+}
+
 export interface ShoppingAnalyzeResponse {
   detected_item: DetectedItem | null;
   similar_items: SimilarItem[];
   advice: string | null;
   analyzed_at: string;
+  usage: ShoppingUsage;
 }
 
 /**

@@ -15,6 +15,7 @@ import { Toast } from '@/components/Toast';
 import { validateImage, compressImage, uploadToStorage } from '@/lib/imageUtils';
 import { useAuth } from '@/hooks/useAuth';
 import { useOffline } from '@/hooks/useOffline';
+import { useShoppingUsage } from '@/hooks/useShoppingUsage';
 import { supabase } from '@/lib/supabase';
 import type {
   ShoppingAnalyzeResponse,
@@ -174,6 +175,17 @@ export function ShoppingPage() {
   const { session } = useAuth();
   const { requireOnline } = useOffline();
 
+  // Shopping usage tracking for limits
+  const {
+    updateUsage,
+    showPhotoWarning,
+    showTextWarning,
+    photoLimitReached,
+    textLimitReached,
+    getPhotoWarningMessage,
+    getTextWarningMessage,
+  } = useShoppingUsage();
+
   // Load recent queries on mount
   useEffect(() => {
     setRecentQueries(loadRecentQueries());
@@ -280,6 +292,13 @@ export function ShoppingPage() {
         // Handle specific error codes
         if (response.status === 429) {
           const details = data.error?.details as { photo_count?: number; photo_limit?: number } | undefined;
+          // Update usage state to reflect limit reached
+          if (details) {
+            updateUsage({
+              photo_count: details.photo_count ?? 20,
+              photo_limit: details.photo_limit ?? 20,
+            });
+          }
           addMessage(
             'assistant',
             'text',
@@ -304,6 +323,14 @@ export function ShoppingPage() {
 
       // Successfully received analysis
       const analysisResponse = data as ShoppingAnalyzeResponse;
+
+      // Update usage state from response
+      if (analysisResponse.usage) {
+        updateUsage({
+          photo_count: analysisResponse.usage.photo_count,
+          photo_limit: analysisResponse.usage.photo_limit,
+        });
+      }
 
       // Create analysis message
       const newMessage: ChatMessage = {
@@ -339,7 +366,7 @@ export function ShoppingPage() {
     } finally {
       setIsTyping(false);
     }
-  }, [addMessage, requireOnline, saveRecentQuery]);
+  }, [addMessage, requireOnline, saveRecentQuery, updateUsage]);
 
   /**
    * Handle file selection from camera or gallery (initial state)
@@ -600,6 +627,13 @@ export function ShoppingPage() {
         // Handle specific error codes
         if (response.status === 429) {
           const details = data.error?.details as { text_count?: number; text_limit?: number } | undefined;
+          // Update usage state to reflect limit reached
+          if (details) {
+            updateUsage({
+              text_count: details.text_count ?? 50,
+              text_limit: details.text_limit ?? 50,
+            });
+          }
           addMessage(
             'assistant',
             'text',
@@ -624,6 +658,15 @@ export function ShoppingPage() {
 
       // Successfully received response
       const followupResponse = data as ShoppingFollowupResponse;
+
+      // Update usage state from response
+      if (followupResponse.usage) {
+        updateUsage({
+          text_count: followupResponse.usage.text_count,
+          text_limit: followupResponse.usage.text_limit,
+        });
+      }
+
       addMessage('assistant', 'text', followupResponse.response);
 
     } catch (error) {
@@ -636,7 +679,7 @@ export function ShoppingPage() {
     } finally {
       setIsTyping(false);
     }
-  }, [inputValue, addMessage, buildConversationHistory, requireOnline]);
+  }, [inputValue, addMessage, buildConversationHistory, requireOnline, updateUsage]);
 
   /**
    * Handle Enter key press in input
@@ -864,10 +907,42 @@ export function ShoppingPage() {
     );
   };
 
+  // Get current warning messages
+  const photoWarningMessage = getPhotoWarningMessage();
+  const textWarningMessage = getTextWarningMessage();
+
   // Render Chat Interface
   if (viewState === 'chat') {
     return (
       <div className="h-full flex flex-col bg-gray-50">
+        {/* Usage Warning Banner */}
+        {(showPhotoWarning || photoLimitReached) && (
+          <div
+            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
+              photoLimitReached
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}
+          >
+            <span className="mr-1">{photoLimitReached ? '🚫' : '⚠️'}</span>
+            {photoWarningMessage}
+          </div>
+        )}
+
+        {/* Text Usage Warning Banner (only show when different from photo warning) */}
+        {(showTextWarning || textLimitReached) && !photoLimitReached && (
+          <div
+            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
+              textLimitReached
+                ? 'bg-red-100 text-red-700'
+                : 'bg-yellow-100 text-yellow-800'
+            }`}
+          >
+            <span className="mr-1">{textLimitReached ? '🚫' : '⚠️'}</span>
+            {textWarningMessage}
+          </div>
+        )}
+
         {/* Chat Header */}
         <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -943,7 +1018,12 @@ export function ShoppingPage() {
             {/* Camera Button */}
             <button
               onClick={handleChatCameraClick}
-              className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              disabled={photoLimitReached}
+              className={`flex-shrink-0 p-2 rounded-full transition-colors ${
+                photoLimitReached
+                  ? 'text-gray-300 cursor-not-allowed'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+              }`}
               aria-label="Add photo"
             >
               <svg
@@ -975,19 +1055,24 @@ export function ShoppingPage() {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask a follow-up..."
-                className="w-full px-4 py-2 bg-gray-100 rounded-full border border-transparent focus:border-blue-300 focus:bg-white focus:outline-none transition-colors"
+                disabled={textLimitReached}
+                placeholder={textLimitReached ? "Daily limit reached" : "Ask a follow-up..."}
+                className={`w-full px-4 py-2 rounded-full border border-transparent focus:outline-none transition-colors ${
+                  textLimitReached
+                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-100 focus:border-blue-300 focus:bg-white'
+                }`}
               />
             </div>
 
             {/* Send Button */}
             <button
               onClick={handleSendMessage}
-              disabled={!inputValue.trim()}
+              disabled={!inputValue.trim() || textLimitReached}
               className={`flex-shrink-0 p-2 rounded-full transition-colors ${
-                inputValue.trim()
+                inputValue.trim() && !textLimitReached
                   ? 'bg-blue-500 text-white hover:bg-blue-600'
-                  : 'bg-gray-100 text-gray-400'
+                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
               }`}
               aria-label="Send message"
             >
@@ -1154,6 +1239,20 @@ export function ShoppingPage() {
   // Render Initial State
   return (
     <div className="min-h-full flex flex-col bg-gray-50">
+      {/* Usage Warning Banner */}
+      {(showPhotoWarning || photoLimitReached) && (
+        <div
+          className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
+            photoLimitReached
+              ? 'bg-red-100 text-red-700'
+              : 'bg-yellow-100 text-yellow-800'
+          }`}
+        >
+          <span className="mr-1">{photoLimitReached ? '🚫' : '⚠️'}</span>
+          {photoWarningMessage}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex-shrink-0 pt-6 pb-4 px-4">
         <h1 className="text-2xl font-bold text-gray-900">Shop</h1>
@@ -1197,7 +1296,7 @@ export function ShoppingPage() {
           {/* Take Photo Card */}
           <button
             onClick={handleTakePhoto}
-            disabled={isProcessing}
+            disabled={isProcessing || photoLimitReached}
             className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
@@ -1253,7 +1352,7 @@ export function ShoppingPage() {
           {/* Choose from Gallery Card */}
           <button
             onClick={handleChooseFromGallery}
-            disabled={isProcessing}
+            disabled={isProcessing || photoLimitReached}
             className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
