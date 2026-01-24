@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BottomNav } from './BottomNav'
 import { InstallBanner } from '../InstallBanner'
 import { IOSInstallBanner } from '../IOSInstallBanner'
+import { OfflineBanner } from '../OfflineBanner'
 import { Toast } from '../Toast'
 
 interface AppShellProps {
@@ -36,6 +37,9 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Offline status banner */}
+      <OfflineBanner />
+
       {/* Header area */}
       {header && (
         <header className="sticky top-0 bg-white border-b border-gray-200 z-40">
