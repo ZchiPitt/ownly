@@ -52,8 +52,8 @@ export function SettingsPage() {
 
   // Handle settings updates with optimistic UI
   const handleSettingChange = async (
-    key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled',
-    value: boolean | number
+    key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled' | 'default_view',
+    value: boolean | number | string
   ) => {
     if (isUpdating || isRequestingPush) return;
 
@@ -341,6 +341,52 @@ export function SettingsPage() {
                 )}
               </>
             )}
+          </div>
+        </section>
+
+        {/* Display Section - US-087 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Display
+          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Default View Toggle - Gallery / List */}
+            <div className="px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <label className="text-sm font-medium text-gray-900">
+                    Default View
+                  </label>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Choose how your inventory displays by default
+                  </p>
+                </div>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => handleSettingChange('default_view', 'gallery')}
+                    disabled={isUpdating}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      settings?.default_view === 'gallery'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Gallery
+                  </button>
+                  <button
+                    onClick={() => handleSettingChange('default_view', 'list')}
+                    disabled={isUpdating}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                      settings?.default_view === 'list'
+                        ? 'bg-white text-blue-600 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    List
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

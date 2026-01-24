@@ -2404,3 +2404,52 @@ Created a comprehensive reusable Skeleton component library that provides buildi
   - TypeScript noUnusedLocals will catch unused type imports
 
 ---
+---
+
+## 2026-01-24 - US-085
+- What was implemented:
+  - Created reusable BottomSheet component at `/src/components/BottomSheet.tsx`
+  - Props-based API: isOpen, onClose, title, children, footer, maxWidth, showHandleBar, showCloseButton
+  - Implemented backdrop overlay with tap-to-close functionality
+  - Added escape key handler for accessibility
+  - Included header with title and close button (optional)
+  - Scrollable content area with max-height constraint (85vh)
+  - Optional footer section for action buttons
+  - Customizable max width (default: max-w-lg)
+  - Smooth slide-up animation and fade-in backdrop
+  - Prevents body scroll when open
+
+- Files changed:
+  - src/components/BottomSheet.tsx (new)
+
+- **Learnings for future iterations:**
+  - Pattern: Bottom sheet component follows modal best practices: backdrop, escape key, scroll prevention
+  - Use `useRef` for backdrop click detection (only close when clicking backdrop, not sheet)
+  - Use `animate-in` and `slide-in-from-bottom` CSS utilities for smooth animations
+  - Use flex layout with `items-end justify-center` for bottom positioning with horizontal centering
+  - Max height constraint to `85vh` prevents overflow on small screens
+  - Header, handle bar, and close button are all optional via props
+  - Pattern extends existing component patterns from Toast and ConfirmDialog systems
+  - Component design makes existing LocationFilterBottomSheet and SortBottomSheet components interchangeable with this new reusable component
+  - TypeScript Generics: If component needs to be type-safe with different content types, use generics
+  - Build passed successfully with only Tailwind CSS warnings (unrelated to changes)
+
+## 2026-01-24 - US-087
+- What was implemented:
+  - Added Display section to SettingsPage between Account and Reminders & Notifications sections
+  - Display section shows Default View toggle with Gallery/List buttons
+  - Button groups highlight active selection (white background with blue text) vs inactive (gray)
+  - Uses the existing handleSettingChange function extended to support 'default_view' key
+  - Changes save immediately via useUserSettings.updateSettings hook
+  - InventoryPage already loads and applies default_view from user_settings
+
+- Files changed:
+  - src/pages/SettingsPage.tsx (added Display section UI, extended handleSettingChange type)
+
+- **Learnings for future iterations:**
+  - default_view setting is already implemented in useUserSettings and InventoryPage
+  - The handleSettingChange function needed to accept string type for default_view value
+  - Settings are structured in logical order: Account → Display → Reminders & Notifications
+  - Toggle button group pattern works better than a switch for view preference (two mutually exclusive options)
+  - Changes apply immediately without page reload due to React Query caching
+---

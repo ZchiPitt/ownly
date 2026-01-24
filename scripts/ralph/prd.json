@@ -1511,7 +1511,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 85,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1544,8 +1544,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 87,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implemented Display section with Gallery/List toggle button group between Reminders & Notifications and Account sections. Uses updateSettings hook same as other user settings."
     },
     {
       "id": "US-088",
