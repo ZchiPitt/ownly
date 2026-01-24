@@ -1,4 +1,7 @@
+import { useState } from 'react'
 import { BottomNav } from './BottomNav'
+import { InstallBanner } from '../InstallBanner'
+import { Toast } from '../Toast'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -24,6 +27,12 @@ export function AppShell({
   showBottomNav = true,
   bottomPadding = true,
 }: AppShellProps) {
+  const [showInstallToast, setShowInstallToast] = useState(false)
+
+  const handleInstalled = () => {
+    setShowInstallToast(true)
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header area */}
@@ -42,8 +51,22 @@ export function AppShell({
         {children}
       </main>
 
+      {/* Install banner for Android/Chrome */}
+      {showBottomNav && (
+        <InstallBanner onInstalled={handleInstalled} />
+      )}
+
       {/* Bottom navigation */}
       {showBottomNav && <BottomNav />}
+
+      {/* Install success toast */}
+      {showInstallToast && (
+        <Toast
+          message="App installed!"
+          type="success"
+          onClose={() => setShowInstallToast(false)}
+        />
+      )}
     </div>
   )
 }
