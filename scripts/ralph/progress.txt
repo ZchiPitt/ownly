@@ -2291,3 +2291,48 @@
   - setToast state setter needs to be in useCallback dependencies for React compiler
   - Toast component already exists at `/src/components/Toast.tsx` for simple notifications
 ---
+
+---
+## Iteration: US-082 - Create loading skeletons for all main pages
+- **Status:** COMPLETED
+- **Date:** 2026-01-24
+- **Commit:** 02d70b5
+
+### Summary
+Created a comprehensive reusable Skeleton component library that provides building blocks for loading placeholders across all main pages.
+
+### Components Created
+- **SkeletonLine**: Text placeholder (single line) with configurable width/height
+- **SkeletonCircle**: Circular placeholder for avatars/icons
+- **SkeletonRect**: Rectangular placeholder for images/cards with aspect ratio support
+- **SkeletonCard**: Card placeholder with optional image, text lines, and badge
+- **SkeletonListRow**: List row placeholder with thumbnail and action area
+- **SkeletonGrid**: Grid of card skeletons for gallery view (responsive columns)
+- **SkeletonList**: List of row skeletons with optional dividers
+- **SkeletonStatCard**: Dashboard stat card placeholder
+- **SkeletonSection**: Section with header placeholder
+- **SkeletonItemDetail**: Full item detail page skeleton
+- **SkeletonSearchResult**: Search result row skeleton
+- **SkeletonDashboard**: Full dashboard page skeleton
+- **SkeletonInventory**: Inventory page skeleton (adapts to view mode)
+
+### Files Changed
+- src/components/Skeleton.tsx (new - 536 lines)
+
+### Acceptance Criteria Met
+- ✅ Create reusable Skeleton components (line, card, grid, list)
+- ✅ Dashboard: stat cards skeleton, section skeletons (SkeletonDashboard, SkeletonStatCard, SkeletonSection)
+- ✅ Inventory: grid or list skeleton matching view mode (SkeletonInventory with viewMode prop)
+- ✅ Item Detail: photo placeholder, text line skeletons (SkeletonItemDetail)
+- ✅ Search: result row skeletons (SkeletonSearchResult)
+- ✅ Skeletons use pulse animation (all components use animate-pulse)
+- ✅ Typecheck passes
+
+### Learnings for future iterations
+- Skeleton components are reusable via `/src/components/Skeleton.tsx`
+- Import specific components: `import { SkeletonLine, SkeletonCard, SkeletonGrid } from '@/components/Skeleton'`
+- All components accept className for additional styling
+- SkeletonInventory adapts to viewMode='gallery' or viewMode='list'
+- Page-specific skeletons (Dashboard, ItemDetail, etc.) provide complete page loading states
+- Building blocks (Line, Rect, Circle) can be composed for custom layouts
+---

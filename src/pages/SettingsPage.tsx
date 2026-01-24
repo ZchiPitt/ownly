@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { Toast } from '@/components/Toast';
+import { useToast } from '@/hooks/useToast';
 
 // Unused item reminder threshold options (days)
 const UNUSED_THRESHOLD_OPTIONS = [
@@ -41,9 +41,9 @@ export function SettingsPage() {
     requestPermission,
     unsubscribe: unsubscribePush,
   } = usePushNotifications();
+  const { success, error } = useToast();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleLogoutClick = () => {
@@ -74,14 +74,14 @@ export function SettingsPage() {
     setIsUpdating(false);
 
     if (!success) {
-      setToast({ message: 'Failed to update setting', type: 'error' });
+      error('Failed to update setting');
     }
   };
 
   // Handle enabling push notifications
   const handleEnablePushNotifications = async () => {
     if (!isPushSupported) {
-      setToast({ message: 'Push notifications are not supported in this browser', type: 'error' });
+      error('Push notifications are not supported in this browser');
       return;
     }
 
@@ -94,17 +94,14 @@ export function SettingsPage() {
       setIsUpdating(false);
 
       if (success) {
-        setToast({ message: 'Push notifications enabled', type: 'success' });
+        success('Push notifications enabled');
       } else {
-        setToast({ message: 'Failed to save notification setting', type: 'error' });
+        error('Failed to save notification setting');
       }
     } else if (result === 'denied') {
-      setToast({
-        message: 'Notifications blocked. Please enable in browser settings.',
-        type: 'error',
-      });
+      error('Notifications blocked. Please enable in browser settings.');
     } else {
-      setToast({ message: 'Failed to enable notifications', type: 'error' });
+      error('Failed to enable notifications');
     }
   };
 
@@ -119,7 +116,7 @@ export function SettingsPage() {
     setIsUpdating(false);
 
     if (!success) {
-      setToast({ message: 'Failed to update setting', type: 'error' });
+      error('Failed to update setting');
     }
   };
 
@@ -132,7 +129,7 @@ export function SettingsPage() {
     try {
       await signOut();
       // Show toast briefly before redirect
-      setToast({ message: 'Logged out successfully', type: 'success' });
+      success('Logged out successfully');
       // Small delay to allow user to see success message
       setTimeout(() => {
         navigate('/login', { replace: true });
@@ -140,7 +137,7 @@ export function SettingsPage() {
     } catch {
       setIsLoggingOut(false);
       setShowLogoutDialog(false);
-      setToast({ message: 'Failed to log out. Please try again.', type: 'error' });
+      error('Failed to log out. Please try again.');
     }
   };
 
@@ -330,11 +327,7 @@ export function SettingsPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                // Open a help modal or navigate to instructions
-                                setToast({
-                                  message: 'Go to browser settings > Site Settings > Notifications to enable',
-                                  type: 'error',
-                                });
+                                error('Go to browser settings > Site Settings > Notifications to enable');
                               }}
                               className="font-medium underline hover:no-underline"
                             >
@@ -427,15 +420,6 @@ export function SettingsPage() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Toast notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
       )}
     </div>
   );
