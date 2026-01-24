@@ -316,6 +316,43 @@ export interface ShoppingAnalyzeResponse {
   analyzed_at: string;
 }
 
+/**
+ * Shopping assistant follow-up message (for conversation context)
+ */
+export interface ShoppingConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  type: 'text' | 'image' | 'analysis';
+  imageUrl?: string;
+  analysisData?: {
+    detected_item?: DetectedItem | null;
+    similar_items?: Array<{
+      name: string | null;
+      similarity: number;
+    }>;
+  };
+}
+
+/**
+ * Shopping assistant follow-up request
+ */
+export interface ShoppingFollowupRequest {
+  message: string;
+  conversation_history: ShoppingConversationMessage[];
+}
+
+/**
+ * Shopping assistant follow-up response
+ */
+export interface ShoppingFollowupResponse {
+  response: string;
+  responded_at: string;
+  usage: {
+    text_count: number;
+    text_limit: number;
+  };
+}
+
 // ============================================
 // Embedding Request/Response Types
 // ============================================

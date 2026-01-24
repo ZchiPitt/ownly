@@ -16,7 +16,13 @@ import { validateImage, compressImage, uploadToStorage } from '@/lib/imageUtils'
 import { useAuth } from '@/hooks/useAuth';
 import { useOffline } from '@/hooks/useOffline';
 import { supabase } from '@/lib/supabase';
-import type { ShoppingAnalyzeResponse, SimilarItem, DetectedItem } from '@/types/api';
+import type {
+  ShoppingAnalyzeResponse,
+  ShoppingFollowupResponse,
+  ShoppingConversationMessage,
+  SimilarItem,
+  DetectedItem,
+} from '@/types/api';
 
 // Storage key for recent shopping queries
 const RECENT_QUERIES_KEY = 'clekee_shopping_queries';
@@ -514,27 +520,123 @@ export function ShoppingPage() {
   }, []);
 
   /**
+   * Build conversation history for API from messages state
+   */
+  const buildConversationHistory = useCallback((): ShoppingConversationMessage[] => {
+    return messages.map((msg) => ({
+      role: msg.role,
+      content: msg.content,
+      type: msg.type,
+      imageUrl: msg.imageUrl,
+      analysisData: msg.analysisData
+        ? {
+            detected_item: msg.analysisData.detected_item,
+            similar_items: msg.analysisData.similar_items?.map((item) => ({
+              name: item.name,
+              similarity: item.similarity,
+            })),
+          }
+        : undefined,
+    }));
+  }, [messages]);
+
+  /**
    * Handle sending a text message
    */
   const handleSendMessage = useCallback(async () => {
     const text = inputValue.trim();
     if (!text) return;
 
+    // Check online status
+    if (!requireOnline('send message')) {
+      setToast({
+        message: "You're offline. Connect to send messages.",
+        type: 'warning',
+      });
+      return;
+    }
+
     // Add user message
     addMessage('user', 'text', text);
     setInputValue('');
 
-    // For now, send a helpful response for text-only messages
     setIsTyping(true);
-    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    addMessage(
-      'assistant',
-      'text',
-      "To get shopping advice, please send a photo of the item you're considering. I'll search your inventory for similar items and give you personalized recommendations."
-    );
-    setIsTyping(false);
-  }, [inputValue, addMessage]);
+    try {
+      // Get the current session token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      if (!token) {
+        addMessage(
+          'assistant',
+          'text',
+          'Please sign in to continue the conversation.'
+        );
+        setIsTyping(false);
+        return;
+      }
+
+      // Build conversation history
+      const conversationHistory = buildConversationHistory();
+
+      // Call the Edge Function
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/shopping-followup`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: text,
+          conversation_history: conversationHistory,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes
+        if (response.status === 429) {
+          const details = data.error?.details as { text_count?: number; text_limit?: number } | undefined;
+          addMessage(
+            'assistant',
+            'text',
+            `You've used ${details?.text_count ?? 'all'} of your ${details?.text_limit ?? 50} daily questions. Try again tomorrow!`
+          );
+        } else if (response.status === 401) {
+          addMessage(
+            'assistant',
+            'text',
+            'Your session has expired. Please sign in again.'
+          );
+        } else {
+          addMessage(
+            'assistant',
+            'text',
+            data.error?.message || 'Something went wrong. Please try again.'
+          );
+        }
+        setIsTyping(false);
+        return;
+      }
+
+      // Successfully received response
+      const followupResponse = data as ShoppingFollowupResponse;
+      addMessage('assistant', 'text', followupResponse.response);
+
+    } catch (error) {
+      console.error('Error sending message:', error);
+      addMessage(
+        'assistant',
+        'text',
+        'Sorry, I had trouble responding. Please try again.'
+      );
+    } finally {
+      setIsTyping(false);
+    }
+  }, [inputValue, addMessage, buildConversationHistory, requireOnline]);
 
   /**
    * Handle Enter key press in input
