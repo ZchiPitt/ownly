@@ -71,6 +71,8 @@
 - OfflineProvider at `/src/contexts/OfflineProvider.tsx` - provides offline context; wrap app with `<OfflineProvider>`
 - OfflineBanner at `/src/components/OfflineBanner.tsx` - shows "You're offline" banner at top when disconnected
 - requireOnline(actionName) returns true if online, false if offline (also shows toast with action message)
+- shopping-followup Edge Function at `supabase/functions/shopping-followup/index.ts` for chat follow-up questions
+- ShoppingConversationMessage type in api.ts for passing conversation context to Edge Functions
 
 ---
 
@@ -2157,4 +2159,79 @@
   - ShoppingAnalyzeResponse type from api.ts has usage info in optional property
   - Modal overlays use fixed positioning with z-50 and bg-black/50 backdrop
   - animate-in slide-in-from-bottom for bottom sheet modal animations
+---
+
+## 2026-01-24 - US-077
+- What was implemented:
+  - Created shopping-followup Edge Function for handling text follow-up questions
+  - Edge Function builds conversation context from message history (last 10 messages)
+  - Uses GPT-4o-mini for cost-efficient conversational responses
+  - Updated ShoppingPage handleSendMessage to call the new Edge Function
+  - Passes full conversation history to API including detected items and similar items info
+  - Added ShoppingFollowupRequest/Response types to api.ts
+  - Rate limiting: 50 text questions per day per user
+  - Proper error handling for rate limits (429), auth errors (401), and offline state
+
+- Files changed:
+  - supabase/functions/shopping-followup/index.ts (new)
+  - src/pages/ShoppingPage.tsx (modified - updated handleSendMessage)
+  - src/types/api.ts (modified - added ShoppingFollowupRequest/Response, ShoppingConversationMessage)
+
+- **Learnings for future iterations:**
+  - For conversation context, limit to last 10 messages to avoid token limits
+  - Use gpt-4o-mini for follow-up responses (cheaper than gpt-4o)
+  - shopping_usage table already has text_count column from previous migration
+  - increment_shopping_text_usage() SQL function already exists
+  - When building conversation history, only include essential data (detected_item name/category, similarity scores) not full objects
+  - Edge Function can reuse existing auth validation pattern from shopping-analyze
+---
+
+## 2026-01-23 - US-078
+- What was implemented:
+  - Added ShoppingUsage type to api.ts for tracking photo/text usage limits
+  - Created useShoppingUsage hook at /src/hooks/useShoppingUsage.ts with:
+    - Daily limits: 20 photo analyses, 50 text questions
+    - Warning thresholds: show warning at 5 remaining photos, 10 remaining questions
+    - Helper functions: getPhotoWarningMessage, getTextWarningMessage, etc.
+    - Usage state management via updateUsage callback
+  - Updated ShoppingPage to integrate usage tracking:
+    - Warning banners displayed when approaching limits (yellow) or at limit (red)
+    - Buttons/inputs disabled when limits reached
+    - Usage state updated from API responses
+    - Camera button and photo action cards disabled when photo limit reached
+    - Text input and send button disabled when text limit reached
+
+- Files changed:
+  - src/types/api.ts (modified - added ShoppingUsage type, updated ShoppingAnalyzeResponse)
+  - src/hooks/useShoppingUsage.ts (new)
+  - src/pages/ShoppingPage.tsx (modified - integrated useShoppingUsage, added warning UI)
+
+- **Learnings for future iterations:**
+  - Usage limits were already implemented in Edge Functions (US-075, US-077) - just needed UI integration
+  - shopping_usage table already existed with increment functions
+  - Edge Function responses already included usage data in responses
+  - useShoppingUsage hook tracks client-side state that syncs with API responses
+  - Warning thresholds: 5 remaining for photos (at 15 uses), 10 remaining for text
+  - Limits reset at midnight UTC (handled by database using usage_date column)
+---
+
+## 2026-01-24 - US-079
+- What was implemented:
+  - Created Supabase Edge Function `cleanup-deleted-items` for permanently deleting soft-deleted items
+  - Function finds items where deleted_at < NOW() - 30 days
+  - Hard deletes item records from the database
+  - Deletes associated files from Supabase Storage (photo and thumbnail)
+  - Logs deletion counts for audit purposes
+  - Optional secret key validation for external schedulers
+
+- Files changed:
+  - supabase/functions/cleanup-deleted-items/index.ts (new - Edge Function for permanent deletion)
+
+- **Learnings for future iterations:**
+  - Storage URLs have pattern: /storage/v1/object/{public|sign}/items/{user-id}/{filename}
+  - Use extractStoragePath() helper to extract the path from full URL for storage deletion
+  - Supabase storage.remove() accepts array of paths for batch deletion
+  - Service role key bypasses RLS for both database and storage operations
+  - Edge Functions can be triggered via pg_cron, Supabase scheduled functions, or external schedulers
+  - Optional secret key header (X-Cleanup-Secret) provides protection for external triggers
 ---
