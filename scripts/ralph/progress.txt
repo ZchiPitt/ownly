@@ -2473,3 +2473,42 @@ Created a comprehensive reusable Skeleton component library that provides buildi
   - Error states provide clear messaging and actionable options (retry, back to inventory)
   - This story was already completed as part of the Item Detail feature implementation
 ---
+
+## 2026-01-24 - US-089, US-090
+- **US-089: Completed app router with 404 page**
+  - Created NotFoundPage component with friendly error messaging
+  - Added comprehensive 404 handling for both auth and protected routes
+  - Updated router to include wildcard fallback routes
+  - All routes properly wrapped with ProtectedRoute where needed
+
+- **US-090: Implemented app update detection**
+  - Created ServiceWorkerUpdateDetector component
+  - Listens for pwa-update-available events from vite-plugin-pwa
+  - Shows persistent toast notification with Refresh button
+  - Checks for updates on page focus
+  - Handles service worker updates gracefully
+
+- **Files changed:**
+  - src/pages/NotFoundPage.tsx (new)
+  - src/pages/index.ts (updated - added NotFoundPage export)
+  - src/App.tsx (updated - added routes, update detection)
+
+- **Key implementation details:**
+  - NotFoundPage shows helpful links and provides clear navigation back to app
+  - Service worker update detection integrates with existing vite-plugin-pwa setup
+  - Uses react-router-dom v6 nested routes structure
+  - Toast notifications provide non-intrusive update prompts
+
+- **Verification:**
+  - Type check: PASS
+  - Production build: PASS (with existing chunk size warnings)
+  - All acceptance criteria met for both stories
+
+- **Learnings for future iterations:**
+  - React Router v6 nested Routes structure allows 404 handling at different levels
+  - vite-plugin-pwa dispatches custom events that can be listened for update detection
+  - Service worker updates should be non-blocking and user-initiated
+  - Toast notifications with actions provide good UX for app updates
+  - useToast hook provides info(), success(), error(), warning() methods (not add())
+  - 404 pages should be helpful, not just show errors
+---
