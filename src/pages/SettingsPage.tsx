@@ -3,12 +3,14 @@
  * Allows users to configure preferences and log out
  * US-020: Create logout functionality in settings
  * US-064: Create Settings page - reminder settings section
+ * US-065: Implement push notification permission flow
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Toast } from '@/components/Toast';
 
 // Unused item reminder threshold options (days)
@@ -32,6 +34,13 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { settings, updateSettings, isLoading: isLoadingSettings } = useUserSettings();
+  const {
+    permissionState,
+    isSupported: isPushSupported,
+    isRequesting: isRequestingPush,
+    requestPermission,
+    unsubscribe: unsubscribePush,
+  } = usePushNotifications();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -46,10 +55,67 @@ export function SettingsPage() {
     key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled',
     value: boolean | number
   ) => {
-    if (isUpdating) return;
+    if (isUpdating || isRequestingPush) return;
+
+    // Special handling for push notifications toggle
+    if (key === 'push_notifications_enabled' && value === true) {
+      await handleEnablePushNotifications();
+      return;
+    }
+
+    // If disabling push notifications, also unsubscribe
+    if (key === 'push_notifications_enabled' && value === false) {
+      await handleDisablePushNotifications();
+      return;
+    }
 
     setIsUpdating(true);
     const success = await updateSettings({ [key]: value });
+    setIsUpdating(false);
+
+    if (!success) {
+      setToast({ message: 'Failed to update setting', type: 'error' });
+    }
+  };
+
+  // Handle enabling push notifications
+  const handleEnablePushNotifications = async () => {
+    if (!isPushSupported) {
+      setToast({ message: 'Push notifications are not supported in this browser', type: 'error' });
+      return;
+    }
+
+    const result = await requestPermission();
+
+    if (result === 'granted') {
+      // Update user settings in database
+      setIsUpdating(true);
+      const success = await updateSettings({ push_notifications_enabled: true });
+      setIsUpdating(false);
+
+      if (success) {
+        setToast({ message: 'Push notifications enabled', type: 'success' });
+      } else {
+        setToast({ message: 'Failed to save notification setting', type: 'error' });
+      }
+    } else if (result === 'denied') {
+      setToast({
+        message: 'Notifications blocked. Please enable in browser settings.',
+        type: 'error',
+      });
+    } else {
+      setToast({ message: 'Failed to enable notifications', type: 'error' });
+    }
+  };
+
+  // Handle disabling push notifications
+  const handleDisablePushNotifications = async () => {
+    // Unsubscribe from push notifications
+    await unsubscribePush();
+
+    // Update user settings in database
+    setIsUpdating(true);
+    const success = await updateSettings({ push_notifications_enabled: false });
     setIsUpdating(false);
 
     if (!success) {
@@ -199,31 +265,84 @@ export function SettingsPage() {
                     </div>
 
                     {/* Push Notifications Toggle */}
-                    <div className="px-4 py-4 flex items-center justify-between">
-                      <div className="flex-1">
-                        <label htmlFor="push-toggle" className="text-sm font-medium text-gray-900">
-                          Push Notifications
-                        </label>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          Receive reminders on your device
-                        </p>
+                    <div className="px-4 py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <label htmlFor="push-toggle" className="text-sm font-medium text-gray-900">
+                            Push Notifications
+                          </label>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            Receive reminders on your device
+                          </p>
+                        </div>
+                        {isPushSupported ? (
+                          <button
+                            id="push-toggle"
+                            role="switch"
+                            aria-checked={settings?.push_notifications_enabled ?? false}
+                            onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
+                            disabled={isUpdating || isRequestingPush}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                              settings?.push_notifications_enabled ? 'bg-blue-600' : 'bg-gray-200'
+                            }`}
+                          >
+                            {isRequestingPush ? (
+                              <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
+                                <svg
+                                  className="animate-spin h-3 w-3 text-blue-500"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  />
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  />
+                                </svg>
+                              </span>
+                            ) : (
+                              <span
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                  settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
+                                }`}
+                              />
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-gray-400">Not supported</span>
+                        )}
                       </div>
-                      <button
-                        id="push-toggle"
-                        role="switch"
-                        aria-checked={settings?.push_notifications_enabled ?? false}
-                        onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
-                        disabled={isUpdating}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          settings?.push_notifications_enabled ? 'bg-blue-600' : 'bg-gray-200'
-                        }`}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
+
+                      {/* Notifications blocked message */}
+                      {isPushSupported && permissionState === 'denied' && (
+                        <div className="mt-2 p-2 bg-amber-50 rounded-md border border-amber-200">
+                          <p className="text-xs text-amber-800">
+                            Notifications blocked in browser settings.{' '}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Open a help modal or navigate to instructions
+                                setToast({
+                                  message: 'Go to browser settings > Site Settings > Notifications to enable',
+                                  type: 'error',
+                                });
+                              }}
+                              className="font-medium underline hover:no-underline"
+                            >
+                              How to enable
+                            </button>
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

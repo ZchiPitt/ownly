@@ -15,6 +15,7 @@ export type {
   Location,
   Item,
   Notification,
+  PushSubscription,
   ItemAIMetadata,
   NotificationType,
   // Supabase Database type definition

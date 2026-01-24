@@ -140,6 +140,24 @@ export interface Notification {
   created_at: string;
 }
 
+/**
+ * Web Push subscription endpoint
+ * Table: push_subscriptions
+ */
+export interface PushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  device_name: string | null;
+  user_agent: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+}
+
 // ============================================
 // Supabase Database Type Definition
 // For use with createClient<Database>()
@@ -241,6 +259,20 @@ export type Database = {
           created_at?: string;
         };
         Update: Partial<Omit<Notification, 'id' | 'user_id' | 'created_at' | 'type'>>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: PushSubscription;
+        Insert: Omit<PushSubscription, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string;
+          device_name?: string | null;
+          user_agent?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          last_used_at?: string | null;
+        };
+        Update: Partial<Omit<PushSubscription, 'id' | 'user_id' | 'created_at'>>;
         Relationships: [];
       };
     };
