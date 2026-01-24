@@ -7,12 +7,16 @@
  * - Take Photo and Choose from Gallery buttons
  * - Recent shopping queries section (last 3)
  * - Chat interface after photo capture (US-074)
- * - AI-powered analysis of items for shopping advice
+ * - AI-powered analysis of items for shopping advice (US-076)
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Toast } from '@/components/Toast';
-import { validateImage, compressImage } from '@/lib/imageUtils';
+import { validateImage, compressImage, uploadToStorage } from '@/lib/imageUtils';
+import { useAuth } from '@/hooks/useAuth';
+import { useOffline } from '@/hooks/useOffline';
+import { supabase } from '@/lib/supabase';
+import type { ShoppingAnalyzeResponse, SimilarItem, DetectedItem } from '@/types/api';
 
 // Storage key for recent shopping queries
 const RECENT_QUERIES_KEY = 'clekee_shopping_queries';
@@ -34,12 +38,23 @@ interface RecentQuery {
 // Chat message types
 type MessageType = 'text' | 'image' | 'analysis';
 
+interface AnalysisData {
+  detected_item: DetectedItem | null;
+  similar_items: SimilarItem[];
+  advice: string | null;
+  usage?: {
+    photo_count: number;
+    photo_limit: number;
+  };
+}
+
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   type: MessageType;
   content: string; // For text messages
   imageUrl?: string; // For image messages
+  analysisData?: AnalysisData; // For analysis messages
   timestamp: number;
 }
 
@@ -147,6 +162,11 @@ export function ShoppingPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<SimilarItem | null>(null);
+
+  // Get auth session and offline status
+  const { session } = useAuth();
+  const { requireOnline } = useOffline();
 
   // Load recent queries on mount
   useEffect(() => {
@@ -182,22 +202,138 @@ export function ShoppingPage() {
   }, []);
 
   /**
-   * Simulate AI response (placeholder for US-075/US-076)
+   * Save a query to recent searches
    */
-  const simulateAIResponse = useCallback(async () => {
+  const saveRecentQuery = useCallback((thumbnailUrl: string, itemName: string) => {
+    try {
+      const queries = loadRecentQueries();
+      const newQuery: RecentQuery = {
+        id: generateId(),
+        thumbnailUrl,
+        itemName,
+        timestamp: Date.now(),
+      };
+
+      // Add to front and limit to max
+      const updated = [newQuery, ...queries.filter(q => q.thumbnailUrl !== thumbnailUrl)]
+        .slice(0, MAX_RECENT_QUERIES);
+
+      localStorage.setItem(RECENT_QUERIES_KEY, JSON.stringify(updated));
+      setRecentQueries(updated);
+    } catch {
+      // Silently fail on localStorage errors
+    }
+  }, []);
+
+  /**
+   * Call the shopping-analyze Edge Function
+   */
+  const analyzeShoppingImage = useCallback(async (imageUrl: string) => {
     setIsTyping(true);
 
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Check online status
+      if (!requireOnline('analyze')) {
+        addMessage(
+          'assistant',
+          'text',
+          "I can't analyze this image while you're offline. Please check your connection and try again."
+        );
+        setIsTyping(false);
+        return;
+      }
 
-    addMessage(
-      'assistant',
-      'text',
-      "I'm analyzing your photo... (AI analysis will be implemented in the next update)"
-    );
+      // Get the current session token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
 
-    setIsTyping(false);
-  }, [addMessage]);
+      if (!token) {
+        addMessage(
+          'assistant',
+          'text',
+          'Please sign in to use the shopping assistant.'
+        );
+        setIsTyping(false);
+        return;
+      }
+
+      // Call the Edge Function
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/shopping-analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image_url: imageUrl }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error codes
+        if (response.status === 429) {
+          const details = data.error?.details as { photo_count?: number; photo_limit?: number } | undefined;
+          addMessage(
+            'assistant',
+            'text',
+            `You've used ${details?.photo_count ?? 'all'} of your ${details?.photo_limit ?? 20} daily analyses. Try again tomorrow!`
+          );
+        } else if (response.status === 401) {
+          addMessage(
+            'assistant',
+            'text',
+            'Your session has expired. Please sign in again.'
+          );
+        } else {
+          addMessage(
+            'assistant',
+            'text',
+            data.error?.message || 'Something went wrong. Please try again.'
+          );
+        }
+        setIsTyping(false);
+        return;
+      }
+
+      // Successfully received analysis
+      const analysisResponse = data as ShoppingAnalyzeResponse;
+
+      // Create analysis message
+      const newMessage: ChatMessage = {
+        id: generateId(),
+        role: 'assistant',
+        type: 'analysis',
+        content: analysisResponse.advice || "I've analyzed your photo.",
+        analysisData: {
+          detected_item: analysisResponse.detected_item,
+          similar_items: analysisResponse.similar_items,
+          advice: analysisResponse.advice,
+          usage: (data as { usage?: { photo_count: number; photo_limit: number } }).usage,
+        },
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, newMessage]);
+
+      // Save to recent queries if we detected an item
+      if (analysisResponse.detected_item) {
+        saveRecentQuery(
+          imageUrl,
+          analysisResponse.detected_item.name
+        );
+      }
+
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+      addMessage(
+        'assistant',
+        'text',
+        'Sorry, I had trouble analyzing that image. Please try again.'
+      );
+    } finally {
+      setIsTyping(false);
+    }
+  }, [addMessage, requireOnline, saveRecentQuery]);
 
   /**
    * Handle file selection from camera or gallery (initial state)
@@ -207,6 +343,16 @@ export function ShoppingPage() {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Check online status before starting
+    if (!requireOnline('analyze')) {
+      setToast({
+        message: "You're offline. Connect to analyze images.",
+        type: 'warning',
+      });
+      event.target.value = '';
+      return;
+    }
 
     setIsProcessing(true);
 
@@ -224,16 +370,33 @@ export function ShoppingPage() {
 
       // Compress the image for display
       const compressedBlob = await compressImage(file);
-      const imageUrl = URL.createObjectURL(compressedBlob);
+      const localImageUrl = URL.createObjectURL(compressedBlob);
 
       // Transition to chat view
       setViewState('chat');
 
-      // Add user's image as first message
-      addMessage('user', 'image', 'Photo uploaded', imageUrl);
+      // Add user's image as first message (with local URL for display)
+      addMessage('user', 'image', 'Photo uploaded', localImageUrl);
 
-      // Simulate AI response
-      await simulateAIResponse();
+      // Upload to Supabase storage for AI analysis
+      if (!session?.user?.id) {
+        addMessage('assistant', 'text', 'Please sign in to use the shopping assistant.');
+        return;
+      }
+
+      // Generate unique filename for shopping photo
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8);
+      const filename = `shopping-${timestamp}-${random}.jpg`;
+
+      const uploadResult = await uploadToStorage(
+        compressedBlob,
+        session.user.id,
+        filename
+      );
+
+      // Call AI analysis with the uploaded URL
+      await analyzeShoppingImage(uploadResult.url);
 
     } catch (error) {
       console.error('Error processing image:', error);
@@ -246,7 +409,7 @@ export function ShoppingPage() {
       // Reset input value to allow selecting the same file again
       event.target.value = '';
     }
-  }, [addMessage, simulateAIResponse]);
+  }, [addMessage, analyzeShoppingImage, requireOnline, session?.user?.id]);
 
   /**
    * Handle adding a new photo in chat mode
@@ -256,6 +419,16 @@ export function ShoppingPage() {
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Check online status
+    if (!requireOnline('analyze')) {
+      setToast({
+        message: "You're offline. Connect to analyze images.",
+        type: 'warning',
+      });
+      event.target.value = '';
+      return;
+    }
 
     try {
       // Validate the selected image
@@ -271,13 +444,30 @@ export function ShoppingPage() {
 
       // Compress the image for display
       const compressedBlob = await compressImage(file);
-      const imageUrl = URL.createObjectURL(compressedBlob);
+      const localImageUrl = URL.createObjectURL(compressedBlob);
 
-      // Add user's image message
-      addMessage('user', 'image', 'Photo uploaded', imageUrl);
+      // Add user's image message (with local URL for display)
+      addMessage('user', 'image', 'Photo uploaded', localImageUrl);
 
-      // Simulate AI response
-      await simulateAIResponse();
+      // Upload to Supabase storage for AI analysis
+      if (!session?.user?.id) {
+        addMessage('assistant', 'text', 'Please sign in to continue.');
+        return;
+      }
+
+      // Generate unique filename for shopping photo
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 8);
+      const filename = `shopping-${timestamp}-${random}.jpg`;
+
+      const uploadResult = await uploadToStorage(
+        compressedBlob,
+        session.user.id,
+        filename
+      );
+
+      // Call AI analysis
+      await analyzeShoppingImage(uploadResult.url);
 
     } catch (error) {
       console.error('Error processing image:', error);
@@ -289,7 +479,7 @@ export function ShoppingPage() {
       // Reset input value
       event.target.value = '';
     }
-  }, [addMessage, simulateAIResponse]);
+  }, [addMessage, analyzeShoppingImage, requireOnline, session?.user?.id]);
 
   /**
    * Handle Take Photo button click
@@ -334,9 +524,17 @@ export function ShoppingPage() {
     addMessage('user', 'text', text);
     setInputValue('');
 
-    // Simulate AI response
-    await simulateAIResponse();
-  }, [inputValue, addMessage, simulateAIResponse]);
+    // For now, send a helpful response for text-only messages
+    setIsTyping(true);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+
+    addMessage(
+      'assistant',
+      'text',
+      "To get shopping advice, please send a photo of the item you're considering. I'll search your inventory for similar items and give you personalized recommendations."
+    );
+    setIsTyping(false);
+  }, [inputValue, addMessage]);
 
   /**
    * Handle Enter key press in input
@@ -352,15 +550,24 @@ export function ShoppingPage() {
    * Handle recent query click
    */
   const handleRecentQueryClick = useCallback((query: RecentQuery) => {
+    // Check online status
+    if (!requireOnline('analyze')) {
+      setToast({
+        message: "You're offline. Connect to analyze images.",
+        type: 'warning',
+      });
+      return;
+    }
+
     // Transition to chat view with the saved query
     setViewState('chat');
 
     // Add the saved image as first message
     addMessage('user', 'image', query.itemName, query.thumbnailUrl);
 
-    // Simulate AI response
-    simulateAIResponse();
-  }, [addMessage, simulateAIResponse]);
+    // Re-analyze the image
+    analyzeShoppingImage(query.thumbnailUrl);
+  }, [addMessage, analyzeShoppingImage, requireOnline]);
 
   /**
    * Handle New Chat button
@@ -370,7 +577,139 @@ export function ShoppingPage() {
     setMessages([]);
     setInputValue('');
     setIsTyping(false);
+    setSelectedItem(null);
   }, []);
+
+  /**
+   * Render a similar item card
+   */
+  const renderSimilarItem = (item: SimilarItem) => {
+    const matchPercentage = Math.round(item.similarity * 100);
+    const matchColor =
+      matchPercentage >= 90
+        ? 'bg-red-100 text-red-700'
+        : matchPercentage >= 70
+          ? 'bg-orange-100 text-orange-700'
+          : 'bg-green-100 text-green-700';
+
+    return (
+      <button
+        key={item.id}
+        onClick={() => setSelectedItem(item)}
+        className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all active:scale-[0.98] w-full text-left"
+      >
+        {/* Thumbnail */}
+        <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+          <img
+            src={item.thumbnail_url || item.photo_url}
+            alt={item.name || 'Item'}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 truncate">
+            {item.name || 'Unnamed item'}
+          </p>
+          {item.location_path && (
+            <p className="text-xs text-gray-500 truncate">
+              📍 {item.location_path}
+            </p>
+          )}
+        </div>
+
+        {/* Match Percentage */}
+        <div
+          className={`px-2 py-1 rounded-full text-xs font-medium ${matchColor}`}
+        >
+          {matchPercentage}%
+        </div>
+      </button>
+    );
+  };
+
+  /**
+   * Render an analysis message with similar items
+   */
+  const renderAnalysisMessage = (message: ChatMessage) => {
+    const data = message.analysisData;
+    if (!data) return null;
+
+    const hasSimilarItems = data.similar_items.length > 0;
+    const highMatchItems = data.similar_items.filter(i => i.similarity >= 0.9);
+
+    return (
+      <div className="flex justify-start mb-2">
+        <div className="max-w-[90%] rounded-2xl bg-gray-200 text-gray-900 rounded-bl-md px-4 py-3">
+          {/* Detected Item Header */}
+          {data.detected_item && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-lg">🔍</span>
+                <span className="font-medium text-gray-900">
+                  {data.detected_item.name}
+                </span>
+              </div>
+              {data.detected_item.category_suggestion && (
+                <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                  {data.detected_item.category_suggestion}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Similar Items Section */}
+          {hasSimilarItems ? (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {highMatchItems.length > 0
+                    ? `⚠️ Found ${highMatchItems.length} very similar item${highMatchItems.length > 1 ? 's' : ''}!`
+                    : `📦 ${data.similar_items.length} similar item${data.similar_items.length > 1 ? 's' : ''} in your inventory`}
+                </span>
+              </div>
+              <div className="space-y-2">
+                {data.similar_items.slice(0, 3).map(renderSimilarItem)}
+              </div>
+              {data.similar_items.length > 3 && (
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  +{data.similar_items.length - 3} more items
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="mb-3 p-3 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">✅</span>
+                <span className="text-sm text-green-700">
+                  No similar items found in your inventory
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* AI Advice */}
+          {data.advice && (
+            <div className="pt-3 border-t border-gray-300">
+              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+                {data.advice}
+              </p>
+            </div>
+          )}
+
+          {/* Usage indicator */}
+          {data.usage && (
+            <div className="mt-3 pt-2 border-t border-gray-300">
+              <p className="text-xs text-gray-500">
+                📸 {data.usage.photo_count}/{data.usage.photo_limit} daily analyses used
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   /**
    * Render a single chat message
@@ -394,27 +733,31 @@ export function ShoppingPage() {
         )}
 
         {/* Message Bubble */}
-        <div
-          className={`flex mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}
-        >
+        {message.type === 'analysis' ? (
+          renderAnalysisMessage(message)
+        ) : (
           <div
-            className={`max-w-[80%] rounded-2xl ${
-              isUser
-                ? 'bg-blue-500 text-white rounded-br-md'
-                : 'bg-gray-200 text-gray-900 rounded-bl-md'
-            } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
+            className={`flex mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}
           >
-            {message.type === 'image' && message.imageUrl ? (
-              <img
-                src={message.imageUrl}
-                alt="User photo"
-                className="max-w-full rounded-xl max-h-64 object-contain"
-              />
-            ) : (
-              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-            )}
+            <div
+              className={`max-w-[80%] rounded-2xl ${
+                isUser
+                  ? 'bg-blue-500 text-white rounded-br-md'
+                  : 'bg-gray-200 text-gray-900 rounded-bl-md'
+              } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
+            >
+              {message.type === 'image' && message.imageUrl ? (
+                <img
+                  src={message.imageUrl}
+                  alt="User photo"
+                  className="max-w-full rounded-xl max-h-64 object-contain"
+                />
+              ) : (
+                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
@@ -573,6 +916,126 @@ export function ShoppingPage() {
           className="hidden"
           aria-label="Take photo for chat"
         />
+
+        {/* Similar Item Detail Modal */}
+        {selectedItem && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+            onClick={() => setSelectedItem(null)}
+          >
+            <div
+              className="bg-white w-full max-w-lg rounded-t-2xl max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Item Details
+                </h3>
+                <button
+                  onClick={() => setSelectedItem(null)}
+                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-4 overflow-y-auto">
+                {/* Item Image */}
+                <div className="w-full aspect-square rounded-xl bg-gray-100 overflow-hidden mb-4">
+                  <img
+                    src={selectedItem.photo_url}
+                    alt={selectedItem.name || 'Item'}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                {/* Item Info */}
+                <div className="space-y-3">
+                  <h4 className="text-xl font-semibold text-gray-900">
+                    {selectedItem.name || 'Unnamed item'}
+                  </h4>
+
+                  {/* Match Badge */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Match:</span>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        selectedItem.similarity >= 0.9
+                          ? 'bg-red-100 text-red-700'
+                          : selectedItem.similarity >= 0.7
+                            ? 'bg-orange-100 text-orange-700'
+                            : 'bg-green-100 text-green-700'
+                      }`}
+                    >
+                      {Math.round(selectedItem.similarity * 100)}% similar
+                    </span>
+                  </div>
+
+                  {/* Location */}
+                  {selectedItem.location_path && (
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <svg
+                        className="w-5 h-5 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      <span className="text-sm">{selectedItem.location_path}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 flex gap-3">
+                  <button
+                    onClick={() => {
+                      setSelectedItem(null);
+                      // Navigate to item detail page
+                      window.location.href = `/item/${selectedItem.id}`;
+                    }}
+                    className="flex-1 py-3 px-4 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors"
+                  >
+                    View Item
+                  </button>
+                  <button
+                    onClick={() => setSelectedItem(null)}
+                    className="py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Toast Notification */}
         {toast && (
