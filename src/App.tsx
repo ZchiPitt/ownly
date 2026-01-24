@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider, OfflineProvider } from '@/contexts'
 import { AppShell } from '@/components/layout'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage } from '@/pages'
 
 const queryClient = new QueryClient()
 
@@ -35,6 +35,7 @@ function App() {
                       <Route path="/settings" element={<SettingsPage />} />
                       <Route path="/search" element={<SearchPage />} />
                       <Route path="/notifications" element={<NotificationsPage />} />
+                      <Route path="/shopping" element={<ShoppingPage />} />
                     </Routes>
                   </AppShell>
                 }

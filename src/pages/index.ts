@@ -16,3 +16,4 @@ export { ItemDetailPage } from './ItemDetailPage';
 export { EditItemPage } from './EditItemPage';
 export { SearchPage } from './SearchPage';
 export { NotificationsPage } from './NotificationsPage';
+export { ShoppingPage } from './ShoppingPage';
