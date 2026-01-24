@@ -57,6 +57,12 @@
 - Use `setSearchParams(params, { replace: true })` to update URL without adding to history
 - useInventoryItems supports `categoryIds: string[]` for multi-select filter (uses Supabase `.in()` operator)
 - Inventory URL filter format: /inventory?location={id}&categories={id1,id2}&sort={key} - location AND categories combine with AND logic
+- useSearch hook at `/src/hooks/useSearch.ts` - use `const { results, isLoading, error, query, setQuery, hasSearched } = useSearch()` for debounced search with abort control
+- SearchResult component at `/src/components/SearchResult.tsx` - use `<SearchResult item={item} query={query} />` for search results with text highlighting
+- For searching joined tables in Supabase, use separate queries with `!inner` join then combine and deduplicate results by id
+- Use AbortController with Supabase `.abortSignal()` to cancel in-flight requests when new search initiated
+- For Web Speech API types, add global Window declarations: `interface Window { SpeechRecognition?: ...; webkitSpeechRecognition?: ...; }`
+- useRecentSearches hook at `/src/hooks/useRecentSearches.ts` - use `const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()` for localStorage-persisted search history
 
 ---
 
@@ -1588,4 +1594,86 @@
   - Use `ReturnType<typeof setTimeout>` for timer refs instead of `NodeJS.Timeout` for browser TypeScript compatibility
   - Countdown timers use setInterval for per-second updates with a backup setTimeout for overall duration
   - Clean up intervals and timeouts on component unmount and when undo is triggered to prevent memory leaks
+---
+
+## 2026-01-24 - US-059
+- What was implemented:
+  - Created /src/pages/SearchPage.tsx component at route /search
+  - Added sticky search input bar at top with white background and bottom border
+  - Back arrow on left that navigates back using navigate(-1)
+  - Auto-focused text input with placeholder "Search items, tags, locations..."
+  - Clear button appears when query has text (X icon)
+  - Microphone icon conditionally shown if SpeechRecognition API is available
+  - Query preserved in URL with ?q={encoded_query} using setSearchParams with { replace: true }
+  - Added SearchPage export to /src/pages/index.ts
+  - Added /search route to App.tsx within AppShell protected routes
+
+- Files changed:
+  - src/pages/SearchPage.tsx (new)
+  - src/pages/index.ts (updated - added SearchPage export)
+  - src/App.tsx (updated - added /search route and SearchPage import)
+
+- **Learnings for future iterations:**
+  - Check SpeechRecognition support with: `window.SpeechRecognition || window.webkitSpeechRecognition`
+  - Use `setSearchParams({}, { replace: true })` to clear URL params without adding history entry
+  - Auto-focus on mount with useEffect + inputRef.current.focus()
+  - Placeholder search results added for upcoming US-060, US-061 implementations
+  - isSpeechRecognitionSupported() helper function for cross-browser Speech API detection
+---
+
+## 2026-01-24 - US-060
+- What was implemented:
+  - Created useSearch hook with 300ms debounce for real-time search
+  - Search across multiple fields: name, description, tags, category.name, location.path, brand
+  - Used separate Supabase queries for category and location joins, then combined and deduplicated results
+  - Created SearchResult component with HighlightText for highlighting matches (yellow background using <mark>)
+  - Results show: thumbnail (60x60), name with highlight, location path with highlight, category badge with icon and color
+  - Results header shows "{n} results for {query}"
+  - Loading state uses SearchResultSkeleton components (5 placeholders)
+  - No results state shows magnifying glass with X icon and helpful message
+  - Error state shows warning icon with retry button
+  - AbortController cancels in-flight requests when new search is initiated
+  - Added TypeScript type declarations for Web Speech API (SpeechRecognition)
+
+- Files changed:
+  - src/hooks/useSearch.ts (new - search hook with debounce, abort, and multi-field search)
+  - src/components/SearchResult.tsx (new - search result item with highlighting)
+  - src/pages/SearchPage.tsx (updated - integrated useSearch hook and SearchResult component)
+
+- **Learnings for future iterations:**
+  - Use `tags.cs.{value}` for Supabase array contains search (case-sensitive)
+  - Use `.or()` for combining multiple ilike conditions on items table
+  - For searching joined tables (categories.name, locations.path), use separate queries with `!inner` join then combine results
+  - Deduplicate combined results using Map by id
+  - Use AbortController with `.abortSignal()` to cancel Supabase requests
+  - Web Speech API types need global declaration: `interface Window { SpeechRecognition?: ...; webkitSpeechRecognition?: ...; }`
+  - Use `<mark className="bg-yellow-200">` for highlighted text with proper styling
+  - Use regex with escaped special characters for safe text splitting in highlight function
+---
+
+## 2026-01-24 - US-061
+- What was implemented:
+  - Created useRecentSearches hook at `/src/hooks/useRecentSearches.ts`
+  - Stores last 10 unique queries in localStorage (key: clekee_recent_searches)
+  - Recent searches section shows when search input is empty
+  - Header: 'Recent Searches' + 'Clear All' link with confirmation dialog
+  - Tap recent query populates input and executes search
+  - Swipe left reveals Delete button on mobile
+  - Hover shows X delete button on desktop
+  - Save to recent when: query >=2 chars AND results >=1 (via onSuccessfulSearch callback)
+  - Added ClockIcon, TrashIcon, RecentSearchItem, and ClearConfirmDialog components
+  - RecentSearchItem uses touch events for swipe gesture (startX, deltaX, swiped state)
+  - Fixed ESLint error by using type alias instead of interface with constructor
+
+- Files changed:
+  - src/hooks/useRecentSearches.ts (used existing file - hook already created in previous iteration)
+  - src/pages/SearchPage.tsx (added recent searches UI, swipe-to-delete, confirmation dialog)
+
+- **Learnings for future iterations:**
+  - useSearch hook has `onSuccessfulSearch` callback for hooking into successful searches
+  - For swipe gestures, track startX, calculate deltaX on move, check threshold on end
+  - Use `e.stopPropagation()` to prevent parent click handler when clicking delete button
+  - Use `useRef<HTMLDivElement>` with click outside listener to reset swipe state
+  - For TypeScript with ESLint `@typescript-eslint/no-misused-new`, use type alias instead of interface for constructors
+  - Example: `type SpeechRecognitionConstructor = new () => unknown;` instead of interface with `new (): Type`
 ---

@@ -9,24 +9,24 @@
  * - Query preserved in URL: ?q={encoded_query}
  * - Real-time search with 300ms debounce
  * - Highlighted matching text in results
+ * - Recent searches with swipe-to-delete and Clear All
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSearch } from '@/hooks/useSearch';
+import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { SearchResult, SearchResultSkeleton } from '@/components/SearchResult';
 
 /**
  * Type declaration for Web Speech API (not included in standard TypeScript lib)
  */
-interface SpeechRecognitionInterface {
-  new (): SpeechRecognitionInterface;
-}
+type SpeechRecognitionConstructor = new () => unknown;
 
 declare global {
   interface Window {
-    SpeechRecognition?: SpeechRecognitionInterface;
-    webkitSpeechRecognition?: SpeechRecognitionInterface;
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
   }
 }
 
@@ -148,6 +148,205 @@ function NoResultsIcon() {
   );
 }
 
+/**
+ * Clock icon for recent searches
+ */
+function ClockIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Trash icon for delete buttons
+ */
+function TrashIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Recent search item with swipe-to-delete on mobile and hover delete on desktop
+ */
+interface RecentSearchItemProps {
+  query: string;
+  onClick: () => void;
+  onRemove: (e: React.MouseEvent) => void;
+}
+
+function RecentSearchItem({ query, onClick, onRemove }: RecentSearchItemProps) {
+  const [swiped, setSwiped] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [deltaX, setDeltaX] = useState(0);
+  const itemRef = useRef<HTMLDivElement>(null);
+
+  // Handle touch start for swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartX(e.touches[0].clientX);
+    setDeltaX(0);
+  };
+
+  // Handle touch move for swipe
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const currentX = e.touches[0].clientX;
+    const diff = startX - currentX;
+
+    // Only allow swiping left (positive diff)
+    if (diff > 0) {
+      setDeltaX(Math.min(diff, 80)); // Max swipe distance of 80px
+    } else {
+      setDeltaX(0);
+    }
+  };
+
+  // Handle touch end for swipe
+  const handleTouchEnd = () => {
+    // If swiped more than 40px, show delete button
+    if (deltaX > 40) {
+      setSwiped(true);
+    } else {
+      setSwiped(false);
+    }
+    setDeltaX(0);
+  };
+
+  // Reset swipe state when clicked elsewhere
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (itemRef.current && !itemRef.current.contains(e.target as Node)) {
+        setSwiped(false);
+      }
+    };
+
+    if (swiped) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [swiped]);
+
+  return (
+    <div ref={itemRef} className="relative overflow-hidden">
+      {/* Delete button revealed on swipe (mobile) */}
+      <div
+        className={`absolute right-0 top-0 bottom-0 flex items-center bg-red-500 transition-all duration-200 ${
+          swiped ? 'w-20' : 'w-0'
+        }`}
+      >
+        <button
+          onClick={onRemove}
+          className="w-full h-full flex items-center justify-center text-white"
+          aria-label="Delete search"
+        >
+          <TrashIcon />
+        </button>
+      </div>
+
+      {/* Main content */}
+      <div
+        onClick={() => !swiped && onClick()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className={`flex items-center px-4 py-3 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-200 group ${
+          swiped ? '-translate-x-20' : deltaX > 0 ? '' : ''
+        }`}
+        style={{
+          transform: deltaX > 0 ? `translateX(-${deltaX}px)` : swiped ? 'translateX(-80px)' : 'translateX(0)',
+        }}
+      >
+        {/* Clock icon */}
+        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400">
+          <ClockIcon />
+        </div>
+
+        {/* Query text */}
+        <span className="flex-1 text-gray-900 truncate">{query}</span>
+
+        {/* Delete button on hover (desktop) */}
+        <button
+          onClick={onRemove}
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-red-50 hidden md:flex"
+          aria-label="Remove from recent searches"
+        >
+          <ClearIcon />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Confirmation dialog for clearing all recent searches
+ */
+interface ClearConfirmDialogProps {
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ClearConfirmDialog({ isOpen, onConfirm, onCancel }: ClearConfirmDialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onCancel}
+      />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-xl mx-4 w-full max-w-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Clear all recent searches?
+        </h2>
+        <p className="text-sm text-gray-600 mb-6">
+          This action cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 px-4 py-2.5 bg-red-500 rounded-lg text-white font-medium hover:bg-red-600 transition-colors"
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -156,14 +355,26 @@ export function SearchPage() {
   // Get initial query from URL
   const initialQuery = searchParams.get('q') || '';
 
+  // Recent searches hook
+  const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches();
+
+  // Callback to add to recent searches when a successful search completes
+  const handleSuccessfulSearch = useCallback((searchQuery: string) => {
+    addSearch(searchQuery);
+  }, [addSearch]);
+
   // Use the search hook
   const { results, isLoading, error, query, setQuery, hasSearched } = useSearch({
     debounceMs: 300,
     minQueryLength: 1,
+    onSuccessfulSearch: handleSuccessfulSearch,
   });
 
   // Track speech recognition support
   const [speechSupported] = useState(() => isSpeechRecognitionSupported());
+
+  // State for showing clear all confirmation dialog
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // Initialize query from URL on mount
   useEffect(() => {
@@ -209,6 +420,47 @@ export function SearchPage() {
   const handleMicrophoneClick = () => {
     // Microphone functionality will be implemented in US-062
     console.log('Voice search clicked - to be implemented in US-062');
+  };
+
+  /**
+   * Handle tapping a recent search to execute it
+   */
+  const handleRecentSearchClick = (searchQuery: string) => {
+    setQuery(searchQuery);
+    // Focus input after selecting
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  /**
+   * Handle removing a recent search
+   */
+  const handleRemoveRecentSearch = (searchQuery: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the click handler
+    removeSearch(searchQuery);
+  };
+
+  /**
+   * Handle clearing all recent searches
+   */
+  const handleClearAllClick = () => {
+    setShowClearConfirm(true);
+  };
+
+  /**
+   * Confirm clearing all recent searches
+   */
+  const confirmClearAll = () => {
+    clearAll();
+    setShowClearConfirm(false);
+  };
+
+  /**
+   * Cancel clearing all recent searches
+   */
+  const cancelClearAll = () => {
+    setShowClearConfirm(false);
   };
 
   // Render search results header
@@ -266,12 +518,48 @@ export function SearchPage() {
       );
     }
 
-    // No query entered - show placeholder
+    // No query entered - show recent searches or placeholder
     if (!query) {
+      // Show recent searches if available
+      if (recentSearches.length > 0) {
+        return (
+          <div className="py-4">
+            {/* Header with Clear All */}
+            <div className="flex items-center justify-between px-4 py-2">
+              <div className="flex items-center gap-2 text-gray-600">
+                <ClockIcon />
+                <span className="font-medium text-sm">Recent Searches</span>
+              </div>
+              <button
+                onClick={handleClearAllClick}
+                className="text-sm text-blue-500 hover:text-blue-600 font-medium transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+
+            {/* Recent search list */}
+            <div className="divide-y divide-gray-100">
+              {recentSearches.map((searchQuery) => (
+                <RecentSearchItem
+                  key={searchQuery}
+                  query={searchQuery}
+                  onClick={() => handleRecentSearchClick(searchQuery)}
+                  onRemove={(e) => handleRemoveRecentSearch(searchQuery, e)}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      // No recent searches - show empty state
       return (
-        <div className="text-center text-gray-500 mt-8 px-4">
-          <p>Search for items by name, tags, locations, and more</p>
-          {/* Recent searches will be implemented in US-061 */}
+        <div className="text-center text-gray-500 mt-12 px-4">
+          <div className="flex justify-center mb-4">
+            <ClockIcon />
+          </div>
+          <p>Your recent searches will appear here</p>
         </div>
       );
     }
@@ -370,6 +658,13 @@ export function SearchPage() {
       <div className="pb-4">
         {renderContent()}
       </div>
+
+      {/* Clear all confirmation dialog */}
+      <ClearConfirmDialog
+        isOpen={showClearConfirm}
+        onConfirm={confirmClearAll}
+        onCancel={cancelClearAll}
+      />
     </div>
   );
 }

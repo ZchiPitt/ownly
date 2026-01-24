@@ -80,6 +80,7 @@ function transformRawItem(item: RawSearchItem): SearchResultItem {
 interface UseSearchOptions {
   debounceMs?: number;
   minQueryLength?: number;
+  onSuccessfulSearch?: (query: string) => void;
 }
 
 interface UseSearchResult {
@@ -97,7 +98,7 @@ interface UseSearchResult {
  * @returns Search state and control functions
  */
 export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
-  const { debounceMs = 300, minQueryLength = 1 } = options;
+  const { debounceMs = 300, minQueryLength = 1, onSuccessfulSearch } = options;
   const { user } = useAuth();
 
   const [query, setQuery] = useState('');
@@ -287,6 +288,11 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
       const searchResults = uniqueItems.map(transformRawItem);
 
       setResults(searchResults);
+
+      // Call onSuccessfulSearch callback when we have results (query >= 2 chars and results >= 1)
+      if (searchResults.length > 0 && searchQuery.length >= 2 && onSuccessfulSearch) {
+        onSuccessfulSearch(searchQuery);
+      }
     } catch (err) {
       // Don't set error if request was aborted
       if (err instanceof Error && err.name === 'AbortError') {
@@ -298,7 +304,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
     } finally {
       setIsLoading(false);
     }
-  }, [user, minQueryLength]);
+  }, [user, minQueryLength, onSuccessfulSearch]);
 
   // Trigger search when debounced query changes
   useEffect(() => {
