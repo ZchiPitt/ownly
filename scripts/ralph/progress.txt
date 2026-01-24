@@ -2336,3 +2336,37 @@ Created a comprehensive reusable Skeleton component library that provides buildi
 - Page-specific skeletons (Dashboard, ItemDetail, etc.) provide complete page loading states
 - Building blocks (Line, Rect, Circle) can be composed for custom layouts
 ---
+
+## 2026-01-24 - US-083
+- What was implemented:
+  - Created ToastContext at `/src/contexts/toast-context.ts` with types for toast options and actions
+  - Created ToastProvider at `/src/contexts/ToastProvider.tsx` with queue management (max 5 concurrent toasts)
+  - Created useToast hook at `/src/hooks/useToast.ts` with convenient methods: toast, success, error, info, warning
+  - Updated Toast component with ToastItem, ToastContainer for stacking multiple toasts
+  - Added action button support for undo-style interactions
+  - Integrated ToastProvider in App.tsx with ToastNotifications wrapper component
+  - Updated SettingsPage.tsx to use new useToast hook instead of local state
+  - Toast positioning at bottom-20 (80px from bottom) to avoid bottom navigation overlap
+  - Auto-dismiss with configurable duration (default 3000ms), manual dismiss via X button
+  - Smooth enter/exit animations with CSS transforms
+
+- Files changed:
+  - src/contexts/toast-context.ts (new) - Toast types and context definition
+  - src/contexts/ToastProvider.tsx (new) - Toast provider with queue management
+  - src/contexts/index.ts (modified) - Export ToastContext and ToastProvider
+  - src/hooks/useToast.ts (new) - Custom hook for consuming toast context
+  - src/components/Toast.tsx (modified) - Added ToastItem, ToastContainer for stacking
+  - src/App.tsx (modified) - Integrated ToastProvider and ToastContainer
+  - src/pages/SettingsPage.tsx (modified) - Migrated to useToast hook
+
+- **Learnings for future iterations:**
+  - Pattern: For context providers that need to be consumed globally, create a separate wrapper component (ToastNotifications) that uses the hook internally
+  - Pattern: When migrating from local state toast to context-based toast, replace `useState<{message, type}>` with `const { success, error } = useToast()` and update calls from `setToast({...})` to `success('message')` or `error('message')`
+  - Pattern: Toast positioning at bottom-20 (80px from bottom) avoids overlap with fixed bottom navigation (bottom-16 = 64px)
+  - The existing ToastProvider and toast-context.ts files were already present from previous work - just needed to create the useToast hook and integrate properly
+  - For toast stacking, use flex-col-reverse to stack newer toasts at the bottom with `marginBottom` for spacing
+  - Use `role="alert"` and `aria-live="polite"` for accessibility on toast notifications
+  - Type icons: success=✓, error=✕, info=ⓘ, warning=⚠ - use aria-hidden to hide from screen readers
+  - When creating reusable UI systems like toasts, dialogs, and bottom sheets, follow the pattern: Context → Provider → Hook → Component
+
+---
