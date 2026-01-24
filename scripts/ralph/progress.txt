@@ -2235,3 +2235,59 @@
   - Edge Functions can be triggered via pg_cron, Supabase scheduled functions, or external schedulers
   - Optional secret key header (X-Cleanup-Secret) provides protection for external triggers
 ---
+
+## 2026-01-24 - US-080
+- What was implemented:
+  - Created Supabase Edge Function `generate-embedding` at `supabase/functions/generate-embedding/index.ts`
+  - Accepts either item_id (to fetch and generate embedding for existing item) or text description
+  - Calls OpenAI Embeddings API with text-embedding-3-small model (1536 dimensions)
+  - Updates item.embedding field in database when item_id provided
+  - Includes comprehensive auth validation and error handling
+  - Can be called async after item creation (non-blocking)
+  - Handles API errors gracefully with appropriate error responses
+
+- Files changed:
+  - supabase/functions/generate-embedding/index.ts (new)
+
+- **Learnings for future iterations:**
+  - Edge Functions use similar patterns for auth validation: extract Bearer token, create Supabase client with token, call auth.getUser()
+  - For vector embedding updates, format as PostgreSQL vector string: `[${embedding.join(',')}]`
+  - The `buildEmbeddingText()` function combines name, description, tags, and brand for richer semantic search
+  - Use service role key for admin operations that need to bypass RLS
+  - OpenAI text-embedding-3-small has an 8000 character practical limit for input text
+---
+
+## 2026-01-24 - US-081
+- What was implemented:
+  - Created reusable usePullToRefresh hook at `/src/hooks/usePullToRefresh.ts`
+    - Touch event handlers for pull gesture detection
+    - Rubber band resistance effect during pull
+    - Configurable threshold and resistance
+    - isRefreshing state management for refresh animation
+  - Created reusable PullToRefreshIndicator component at `/src/components/PullToRefreshIndicator.tsx`
+    - Shows pull progress arrow that flips when threshold reached
+    - Shows spinner during refresh
+    - Shows appropriate text feedback ("Pull to refresh", "Release to refresh", "Refreshing...")
+  - Added pull-to-refresh to DashboardPage:
+    - Touch handlers on main container
+    - Refreshes all dashboard data in parallel (stats, expiring items, recent items)
+    - Shows Toast on refresh failure
+  - Added pull-to-refresh to InventoryPage:
+    - Refactored existing pull-to-refresh implementation to use shared hook/component
+    - Shows Toast on refresh failure
+    - Simplified code by reusing shared components
+
+- Files changed:
+  - src/hooks/usePullToRefresh.ts (new)
+  - src/components/PullToRefreshIndicator.tsx (new)
+  - src/pages/DashboardPage.tsx (modified - added pull-to-refresh)
+  - src/pages/InventoryPage.tsx (modified - refactored to use shared hook/component)
+
+- **Learnings for future iterations:**
+  - usePullToRefresh hook provides handleTouchStart, handleTouchMove, handleTouchEnd for containers
+  - PullToRefreshIndicator component handles visual feedback (position dynamically based on pullDistance)
+  - Pull threshold default is 80px with 0.5 resistance factor for rubber band effect
+  - Dashboard uses Promise.all() to refresh all data sources in parallel (refetchStats, refetchExpiring, refetchRecent)
+  - setToast state setter needs to be in useCallback dependencies for React compiler
+  - Toast component already exists at `/src/components/Toast.tsx` for simple notifications
+---

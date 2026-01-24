@@ -3,13 +3,16 @@
  * Shows time-based greeting, search bar, quick stats, and quick access to inventory
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useExpiringItems, type ExpiringItem } from '@/hooks/useExpiringItems';
 import { useRecentItems, type RecentItem } from '@/hooks/useRecentItems';
 import { NotificationBell } from '@/components/NotificationBell';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { Toast } from '@/components/Toast';
 
 /**
  * Get time-based greeting message
@@ -376,9 +379,37 @@ function EmptyState({ onAddItem }: EmptyStateProps) {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { stats, isLoading: statsLoading } = useDashboardStats();
-  const { items: expiringItems, isLoading: expiringLoading } = useExpiringItems(7, 3);
-  const { items: recentItems, isLoading: recentLoading } = useRecentItems(5);
+  const { stats, isLoading: statsLoading, refetch: refetchStats } = useDashboardStats();
+  const { items: expiringItems, isLoading: expiringLoading, refetch: refetchExpiring } = useExpiringItems(7, 3);
+  const { items: recentItems, isLoading: recentLoading, refetch: refetchRecent } = useRecentItems(5);
+
+  // Toast state for refresh feedback
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    try {
+      // Refresh all data in parallel
+      await Promise.all([
+        refetchStats(),
+        refetchExpiring(),
+        refetchRecent(),
+      ]);
+    } catch {
+      setToast({ message: 'Refresh failed', type: 'error' });
+    }
+  }, [refetchStats, refetchExpiring, refetchRecent]);
+
+  // Pull-to-refresh hook
+  const {
+    pullDistance,
+    isPulling,
+    isRefreshing,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    threshold,
+  } = usePullToRefresh({ onRefresh: handleRefresh });
 
   const greeting = useMemo(() => getGreeting(), []);
   const displayName = useMemo(
@@ -403,7 +434,20 @@ export function DashboardPage() {
   const isEmptyInventory = !statsLoading && stats.totalItems === 0;
 
   return (
-    <div className="min-h-full bg-gray-50">
+    <div
+      className="min-h-full bg-gray-50 relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull-to-refresh indicator */}
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        threshold={threshold}
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+      />
+
       {/* Header with greeting and avatar */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 pt-4 pb-3">
         {/* Greeting row */}
@@ -742,6 +786,15 @@ export function DashboardPage() {
           </div>
         </section>
       </div>
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
       )}
     </div>
   );

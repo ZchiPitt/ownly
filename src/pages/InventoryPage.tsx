@@ -22,6 +22,9 @@ import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomShee
 import { CategoryFilterBottomSheet } from '@/components/CategoryFilterBottomSheet';
 import { useLocations } from '@/hooks/useLocations';
 import { NotificationBell } from '@/components/NotificationBell';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
+import { Toast } from '@/components/Toast';
 
 // Key for storing scroll position in sessionStorage
 const SCROLL_POSITION_KEY = 'inventory-scroll-position';
@@ -186,12 +189,11 @@ export function InventoryPage() {
   const [userSelectedView, setUserSelectedView] = useState<ViewMode | null>(null);
   const [isUpdatingView, setIsUpdatingView] = useState(false);
 
-  // Pull-to-refresh state
-  const [pullStartY, setPullStartY] = useState<number | null>(null);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [isPulling, setIsPulling] = useState(false);
+  // Toast state for refresh feedback
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Scroll container ref for scroll position restoration
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const pullThreshold = 80;
 
   // Compute effective view mode: user selection takes precedence over settings
   const viewMode: ViewMode = userSelectedView ?? settings?.default_view ?? 'gallery';
@@ -281,41 +283,25 @@ export function InventoryPage() {
     ? selectedLocation.name
     : 'All Locations';
 
-  // Pull-to-refresh handlers
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const scrollTop = scrollContainerRef.current?.scrollTop ?? 0;
-    if (scrollTop <= 0 && !isRefreshing) {
-      setPullStartY(e.touches[0].clientY);
+  // Pull-to-refresh handler
+  const handleRefresh = useCallback(async () => {
+    try {
+      await refreshItems();
+    } catch {
+      setToast({ message: 'Refresh failed', type: 'error' });
     }
-  }, [isRefreshing]);
+  }, [refreshItems, setToast]);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (pullStartY === null || isRefreshing) return;
-
-    const currentY = e.touches[0].clientY;
-    const distance = Math.max(0, currentY - pullStartY);
-
-    // Apply resistance to pull distance (rubber band effect)
-    const resistedDistance = Math.min(distance * 0.5, pullThreshold * 1.5);
-    setPullDistance(resistedDistance);
-    setIsPulling(resistedDistance > 10);
-  }, [pullStartY, isRefreshing]);
-
-  const handleTouchEnd = useCallback(() => {
-    if (pullDistance >= pullThreshold && !isRefreshing) {
-      // Trigger refresh
-      refreshItems();
-    }
-
-    // Reset pull state
-    setPullStartY(null);
-    setPullDistance(0);
-    setIsPulling(false);
-  }, [pullDistance, isRefreshing, refreshItems]);
-
-  const handleRefresh = useCallback(() => {
-    refreshItems();
-  }, [refreshItems]);
+  // Pull-to-refresh hook
+  const {
+    pullDistance,
+    isPulling,
+    isRefreshing: isPullRefreshing,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    threshold: pullThreshold,
+  } = usePullToRefresh({ onRefresh: handleRefresh });
 
   // Save scroll position before navigating away
   useEffect(() => {
@@ -567,54 +553,18 @@ export function InventoryPage() {
       {/* Main content area with pull-to-refresh */}
       <div
         ref={scrollContainerRef}
-        className="overflow-y-auto"
+        className="overflow-y-auto relative"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{
-          // Add pull distance offset during pull
-          transform: isPulling ? `translateY(${pullDistance}px)` : undefined,
-          transition: isPulling ? undefined : 'transform 0.3s ease-out',
-        }}
       >
         {/* Pull-to-refresh indicator */}
-        {isPulling && (
-          <div
-            className="absolute left-0 right-0 flex items-center justify-center z-0"
-            style={{
-              top: -pullThreshold,
-              height: pullThreshold,
-              transform: `translateY(${pullDistance}px)`,
-            }}
-          >
-            <div
-              className={`flex items-center gap-2 transition-opacity ${
-                pullDistance >= pullThreshold ? 'opacity-100' : 'opacity-50'
-              }`}
-            >
-              <svg
-                className={`w-5 h-5 text-blue-600 transition-transform ${
-                  pullDistance >= pullThreshold ? 'rotate-180' : ''
-                }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-              <span className="text-sm text-gray-600">
-                {pullDistance >= pullThreshold
-                  ? 'Release to refresh'
-                  : 'Pull to refresh'}
-              </span>
-            </div>
-          </div>
-        )}
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          threshold={pullThreshold}
+          isPulling={isPulling}
+          isRefreshing={isPullRefreshing}
+        />
 
         <div className="p-4">
           {viewMode === 'gallery' ? (
@@ -693,6 +643,15 @@ export function InventoryPage() {
         selectedCategoryIds={selectedCategoryIds}
         onApplyFilter={handleCategoryFilterApply}
       />
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }
