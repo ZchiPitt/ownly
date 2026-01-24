@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Skill(prd)",
-      "Skill(ralph)"
+      "Skill(ralph)",
+      "Bash(ls:*)"
     ]
   }
 }
