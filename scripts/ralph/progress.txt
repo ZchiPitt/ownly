@@ -2044,3 +2044,63 @@
   - requireOnline(actionName) returns true if online, false if offline (also shows toast)
   - type-only imports required for TypeScript verbatimModuleSyntax compatibility
 ---
+
+## 2026-01-23 - US-073
+- What was implemented:
+  - Added 'Shop' tab to bottom navigation with shopping cart icon
+  - Created /src/pages/ShoppingPage.tsx at route /shopping
+  - Implemented initial state UI with:
+    - Shopping bag icon and 'Smart Shopping Assistant' heading
+    - Helper text: 'Take a photo of something you're thinking of buying and I'll check if you already have it'
+    - Take Photo and Choose from Gallery action cards (similar pattern to AddItemPage)
+    - Recent queries section showing last 3 shopping queries from localStorage
+    - Tips section explaining how the feature works
+  - Added ShopIcon component to BottomNav.tsx with cart icon
+  - Updated navItems array to include Shop tab between Inventory and Settings
+  - Updated App.tsx to include /shopping route
+  - Updated pages index.ts to export ShoppingPage
+
+- Files changed:
+  - src/components/layout/BottomNav.tsx (added ShopIcon and Shop nav item)
+  - src/pages/ShoppingPage.tsx (new)
+  - src/pages/index.ts (added ShoppingPage export)
+  - src/App.tsx (added /shopping route)
+
+- **Learnings for future iterations:**
+  - BottomNav now has 5 tabs: Home, Add (FAB), Inventory, Shop, Settings
+  - ShoppingPage uses localStorage key 'clekee_shopping_queries' for recent queries
+  - RecentQuery interface: { id: string, thumbnailUrl: string, itemName: string, timestamp: number }
+  - Photo capture UI pattern is shared with AddItemPage - uses same validateImage util
+  - US-074+ will implement the chat interface after photo capture
+---
+
+## 2026-01-24 - US-074
+- What was implemented:
+  - Created chat interface for Shopping Assistant that activates after photo capture
+  - Implemented ChatMessage interface with id, role (user/assistant), type (text/image/analysis), content, imageUrl, timestamp
+  - Added ViewState type to manage 'initial' and 'chat' view states
+  - Implemented scrollable message area with flex-1 overflow-y-auto
+  - Created sticky bottom input bar with:
+    - Camera button (left) to add photos during chat
+    - Text input field with placeholder "Ask a follow-up..."
+    - Send button (right) that enables when input has text
+  - User messages styled: right-aligned, blue background (bg-blue-500), white text, rounded-br-md
+  - Assistant messages styled: left-aligned, gray background (bg-gray-200), dark text, rounded-bl-md
+  - Photo messages render as image thumbnails inside message bubbles
+  - Timestamps shown below message groups (groups within 5 minutes share timestamp)
+  - Added typing indicator with three animated bouncing dots
+  - Chat header with back button, "Shopping Assistant" title, status indicator, and "New Chat" button
+  - Implemented handleNewChat to clear chat and return to initial state
+  - Added separate camera input (chatCameraInputRef) for adding photos during chat
+
+- Files changed:
+  - src/pages/ShoppingPage.tsx (major update with chat interface)
+
+- **Learnings for future iterations:**
+  - Use ViewState type ('initial' | 'chat') to switch between page modes
+  - Chat messages use isSameTimeGroup() to group messages within 5 minutes
+  - formatMessageTime() shows just time for today, or "Jan 23, 2:30 PM" for older dates
+  - simulateAIResponse() is a placeholder that will be replaced by US-075/US-076 with actual AI analysis
+  - Chat history is maintained during session but not persisted (per acceptance criteria)
+  - pb-safe class is used for bottom padding on input bar (safe area for notched phones)
+---

@@ -6,12 +6,13 @@
  * - Initial state with shopping bag icon and helper text
  * - Take Photo and Choose from Gallery buttons
  * - Recent shopping queries section (last 3)
+ * - Chat interface after photo capture (US-074)
  * - AI-powered analysis of items for shopping advice
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Toast } from '@/components/Toast';
-import { validateImage } from '@/lib/imageUtils';
+import { validateImage, compressImage } from '@/lib/imageUtils';
 
 // Storage key for recent shopping queries
 const RECENT_QUERIES_KEY = 'clekee_shopping_queries';
@@ -29,6 +30,21 @@ interface RecentQuery {
   itemName: string;
   timestamp: number;
 }
+
+// Chat message types
+type MessageType = 'text' | 'image' | 'analysis';
+
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  type: MessageType;
+  content: string; // For text messages
+  imageUrl?: string; // For image messages
+  timestamp: number;
+}
+
+// View states for the page
+type ViewState = 'initial' | 'chat';
 
 /**
  * Load recent shopping queries from localStorage
@@ -75,23 +91,116 @@ function getRelativeTime(timestamp: number): string {
   }
 }
 
+/**
+ * Format timestamp for message groups
+ */
+function formatMessageTime(timestamp: number): string {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  const time = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  if (isToday) {
+    return time;
+  }
+
+  const dateStr = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+
+  return `${dateStr}, ${time}`;
+}
+
+/**
+ * Generate a unique ID for messages
+ */
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+/**
+ * Check if two timestamps are within the same time group (5 minutes)
+ */
+function isSameTimeGroup(t1: number, t2: number): boolean {
+  return Math.abs(t1 - t2) < 5 * 60 * 1000;
+}
+
 export function ShoppingPage() {
-  // References to hidden file inputs
+  // References
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const chatCameraInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // State
   const [toast, setToast] = useState<ToastState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [recentQueries, setRecentQueries] = useState<RecentQuery[]>([]);
+  const [viewState, setViewState] = useState<ViewState>('initial');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
 
   // Load recent queries on mount
   useEffect(() => {
     setRecentQueries(loadRecentQueries());
   }, []);
 
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isTyping]);
+
   /**
-   * Handle file selection from camera or gallery
+   * Add a message to the chat
+   */
+  const addMessage = useCallback((
+    role: 'user' | 'assistant',
+    type: MessageType,
+    content: string,
+    imageUrl?: string
+  ) => {
+    const newMessage: ChatMessage = {
+      id: generateId(),
+      role,
+      type,
+      content,
+      imageUrl,
+      timestamp: Date.now(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+    return newMessage;
+  }, []);
+
+  /**
+   * Simulate AI response (placeholder for US-075/US-076)
+   */
+  const simulateAIResponse = useCallback(async () => {
+    setIsTyping(true);
+
+    // Simulate processing delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    addMessage(
+      'assistant',
+      'text',
+      "I'm analyzing your photo... (AI analysis will be implemented in the next update)"
+    );
+
+    setIsTyping(false);
+  }, [addMessage]);
+
+  /**
+   * Handle file selection from camera or gallery (initial state)
    */
   const handleFileSelect = useCallback(async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -113,12 +222,19 @@ export function ShoppingPage() {
         return;
       }
 
-      // TODO: US-074 will implement the chat interface after photo capture
-      // For now, show a toast indicating the feature is coming
-      setToast({
-        message: 'Shopping chat interface coming in next update!',
-        type: 'info',
-      });
+      // Compress the image for display
+      const compressedBlob = await compressImage(file);
+      const imageUrl = URL.createObjectURL(compressedBlob);
+
+      // Transition to chat view
+      setViewState('chat');
+
+      // Add user's image as first message
+      addMessage('user', 'image', 'Photo uploaded', imageUrl);
+
+      // Simulate AI response
+      await simulateAIResponse();
+
     } catch (error) {
       console.error('Error processing image:', error);
       setToast({
@@ -130,7 +246,50 @@ export function ShoppingPage() {
       // Reset input value to allow selecting the same file again
       event.target.value = '';
     }
-  }, []);
+  }, [addMessage, simulateAIResponse]);
+
+  /**
+   * Handle adding a new photo in chat mode
+   */
+  const handleChatPhotoSelect = useCallback(async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Validate the selected image
+      const validation = await validateImage(file);
+
+      if (!validation.valid) {
+        setToast({
+          message: validation.error || 'Invalid image',
+          type: 'error',
+        });
+        return;
+      }
+
+      // Compress the image for display
+      const compressedBlob = await compressImage(file);
+      const imageUrl = URL.createObjectURL(compressedBlob);
+
+      // Add user's image message
+      addMessage('user', 'image', 'Photo uploaded', imageUrl);
+
+      // Simulate AI response
+      await simulateAIResponse();
+
+    } catch (error) {
+      console.error('Error processing image:', error);
+      setToast({
+        message: 'Failed to process image. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      // Reset input value
+      event.target.value = '';
+    }
+  }, [addMessage, simulateAIResponse]);
 
   /**
    * Handle Take Photo button click
@@ -158,18 +317,276 @@ export function ShoppingPage() {
   }, []);
 
   /**
+   * Handle camera button in chat mode
+   */
+  const handleChatCameraClick = useCallback(() => {
+    chatCameraInputRef.current?.click();
+  }, []);
+
+  /**
+   * Handle sending a text message
+   */
+  const handleSendMessage = useCallback(async () => {
+    const text = inputValue.trim();
+    if (!text) return;
+
+    // Add user message
+    addMessage('user', 'text', text);
+    setInputValue('');
+
+    // Simulate AI response
+    await simulateAIResponse();
+  }, [inputValue, addMessage, simulateAIResponse]);
+
+  /**
+   * Handle Enter key press in input
+   */
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
+
+  /**
    * Handle recent query click
    */
   const handleRecentQueryClick = useCallback((query: RecentQuery) => {
-    // TODO: US-074/US-076 will implement reopening a previous query
-    // For now, we just log the query ID and show a toast
-    console.log('Opening query:', query.id);
-    setToast({
-      message: 'Opening previous queries coming in next update!',
-      type: 'info',
-    });
+    // Transition to chat view with the saved query
+    setViewState('chat');
+
+    // Add the saved image as first message
+    addMessage('user', 'image', query.itemName, query.thumbnailUrl);
+
+    // Simulate AI response
+    simulateAIResponse();
+  }, [addMessage, simulateAIResponse]);
+
+  /**
+   * Handle New Chat button
+   */
+  const handleNewChat = useCallback(() => {
+    setViewState('initial');
+    setMessages([]);
+    setInputValue('');
+    setIsTyping(false);
   }, []);
 
+  /**
+   * Render a single chat message
+   */
+  const renderMessage = (message: ChatMessage, index: number) => {
+    const isUser = message.role === 'user';
+    const prevMessage = index > 0 ? messages[index - 1] : null;
+    const showTimestamp = !prevMessage ||
+      prevMessage.role !== message.role ||
+      !isSameTimeGroup(prevMessage.timestamp, message.timestamp);
+
+    return (
+      <div key={message.id}>
+        {/* Timestamp */}
+        {showTimestamp && (
+          <div className="text-center my-3">
+            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+              {formatMessageTime(message.timestamp)}
+            </span>
+          </div>
+        )}
+
+        {/* Message Bubble */}
+        <div
+          className={`flex mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}
+        >
+          <div
+            className={`max-w-[80%] rounded-2xl ${
+              isUser
+                ? 'bg-blue-500 text-white rounded-br-md'
+                : 'bg-gray-200 text-gray-900 rounded-bl-md'
+            } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
+          >
+            {message.type === 'image' && message.imageUrl ? (
+              <img
+                src={message.imageUrl}
+                alt="User photo"
+                className="max-w-full rounded-xl max-h-64 object-contain"
+              />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Render Chat Interface
+  if (viewState === 'chat') {
+    return (
+      <div className="h-full flex flex-col bg-gray-50">
+        {/* Chat Header */}
+        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleNewChat}
+              className="p-1 -ml-1 text-gray-500 hover:text-gray-700"
+              aria-label="Back to initial state"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Shopping Assistant
+              </h1>
+              <p className="text-xs text-gray-500">
+                {isTyping ? 'Analyzing...' : 'Online'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={handleNewChat}
+            className="text-sm text-blue-600 font-medium hover:text-blue-700"
+          >
+            New Chat
+          </button>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {messages.map((msg, index) => renderMessage(msg, index))}
+
+          {/* Typing Indicator */}
+          {isTyping && (
+            <div className="flex justify-start mb-2">
+              <div className="bg-gray-200 rounded-2xl rounded-bl-md px-4 py-3">
+                <div className="flex gap-1">
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '0ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    style={{ animationDelay: '300ms' }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Scroll anchor */}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Chat Input Bar - Sticky at bottom */}
+        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe">
+          <div className="flex items-center gap-2">
+            {/* Camera Button */}
+            <button
+              onClick={handleChatCameraClick}
+              className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Add photo"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            </button>
+
+            {/* Text Input */}
+            <div className="flex-1 relative">
+              <input
+                ref={inputRef}
+                type="text"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask a follow-up..."
+                className="w-full px-4 py-2 bg-gray-100 rounded-full border border-transparent focus:border-blue-300 focus:bg-white focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Send Button */}
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputValue.trim()}
+              className={`flex-shrink-0 p-2 rounded-full transition-colors ${
+                inputValue.trim()
+                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+                  : 'bg-gray-100 text-gray-400'
+              }`}
+              aria-label="Send message"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Hidden File Input for Chat Camera */}
+        <input
+          ref={chatCameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleChatPhotoSelect}
+          className="hidden"
+          aria-label="Take photo for chat"
+        />
+
+        {/* Toast Notification */}
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Render Initial State
   return (
     <div className="min-h-full flex flex-col bg-gray-50">
       {/* Header */}
