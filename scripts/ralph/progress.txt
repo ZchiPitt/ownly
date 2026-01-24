@@ -2104,3 +2104,30 @@
   - Chat history is maintained during session but not persisted (per acceptance criteria)
   - pb-safe class is used for bottom padding on input bar (safe area for notched phones)
 ---
+
+## 2026-01-24 - US-075
+- What was implemented:
+  - Created Supabase Edge Function `shopping-analyze` at `supabase/functions/shopping-analyze/index.ts`
+  - Function accepts image URL in request body
+  - Calls OpenAI GPT-4o Vision API to identify the item being considered for purchase
+  - Generates embedding using OpenAI text-embedding-3-small (1536 dimensions)
+  - Queries user's inventory using `search_items_by_embedding()` for similarity (threshold 0.6)
+  - Returns detected item info, similar items array with match percentages, and shopping advice
+  - Implemented rate limiting with daily photo limit (20 per day)
+  - Created SQL migration `20260123000011_create_shopping_usage_table.sql` for usage tracking
+  - Migration includes `shopping_usage` table with user_id, usage_date, photo_count, text_count
+  - Created `increment_shopping_photo_usage()` and `increment_shopping_text_usage()` SQL functions
+  - Added RLS policies for users to view their own usage only
+
+- Files changed:
+  - supabase/functions/shopping-analyze/index.ts (new)
+  - supabase/migrations/20260123000011_create_shopping_usage_table.sql (new)
+
+- **Learnings for future iterations:**
+  - Use SECURITY DEFINER with explicit search_path for functions that need to bypass RLS
+  - For upsert pattern in Postgres, use ON CONFLICT ... DO UPDATE
+  - Edge Functions can access SUPABASE_SERVICE_ROLE_KEY for admin operations
+  - Vector embedding search uses `search_items_by_embedding()` with explicit user_id for server-side calls
+  - Rate limiting tables should have unique constraint on (user_id, usage_date) for upsert
+  - Using gpt-4o-mini for advice generation saves costs vs full gpt-4o
+---
