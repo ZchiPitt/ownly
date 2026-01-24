@@ -1934,3 +1934,68 @@
   - CacheFirst is ideal for immutable assets (images, fonts, storage files)
   - Custom events can be used to communicate between SW registration and app UI
 ---
+
+## 2026-01-24 - US-070
+- What was implemented:
+  - Created useInstallPrompt hook at /src/hooks/useInstallPrompt.ts
+  - Captures beforeinstallprompt event and defers native prompt
+  - Tracks engagement criteria via localStorage:
+    - Pages viewed count (clekee_pages_viewed)
+    - First visit timestamp (clekee_first_visit_at)
+    - Dismiss timestamp (clekee_install_dismissed_at)
+    - Installed flag (clekee_app_installed)
+  - Banner shows when: event captured, 2+ pages viewed, 30+ seconds spent, not dismissed in 7 days, not installed
+  - Detects standalone mode via display-mode media query and iOS navigator.standalone
+  - Created InstallBanner component at /src/components/InstallBanner.tsx
+  - Banner shows app icon (192x192), title, subtext, Not Now and Install buttons
+  - Install button triggers event.prompt() and awaits user choice
+  - Not Now button dismisses with 7-day cooldown persisted in localStorage
+  - Integrated InstallBanner into AppShell (shows above bottom nav)
+  - Toast notification "App installed!" on successful installation
+  - Listens for appinstalled event to update state
+  - Closing animation with opacity/translate transition
+
+- Files changed:
+  - src/hooks/useInstallPrompt.ts (new - 282 lines)
+  - src/components/InstallBanner.tsx (new - 149 lines)
+  - src/components/layout/AppShell.tsx (modified - added InstallBanner and toast)
+
+- **Learnings for future iterations:**
+  - beforeinstallprompt event is Chrome/Android specific (not in standard TypeScript DOM types)
+  - Declare global interface WindowEventMap for custom event typing
+  - Use refs for deferredPrompt to avoid re-renders on event capture
+  - Check display-mode: standalone media query for installed state detection
+  - iOS uses navigator.standalone property for PWA detection
+  - event.prompt() can only be called once per event; stash the event reference
+  - Use localStorage for persistent engagement tracking across sessions
+  - MediaQueryListEvent listener on display-mode for real-time install detection
+---
+
+## 2026-01-24 - US-071
+- What was implemented:
+  - Created useIOSInstallPrompt hook at /src/hooks/useIOSInstallPrompt.ts
+  - Detects iOS devices via user agent (iPhone, iPad, iPod, iPad-as-Mac)
+  - Detects Safari browser (excludes CriOS/Chrome, FxiOS/Firefox, EdgiOS/Edge, OPT/Opera)
+  - Checks standalone mode via display-mode media query and navigator.standalone
+  - Reads engagement tracking from shared localStorage keys with Android hook
+  - 30-day dismiss cooldown stored in clekee_ios_install_dismissed_at
+  - Created IOSInstallBanner component at /src/components/IOSInstallBanner.tsx
+  - Banner shows: app icon, title, instructions to tap Share icon then "Add to Home Screen"
+  - Got It button dismisses with 30-day cooldown
+  - Closing animation matches Android banner style
+  - Integrated into AppShell (both banners rendered, only one shows based on platform)
+
+- Files changed:
+  - src/hooks/useIOSInstallPrompt.ts (new - 243 lines)
+  - src/components/IOSInstallBanner.tsx (new - 118 lines)
+  - src/components/layout/AppShell.tsx (modified - added IOSInstallBanner import and render)
+
+- **Learnings for future iterations:**
+  - iOS Safari doesn't support beforeinstallprompt event; must use instructional banner
+  - iPad on iOS 13+ reports as Macintosh - detect via navigator.maxTouchPoints > 1
+  - Safari user agent includes "Safari" but other iOS browsers add specific identifiers (CriOS, FxiOS, etc.)
+  - navigator.standalone is Safari-specific for detecting PWA mode on iOS
+  - Page view and time tracking are shared with Android hook via same localStorage keys
+  - ESLint strict mode requires avoiding setState in useEffect body - use lazy initializers
+  - Use storage event listener for cross-tab sync of localStorage values
+---
