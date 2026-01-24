@@ -2370,3 +2370,37 @@ Created a comprehensive reusable Skeleton component library that provides buildi
   - When creating reusable UI systems like toasts, dialogs, and bottom sheets, follow the pattern: Context → Provider → Hook → Component
 
 ---
+
+## [2026-01-23] - US-084
+- What was implemented:
+  - Created ConfirmDialog component at /src/components/ConfirmDialog.tsx
+  - Created ConfirmContext at /src/contexts/confirm-context.ts
+  - Created ConfirmProvider at /src/contexts/ConfirmProvider.tsx
+  - Created useConfirm hook at /src/hooks/useConfirm.ts
+  - Updated contexts/index.ts to export ConfirmContext and ConfirmProvider
+  - Updated App.tsx to wrap app with ConfirmProvider
+  - Fixed variable shadowing issue in SettingsPage.tsx (success -> updateSuccess)
+
+- Files changed:
+  - src/components/ConfirmDialog.tsx (new)
+  - src/contexts/confirm-context.ts (new)
+  - src/contexts/ConfirmProvider.tsx (new)
+  - src/hooks/useConfirm.ts (new)
+  - src/contexts/index.ts (updated)
+  - src/App.tsx (updated)
+  - src/pages/SettingsPage.tsx (fixed variable shadowing)
+
+- **Learnings for future iterations:**
+  - The ConfirmDialog follows the same pattern as Toast system: Context + Provider + Hook
+  - ConfirmDialog uses a Promise-based API via useConfirm() hook, making it very easy to use: `if (await confirm({ title, message })) { /* user confirmed */ }`
+  - The dialog state is managed centrally by ConfirmProvider, allowing any component to show a confirm dialog
+  - Body scroll is prevented when dialog is open via `document.body.style.overflow = 'hidden'`
+  - Escape key and backdrop click both dismiss the dialog (with onCancel callback)
+  - Two variants: 'default' (blue button) and 'danger' (red button)
+  - The message prop can be a ReactNode, allowing rich content like JSX elements
+  - When fixing variable shadowing issues, be careful to rename all affected references
+  - The existing logout dialog in SettingsPage.tsx is a custom implementation from US-020 and was not replaced - the ConfirmDialog component provides a reusable pattern for future use
+  - For imports from context files, ensure all exported types are actually exported (not just imported and re-exported)
+  - TypeScript noUnusedLocals will catch unused type imports
+
+---
