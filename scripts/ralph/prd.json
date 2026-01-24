@@ -1096,7 +1096,7 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 62,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -1113,8 +1113,8 @@
         "Verify in browser using dev-browser skill"
       ],
       "priority": 63,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Functionality was implemented as part of US-059 to US-062 search feature implementation"
     },
     {
       "id": "US-064",

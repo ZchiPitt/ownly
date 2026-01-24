@@ -1677,3 +1677,54 @@
   - For TypeScript with ESLint `@typescript-eslint/no-misused-new`, use type alias instead of interface for constructors
   - Example: `type SpeechRecognitionConstructor = new () => unknown;` instead of interface with `new (): Type`
 ---
+
+## 2026-01-24 - US-062
+- What was implemented:
+  - Added comprehensive SpeechRecognition TypeScript type declarations for Web Speech API
+  - Created PulsingMicIcon component with animated pulsing rings and red dot
+  - Created VoiceSearchOverlay full-screen overlay component with:
+    - Pulsing microphone animation
+    - "Listening..." text
+    - Real-time transcription display
+    - Cancel hint ("Tap anywhere to cancel")
+  - Implemented handleMicrophoneClick function with:
+    - SpeechRecognition instance creation and configuration
+    - Permission handling (shows alert for "Microphone access required")
+    - Real-time transcription via onresult handler
+    - 5-second no-speech timeout with "Didn't catch that" feedback
+    - Auto-execute search when final transcript received
+  - Added stopVoiceSearch utility for cleanup
+  - Added handleVoiceSearchCancel for overlay tap-to-cancel
+  - Added cleanup effect on component unmount
+
+- Files changed:
+  - src/pages/SearchPage.tsx (added 280 lines, modified 4 lines)
+
+- **Learnings for future iterations:**
+  - Web Speech API types are not included in standard TypeScript lib - need custom interface declarations
+  - SpeechRecognition events have `results` with indexed access and `isFinal` flag for detecting completed speech
+  - Use `abort()` instead of `stop()` for immediate cancellation without triggering onend with results
+  - Browser may prefix SpeechRecognition as `webkitSpeechRecognition` - check both
+  - The `not-allowed` and `permission-denied` error types indicate microphone permission issues
+  - Using alert() as temporary toast replacement until Toast component is fully implemented in US-083
+---
+
+## 2026-01-24 - US-063
+- What was implemented:
+  - Verified all search empty and loading states were already implemented in US-059 to US-062
+  - Loading state: 5 SearchResultSkeleton components display during API calls (SearchPage.tsx lines 751-760)
+  - No results state: NoResultsIcon (magnifying glass with X) + "No items found" + "Try different keywords" (lines 837-846)
+  - Abort previous request: AbortController in useSearch.ts (lines 143-148) cancels in-flight requests
+  - Error state: "Search failed" message with Retry button (lines 763-787)
+  - Empty recent searches: "Your recent searches will appear here" message (lines 825-833)
+  - All functionality was implemented as part of the search feature development
+
+- Files changed:
+  - No code changes needed - all functionality already present
+  - scripts/ralph/prd.json (marked US-063 as passes: true)
+
+- **Learnings for future iterations:**
+  - Search feature empty/loading states were implemented holistically with the main search functionality
+  - When implementing features, consider implementing related UX states in the same PR
+  - AbortController pattern works well with Supabase's .abortSignal() method
+---
