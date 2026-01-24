@@ -2131,3 +2131,30 @@
   - Rate limiting tables should have unique constraint on (user_id, usage_date) for upsert
   - Using gpt-4o-mini for advice generation saves costs vs full gpt-4o
 ---
+
+## 2026-01-24 - US-076
+- What was implemented:
+  - Integrated Shopping Assistant chat with shopping-analyze Edge Function
+  - Replaced placeholder AI response with real API calls to shopping-analyze
+  - Display detected item in chat with name and category suggestion badge
+  - Similar items section showing thumbnails, names, locations, and match percentages
+  - Color-coded match badges: red (≥90%), orange (70-89%), green (<70%)
+  - Item detail modal overlay when tapping similar items (shows full image, location, view button)
+  - Usage tracking display showing "X/20 daily analyses used"
+  - Handle rate limit errors (429) with friendly message about daily limit
+  - Handle auth errors (401) with session expiration message
+  - Handle offline state with requireOnline() check before API calls
+  - Upload images to Supabase storage before analysis (using existing uploadToStorage)
+  - Save recent queries to localStorage for quick re-access
+
+- Files changed:
+  - src/pages/ShoppingPage.tsx (modified - added AI response display, modal, error handling)
+
+- **Learnings for future iterations:**
+  - Use useAuth() hook's session.access_token for Edge Function authorization
+  - Use requireOnline() from useOffline hook to check connectivity before API calls
+  - For shopping photos, use existing 'items' bucket with unique filename prefix (shopping-{timestamp}-{random}.jpg)
+  - ShoppingAnalyzeResponse type from api.ts has usage info in optional property
+  - Modal overlays use fixed positioning with z-50 and bg-black/50 backdrop
+  - animate-in slide-in-from-bottom for bottom sheet modal animations
+---
