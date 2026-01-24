@@ -1,0 +1,207 @@
+/**
+ * Search Result Item Component
+ * Displays a search result with highlighted matching text
+ * Features:
+ * - Thumbnail on left
+ * - Name with highlighted match
+ * - Location path
+ * - Category badge
+ * - Click navigates to item detail
+ */
+
+import { useNavigate } from 'react-router-dom';
+import type { SearchResultItem } from '@/hooks/useSearch';
+
+interface SearchResultProps {
+  item: SearchResultItem;
+  query: string;
+}
+
+/**
+ * Highlight matching text in a string
+ * Uses <mark> element for yellow background highlighting
+ */
+function HighlightText({ text, query }: { text: string; query: string }) {
+  if (!query || !text) {
+    return <>{text}</>;
+  }
+
+  // Escape special regex characters in query
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // Create case-insensitive regex
+  const regex = new RegExp(`(${escapedQuery})`, 'gi');
+
+  // Split text by matches
+  const parts = text.split(regex);
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        // Check if this part matches (case-insensitive)
+        const isMatch = part.toLowerCase() === query.toLowerCase();
+        return isMatch ? (
+          <mark
+            key={index}
+            className="bg-yellow-200 text-gray-900 rounded-sm px-0.5"
+          >
+            {part}
+          </mark>
+        ) : (
+          <span key={index}>{part}</span>
+        );
+      })}
+    </>
+  );
+}
+
+/**
+ * Chevron right icon for navigation indication
+ */
+function ChevronRightIcon() {
+  return (
+    <svg
+      className="w-5 h-5 text-gray-400"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  );
+}
+
+/**
+ * Location pin icon
+ */
+function LocationIcon() {
+  return (
+    <svg
+      className="w-4 h-4 text-gray-400 flex-shrink-0"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+      />
+    </svg>
+  );
+}
+
+export function SearchResult({ item, query }: SearchResultProps) {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate(`/item/${item.id}`);
+  };
+
+  const displayName = item.name || 'Unnamed Item';
+  const imageUrl = item.thumbnail_url || item.photo_url;
+
+  return (
+    <button
+      onClick={handleClick}
+      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+      aria-label={`View ${displayName}`}
+    >
+      {/* Thumbnail */}
+      <div className="flex-shrink-0">
+        <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100">
+          <img
+            src={imageUrl}
+            alt=""
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        {/* Item name with highlighting */}
+        <h3 className="font-medium text-gray-900 truncate">
+          <HighlightText text={displayName} query={query} />
+        </h3>
+
+        {/* Location path */}
+        {item.location_path && (
+          <div className="flex items-center gap-1 mt-0.5">
+            <LocationIcon />
+            <span className="text-sm text-gray-500 truncate">
+              <HighlightText text={item.location_path} query={query} />
+            </span>
+          </div>
+        )}
+
+        {/* Category badge */}
+        {item.category_name && (
+          <div className="mt-1">
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+              style={{
+                backgroundColor: item.category_color ? `${item.category_color}20` : '#6b728020',
+                color: item.category_color || '#6b7280',
+              }}
+            >
+              {item.category_icon && (
+                <span className="text-xs">{item.category_icon}</span>
+              )}
+              <HighlightText text={item.category_name} query={query} />
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Chevron */}
+      <div className="flex-shrink-0">
+        <ChevronRightIcon />
+      </div>
+    </button>
+  );
+}
+
+/**
+ * Skeleton loader for search results
+ */
+export function SearchResultSkeleton() {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-white border-b border-gray-100 animate-pulse">
+      {/* Thumbnail skeleton */}
+      <div className="flex-shrink-0">
+        <div className="w-14 h-14 rounded-lg bg-gray-200" />
+      </div>
+
+      {/* Content skeleton */}
+      <div className="flex-1 min-w-0">
+        {/* Name skeleton */}
+        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+
+        {/* Location skeleton */}
+        <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+
+        {/* Category badge skeleton */}
+        <div className="h-5 bg-gray-200 rounded-full w-20" />
+      </div>
+
+      {/* Chevron skeleton */}
+      <div className="flex-shrink-0">
+        <div className="w-5 h-5 rounded bg-gray-200" />
+      </div>
+    </div>
+  );
+}

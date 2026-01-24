@@ -7,19 +7,34 @@
  * - Clear button when has text
  * - Microphone icon (if Speech API supported)
  * - Query preserved in URL: ?q={encoded_query}
+ * - Real-time search with 300ms debounce
+ * - Highlighted matching text in results
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearch } from '@/hooks/useSearch';
+import { SearchResult, SearchResultSkeleton } from '@/components/SearchResult';
+
+/**
+ * Type declaration for Web Speech API (not included in standard TypeScript lib)
+ */
+interface SpeechRecognitionInterface {
+  new (): SpeechRecognitionInterface;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionInterface;
+    webkitSpeechRecognition?: SpeechRecognitionInterface;
+  }
+}
 
 /**
  * Check if the Web Speech API is available
  */
 function isSpeechRecognitionSupported(): boolean {
-  return !!(
-    window.SpeechRecognition ||
-    (window as typeof window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition
-  );
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 }
 
 /**
@@ -106,6 +121,33 @@ function MicrophoneIcon() {
   );
 }
 
+/**
+ * No results magnifying glass with X
+ */
+function NoResultsIcon() {
+  return (
+    <svg
+      className="w-16 h-16 text-gray-300"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={1.5}
+        d="M8.5 8.5l3 3m0-3l-3 3"
+      />
+    </svg>
+  );
+}
+
 export function SearchPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -113,10 +155,23 @@ export function SearchPage() {
 
   // Get initial query from URL
   const initialQuery = searchParams.get('q') || '';
-  const [query, setQuery] = useState(initialQuery);
+
+  // Use the search hook
+  const { results, isLoading, error, query, setQuery, hasSearched } = useSearch({
+    debounceMs: 300,
+    minQueryLength: 1,
+  });
 
   // Track speech recognition support
   const [speechSupported] = useState(() => isSpeechRecognitionSupported());
+
+  // Initialize query from URL on mount
+  useEffect(() => {
+    if (initialQuery && !query) {
+      setQuery(initialQuery);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-focus input on mount
   useEffect(() => {
@@ -153,8 +208,102 @@ export function SearchPage() {
 
   const handleMicrophoneClick = () => {
     // Microphone functionality will be implemented in US-062
-    // For now, just a placeholder
     console.log('Voice search clicked - to be implemented in US-062');
+  };
+
+  // Render search results header
+  const renderResultsHeader = () => {
+    if (!hasSearched || !query) return null;
+
+    return (
+      <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
+        <p className="text-sm text-gray-600">
+          <span className="font-medium">{results.length}</span>
+          {' '}result{results.length !== 1 ? 's' : ''} for "{query}"
+        </p>
+      </div>
+    );
+  };
+
+  // Render search results or states
+  const renderContent = () => {
+    // Loading state - show skeleton
+    if (isLoading) {
+      return (
+        <div className="divide-y divide-gray-100">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <SearchResultSkeleton key={i} />
+          ))}
+        </div>
+      );
+    }
+
+    // Error state
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center px-4 py-12">
+          <div className="text-red-500 mb-2">
+            <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+          </div>
+          <p className="text-gray-900 font-medium mb-1">Search failed</p>
+          <p className="text-sm text-gray-500 text-center mb-4">
+            Something went wrong. Please try again.
+          </p>
+          <button
+            onClick={() => setQuery(query)} // Trigger re-search
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
+    // No query entered - show placeholder
+    if (!query) {
+      return (
+        <div className="text-center text-gray-500 mt-8 px-4">
+          <p>Search for items by name, tags, locations, and more</p>
+          {/* Recent searches will be implemented in US-061 */}
+        </div>
+      );
+    }
+
+    // Has searched but no results
+    if (hasSearched && results.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center px-4 py-12">
+          <NoResultsIcon />
+          <p className="text-gray-900 font-medium mt-4 mb-1">No items found</p>
+          <p className="text-sm text-gray-500 text-center">
+            Try different keywords or check your spelling
+          </p>
+        </div>
+      );
+    }
+
+    // Has results - show them
+    if (results.length > 0) {
+      return (
+        <>
+          {renderResultsHeader()}
+          <div className="divide-y divide-gray-100">
+            {results.map((item) => (
+              <SearchResult key={item.id} item={item} query={query} />
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    return null;
   };
 
   return (
@@ -217,21 +366,9 @@ export function SearchPage() {
         </div>
       </div>
 
-      {/* Search content area - will be implemented in subsequent stories */}
-      <div className="p-4">
-        {/* Placeholder for search results (US-060), recent searches (US-061), etc. */}
-        {!query && (
-          <div className="text-center text-gray-500 mt-8">
-            <p>Search for items by name, tags, locations, and more</p>
-          </div>
-        )}
-
-        {query && (
-          <div className="text-center text-gray-500 mt-8">
-            <p>Searching for "{query}"...</p>
-            <p className="text-sm mt-2">Search results will be implemented in US-060</p>
-          </div>
-        )}
+      {/* Search content area */}
+      <div className="pb-4">
+        {renderContent()}
       </div>
     </div>
   );
