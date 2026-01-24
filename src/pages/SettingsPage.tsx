@@ -2,22 +2,59 @@
  * Settings Page
  * Allows users to configure preferences and log out
  * US-020: Create logout functionality in settings
+ * US-064: Create Settings page - reminder settings section
  */
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserSettings } from '@/hooks/useUserSettings';
 import { Toast } from '@/components/Toast';
+
+// Unused item reminder threshold options (days)
+const UNUSED_THRESHOLD_OPTIONS = [
+  { value: 30, label: '30 days' },
+  { value: 60, label: '60 days' },
+  { value: 90, label: '90 days' },
+  { value: 180, label: '180 days' },
+  { value: 365, label: '1 year' },
+];
+
+// Expiration reminder options (days before)
+const EXPIRATION_REMINDER_OPTIONS = [
+  { value: 3, label: '3 days before' },
+  { value: 7, label: '7 days before' },
+  { value: 14, label: '14 days before' },
+  { value: 30, label: '30 days before' },
+];
 
 export function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const { settings, updateSettings, isLoading: isLoadingSettings } = useUserSettings();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true);
+  };
+
+  // Handle settings updates with optimistic UI
+  const handleSettingChange = async (
+    key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled',
+    value: boolean | number
+  ) => {
+    if (isUpdating) return;
+
+    setIsUpdating(true);
+    const success = await updateSettings({ [key]: value });
+    setIsUpdating(false);
+
+    if (!success) {
+      setToast({ message: 'Failed to update setting', type: 'error' });
+    }
   };
 
   const handleCancelLogout = () => {
@@ -61,6 +98,137 @@ export function SettingsPage() {
                 Signed in as <span className="font-medium text-gray-900">{user?.email}</span>
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Reminders & Notifications Section - US-064 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Reminders & Notifications
+          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Loading state */}
+            {isLoadingSettings ? (
+              <div className="px-4 py-4 flex items-center justify-center">
+                <div className="animate-pulse flex items-center gap-2">
+                  <div className="w-4 h-4 bg-gray-200 rounded-full" />
+                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Master Toggle: Enable Reminders */}
+                <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                  <div className="flex-1">
+                    <label htmlFor="reminder-toggle" className="text-base font-medium text-gray-900">
+                      Enable Reminders
+                    </label>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Get notified about unused and expiring items
+                    </p>
+                  </div>
+                  <button
+                    id="reminder-toggle"
+                    role="switch"
+                    aria-checked={settings?.reminder_enabled ?? true}
+                    onClick={() => handleSettingChange('reminder_enabled', !settings?.reminder_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      settings?.reminder_enabled ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Sub-options (shown when reminders enabled) */}
+                {settings?.reminder_enabled && (
+                  <div className="pl-8">
+                    {/* Unused Item Reminder Threshold */}
+                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                      <div className="flex-1 pr-4">
+                        <label htmlFor="unused-threshold" className="text-sm font-medium text-gray-900">
+                          Unused Item Reminder
+                        </label>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Remind about items not viewed for
+                        </p>
+                      </div>
+                      <select
+                        id="unused-threshold"
+                        value={settings?.reminder_threshold_days ?? 90}
+                        onChange={(e) => handleSettingChange('reminder_threshold_days', parseInt(e.target.value, 10))}
+                        disabled={isUpdating}
+                        className="block w-32 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {UNUSED_THRESHOLD_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Expiration Reminder Days */}
+                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                      <div className="flex-1 pr-4">
+                        <label htmlFor="expiration-reminder" className="text-sm font-medium text-gray-900">
+                          Expiration Reminder
+                        </label>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Remind before items expire
+                        </p>
+                      </div>
+                      <select
+                        id="expiration-reminder"
+                        value={settings?.expiration_reminder_days ?? 7}
+                        onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
+                        disabled={isUpdating}
+                        className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {EXPIRATION_REMINDER_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Push Notifications Toggle */}
+                    <div className="px-4 py-4 flex items-center justify-between">
+                      <div className="flex-1">
+                        <label htmlFor="push-toggle" className="text-sm font-medium text-gray-900">
+                          Push Notifications
+                        </label>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          Receive reminders on your device
+                        </p>
+                      </div>
+                      <button
+                        id="push-toggle"
+                        role="switch"
+                        aria-checked={settings?.push_notifications_enabled ?? false}
+                        onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
+                        disabled={isUpdating}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          settings?.push_notifications_enabled ? 'bg-blue-600' : 'bg-gray-200'
+                        }`}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </section>
 
