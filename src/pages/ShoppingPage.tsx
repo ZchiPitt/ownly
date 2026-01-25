@@ -557,12 +557,12 @@ export function ShoppingPage() {
       imageUrl: msg.imageUrl,
       analysisData: msg.analysisData
         ? {
-            detected_item: msg.analysisData.detected_item,
-            similar_items: msg.analysisData.similar_items?.map((item) => ({
-              name: item.name,
-              similarity: item.similarity,
-            })),
-          }
+          detected_item: msg.analysisData.detected_item,
+          similar_items: msg.analysisData.similar_items?.map((item) => ({
+            name: item.name,
+            similarity: item.similarity,
+          })),
+        }
         : undefined,
     }));
   }, [messages]);
@@ -741,7 +741,7 @@ export function ShoppingPage() {
       <button
         key={item.id}
         onClick={() => setSelectedItem(item)}
-        className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all active:scale-[0.98] w-full text-left"
+        className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-sm transition-all active:scale-[0.98] w-full text-left"
       >
         {/* Thumbnail */}
         <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
@@ -797,7 +797,7 @@ export function ShoppingPage() {
                 </span>
               </div>
               {data.detected_item.category_suggestion && (
-                <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full">
+                <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full">
                   {data.detected_item.category_suggestion}
                 </span>
               )}
@@ -885,11 +885,10 @@ export function ShoppingPage() {
             className={`flex mb-2 ${isUser ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl ${
-                isUser
-                  ? 'bg-blue-500 text-white rounded-br-md'
+              className={`max-w-[80%] rounded-2xl ${isUser
+                  ? 'bg-teal-600 text-white rounded-br-md'
                   : 'bg-gray-200 text-gray-900 rounded-bl-md'
-              } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
+                } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
             >
               {message.type === 'image' && message.imageUrl ? (
                 <img
@@ -918,11 +917,10 @@ export function ShoppingPage() {
         {/* Usage Warning Banner */}
         {(showPhotoWarning || photoLimitReached) && (
           <div
-            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
-              photoLimitReached
+            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${photoLimitReached
                 ? 'bg-red-100 text-red-700'
                 : 'bg-yellow-100 text-yellow-800'
-            }`}
+              }`}
           >
             <span className="mr-1">{photoLimitReached ? '🚫' : '⚠️'}</span>
             {photoWarningMessage}
@@ -932,11 +930,10 @@ export function ShoppingPage() {
         {/* Text Usage Warning Banner (only show when different from photo warning) */}
         {(showTextWarning || textLimitReached) && !photoLimitReached && (
           <div
-            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
-              textLimitReached
+            className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${textLimitReached
                 ? 'bg-red-100 text-red-700'
                 : 'bg-yellow-100 text-yellow-800'
-            }`}
+              }`}
           >
             <span className="mr-1">{textLimitReached ? '🚫' : '⚠️'}</span>
             {textWarningMessage}
@@ -976,7 +973,7 @@ export function ShoppingPage() {
           </div>
           <button
             onClick={handleNewChat}
-            className="text-sm text-blue-600 font-medium hover:text-blue-700"
+            className="text-sm text-teal-600 font-medium hover:text-teal-700"
           >
             New Chat
           </button>
@@ -1019,11 +1016,10 @@ export function ShoppingPage() {
             <button
               onClick={handleChatCameraClick}
               disabled={photoLimitReached}
-              className={`flex-shrink-0 p-2 rounded-full transition-colors ${
-                photoLimitReached
+              className={`flex-shrink-0 p-2 rounded-full transition-colors ${photoLimitReached
                   ? 'text-gray-300 cursor-not-allowed'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-              }`}
+                }`}
               aria-label="Add photo"
             >
               <svg
@@ -1057,11 +1053,10 @@ export function ShoppingPage() {
                 onKeyDown={handleKeyDown}
                 disabled={textLimitReached}
                 placeholder={textLimitReached ? "Daily limit reached" : "Ask a follow-up..."}
-                className={`w-full px-4 py-2 rounded-full border border-transparent focus:outline-none transition-colors ${
-                  textLimitReached
+                className={`w-full px-4 py-2 rounded-full border border-transparent focus:outline-none transition-colors ${textLimitReached
                     ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-100 focus:border-blue-300 focus:bg-white'
-                }`}
+                    : 'bg-gray-100 focus:border-teal-300 focus:bg-white'
+                  }`}
               />
             </div>
 
@@ -1069,11 +1064,10 @@ export function ShoppingPage() {
             <button
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || textLimitReached}
-              className={`flex-shrink-0 p-2 rounded-full transition-colors ${
-                inputValue.trim() && !textLimitReached
-                  ? 'bg-blue-500 text-white hover:bg-blue-600'
+              className={`flex-shrink-0 p-2 rounded-full transition-colors ${inputValue.trim() && !textLimitReached
+                  ? 'bg-teal-600 text-white hover:bg-teal-700'
                   : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              }`}
+                }`}
               aria-label="Send message"
             >
               <svg
@@ -1161,13 +1155,12 @@ export function ShoppingPage() {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-gray-600">Match:</span>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        selectedItem.similarity >= 0.9
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${selectedItem.similarity >= 0.9
                           ? 'bg-red-100 text-red-700'
                           : selectedItem.similarity >= 0.7
                             ? 'bg-orange-100 text-orange-700'
                             : 'bg-green-100 text-green-700'
-                      }`}
+                        }`}
                     >
                       {Math.round(selectedItem.similarity * 100)}% similar
                     </span>
@@ -1208,7 +1201,7 @@ export function ShoppingPage() {
                       // Navigate to item detail page
                       window.location.href = `/item/${selectedItem.id}`;
                     }}
-                    className="flex-1 py-3 px-4 bg-blue-500 text-white font-medium rounded-xl hover:bg-blue-600 transition-colors"
+                    className="flex-1 py-3 px-4 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors"
                   >
                     View Item
                   </button>
@@ -1242,11 +1235,10 @@ export function ShoppingPage() {
       {/* Usage Warning Banner */}
       {(showPhotoWarning || photoLimitReached) && (
         <div
-          className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${
-            photoLimitReached
+          className={`flex-shrink-0 px-4 py-2 text-sm font-medium text-center ${photoLimitReached
               ? 'bg-red-100 text-red-700'
               : 'bg-yellow-100 text-yellow-800'
-          }`}
+            }`}
         >
           <span className="mr-1">{photoLimitReached ? '🚫' : '⚠️'}</span>
           {photoWarningMessage}
@@ -1263,9 +1255,9 @@ export function ShoppingPage() {
         {/* Initial State - Icon and Helper Text */}
         <div className="flex flex-col items-center text-center mb-8 pt-4">
           {/* Shopping Bag Icon */}
-          <div className="w-24 h-24 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+          <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center mb-4">
             <svg
-              className="w-12 h-12 text-blue-600"
+              className="w-12 h-12 text-teal-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1301,9 +1293,9 @@ export function ShoppingPage() {
           >
             <div className="flex items-center gap-4">
               {/* Camera Icon */}
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-blue-600"
+                  className="w-7 h-7 text-teal-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1357,9 +1349,9 @@ export function ShoppingPage() {
           >
             <div className="flex items-center gap-4">
               {/* Gallery Icon */}
-              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-green-600"
+                  className="w-7 h-7 text-teal-600"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1521,11 +1513,11 @@ export function ShoppingPage() {
         )}
 
         {/* Tips Section */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-          <h4 className="text-sm font-semibold text-blue-800 mb-2">
+        <div className="mt-6 p-4 bg-teal-50 rounded-lg">
+          <h4 className="text-sm font-semibold text-teal-800 mb-2">
             How it works
           </h4>
-          <ul className="text-sm text-blue-700 space-y-1">
+          <ul className="text-sm text-teal-700 space-y-1">
             <li>1. Take a photo of something you want to buy</li>
             <li>2. AI will search your inventory for similar items</li>
             <li>3. Get smart advice on whether to make the purchase</li>

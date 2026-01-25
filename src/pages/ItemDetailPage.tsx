@@ -542,9 +542,8 @@ function DetailsSection({
       >
         <h3 className="text-base font-semibold text-gray-900">Details</h3>
         <ChevronDownIcon
-          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
+          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
+            }`}
         />
       </button>
 
@@ -621,7 +620,7 @@ function ActionBar({
         {/* Edit Item button (primary) */}
         <button
           onClick={onEdit}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 text-white font-medium rounded-2xl hover:bg-teal-700 active:bg-teal-800 transition-colors"
         >
           <EditIcon className="w-5 h-5" />
           <span>Edit Item</span>
@@ -630,7 +629,7 @@ function ActionBar({
         {/* Delete button (red outline) */}
         <button
           onClick={onDelete}
-          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-500 text-red-600 font-medium rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-500 text-red-600 font-medium rounded-2xl hover:bg-red-50 active:bg-red-100 transition-colors"
         >
           <TrashIcon className="w-5 h-5" />
           <span>Delete</span>
@@ -1340,9 +1339,8 @@ export function ItemDetailPage() {
 
                 {/* Favorites toggle */}
                 <button
-                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${
-                    item.is_favorite ? 'text-red-500' : 'text-gray-700'
-                  }`}
+                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${item.is_favorite ? 'text-red-500' : 'text-gray-700'
+                    }`}
                   onClick={handleToggleFavorite}
                   disabled={isUpdating}
                 >
@@ -1355,9 +1353,8 @@ export function ItemDetailPage() {
 
                 {/* Keep Forever toggle */}
                 <button
-                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${
-                    item.keep_forever ? 'text-blue-600' : 'text-gray-700'
-                  }`}
+                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${item.keep_forever ? 'text-blue-600' : 'text-gray-700'
+                    }`}
                   onClick={handleToggleKeepForever}
                   disabled={isUpdating}
                 >
@@ -1531,13 +1528,12 @@ export function ItemDetailPage() {
       {/* Toast notification (US-056) */}
       {toast && (
         <div
-          className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 flex items-center justify-center gap-2 animate-fade-in ${
-            toast.type === 'success'
+          className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 flex items-center justify-center gap-2 animate-fade-in ${toast.type === 'success'
               ? 'bg-green-600'
               : toast.type === 'error'
-              ? 'bg-red-600'
-              : 'bg-blue-600'
-          }`}
+                ? 'bg-red-600'
+                : 'bg-blue-600'
+            }`}
           role="alert"
         >
           {toast.type === 'success' && <CheckIcon className="w-5 h-5 flex-shrink-0" />}

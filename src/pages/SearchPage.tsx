@@ -375,9 +375,8 @@ function RecentSearchItem({ query, onClick, onRemove }: RecentSearchItemProps) {
     <div ref={itemRef} className="relative overflow-hidden">
       {/* Delete button revealed on swipe (mobile) */}
       <div
-        className={`absolute right-0 top-0 bottom-0 flex items-center bg-red-500 transition-all duration-200 ${
-          swiped ? 'w-20' : 'w-0'
-        }`}
+        className={`absolute right-0 top-0 bottom-0 flex items-center bg-red-500 transition-all duration-200 ${swiped ? 'w-20' : 'w-0'
+          }`}
       >
         <button
           onClick={onRemove}
@@ -394,9 +393,8 @@ function RecentSearchItem({ query, onClick, onRemove }: RecentSearchItemProps) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`flex items-center px-4 py-3 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-200 group ${
-          swiped ? '-translate-x-20' : deltaX > 0 ? '' : ''
-        }`}
+        className={`flex items-center px-4 py-3 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-200 group ${swiped ? '-translate-x-20' : deltaX > 0 ? '' : ''
+          }`}
         style={{
           transform: deltaX > 0 ? `translateX(-${deltaX}px)` : swiped ? 'translateX(-80px)' : 'translateX(0)',
         }}
@@ -779,7 +777,7 @@ export function SearchPage() {
           </p>
           <button
             onClick={() => setQuery(query)} // Trigger re-search
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors"
           >
             Retry
           </button>

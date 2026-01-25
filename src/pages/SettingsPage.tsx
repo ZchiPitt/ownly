@@ -209,14 +209,14 @@ export function SettingsPage() {
             <div className="px-4 py-4 border-b border-gray-100">
               <div className="flex items-center space-x-4">
                 {/* User Avatar or Initials */}
-                <div className="h-14 w-14 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                <div className="h-14 w-14 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
                   {user?.user_metadata?.display_name
                     ? user.user_metadata.display_name
-                        .split(' ')
-                        .map((n: string) => n[0])
-                        .join('')
-                        .slice(0, 2)
-                        .toUpperCase()
+                      .split(' ')
+                      .map((n: string) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
                     : user?.email?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="flex-1">
@@ -292,14 +292,12 @@ export function SettingsPage() {
                     aria-checked={settings?.reminder_enabled ?? true}
                     onClick={() => handleSettingChange('reminder_enabled', !settings?.reminder_enabled)}
                     disabled={isUpdating}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      settings?.reminder_enabled ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                      }`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
                   </button>
                 </div>
@@ -322,7 +320,7 @@ export function SettingsPage() {
                         value={settings?.reminder_threshold_days ?? 90}
                         onChange={(e) => handleSettingChange('reminder_threshold_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-32 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-32 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {UNUSED_THRESHOLD_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -347,7 +345,7 @@ export function SettingsPage() {
                         value={settings?.expiration_reminder_days ?? 7}
                         onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {EXPIRATION_REMINDER_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -375,14 +373,13 @@ export function SettingsPage() {
                             aria-checked={settings?.push_notifications_enabled ?? false}
                             onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
                             disabled={isUpdating || isRequestingPush}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                              settings?.push_notifications_enabled ? 'bg-blue-600' : 'bg-gray-200'
-                            }`}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.push_notifications_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                              }`}
                           >
                             {isRequestingPush ? (
                               <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
                                 <svg
-                                  className="animate-spin h-3 w-3 text-blue-500"
+                                  className="animate-spin h-3 w-3 text-teal-500"
                                   xmlns="http://www.w3.org/2000/svg"
                                   fill="none"
                                   viewBox="0 0 24 24"
@@ -404,9 +401,8 @@ export function SettingsPage() {
                               </span>
                             ) : (
                               <span
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                  settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
-                                }`}
+                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
+                                  }`}
                               />
                             )}
                           </button>
@@ -461,22 +457,20 @@ export function SettingsPage() {
                   <button
                     onClick={() => handleSettingChange('default_view', 'gallery')}
                     disabled={isUpdating}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                      settings?.default_view === 'gallery'
-                        ? 'bg-white text-blue-600 shadow-sm'
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'gallery'
+                        ? 'bg-white text-teal-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Gallery
                   </button>
                   <button
                     onClick={() => handleSettingChange('default_view', 'list')}
                     disabled={isUpdating}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                      settings?.default_view === 'list'
-                        ? 'bg-white text-blue-600 shadow-sm'
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'list'
+                        ? 'bg-white text-teal-600 shadow-sm'
                         : 'text-gray-600 hover:text-gray-900'
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     List
                   </button>
@@ -588,7 +582,7 @@ export function SettingsPage() {
                 onChange={(e) => setEditingName(e.target.value)}
                 maxLength={50}
                 placeholder="Enter your display name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                 autoFocus
               />
               <p className="text-xs text-gray-500 mt-1">Up to 50 characters</p>
@@ -617,7 +611,7 @@ export function SettingsPage() {
               <button
                 onClick={handleSaveEditProfile}
                 disabled={isSavingName || !editingName.trim() || editingName.trim().length > 50}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="flex-1 py-2.5 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 {isSavingName ? (
                   <>

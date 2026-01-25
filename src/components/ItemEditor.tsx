@@ -142,11 +142,10 @@ function QuantityStepper({
         type="button"
         onClick={handleDecrement}
         disabled={value <= min}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
-          value <= min
+        className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${value <= min
             ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-        }`}
+          }`}
         aria-label="Decrease quantity"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -161,7 +160,7 @@ function QuantityStepper({
         onChange={handleInputChange}
         min={min}
         max={max}
-        className="w-16 h-10 text-center text-lg font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-16 h-10 text-center text-lg font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         aria-label="Quantity"
       />
 
@@ -170,11 +169,10 @@ function QuantityStepper({
         type="button"
         onClick={handleIncrement}
         disabled={value >= max}
-        className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
-          value >= max
+        className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${value >= max
             ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
-        }`}
+          }`}
         aria-label="Increase quantity"
       >
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,7 +334,7 @@ function CategorySelector({
       <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
         Category
         {isAIFilled && (
-          <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
             <SparkleIcon className="w-3 h-3" />
             AI
           </span>
@@ -348,11 +346,10 @@ function CategorySelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
-          isAIFilled
-            ? 'border-blue-300 bg-blue-50/50'
+        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors text-left ${isAIFilled
+            ? 'border-teal-300 bg-teal-50/50'
             : 'border-gray-300 bg-white'
-        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <div className="flex items-center gap-2 min-w-0">
           {selectedCategory ? (
@@ -360,7 +357,7 @@ function CategorySelector({
               <span className="text-lg flex-shrink-0">{selectedCategory.icon}</span>
               <span className="truncate">{selectedCategory.name}</span>
               {isAIFilled && selectedCategory.id === aiSuggestedCategory?.id && (
-                <span className="flex-shrink-0 text-xs text-blue-600">(AI suggested)</span>
+                <span className="flex-shrink-0 text-xs text-teal-600">(AI suggested)</span>
               )}
             </>
           ) : (
@@ -368,9 +365,8 @@ function CategorySelector({
           )}
         </div>
         <svg
-          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+            }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -409,23 +405,22 @@ function CategorySelector({
                     <button
                       type="button"
                       onClick={() => handleSelect(category)}
-                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
-                        isSelected
-                          ? 'bg-blue-50 text-blue-700'
+                      className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${isSelected
+                          ? 'bg-teal-50 text-teal-700'
                           : 'hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       <span className="text-lg flex-shrink-0">{category.icon}</span>
                       <span className="flex-1 truncate">{category.name}</span>
                       {isAISuggested && (
-                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
                           <SparkleIcon className="w-3 h-3" />
                           AI
                         </span>
                       )}
                       {isSelected && (
                         <svg
-                          className="w-5 h-5 text-blue-600 flex-shrink-0"
+                          className="w-5 h-5 text-teal-600 flex-shrink-0"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -457,18 +452,17 @@ function CategorySelector({
                         onKeyDown={handleCreateKeyPress}
                         placeholder="Category name"
                         maxLength={50}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
                         disabled={isSaving}
                       />
                       <button
                         type="button"
                         onClick={handleCreateCategory}
                         disabled={isSaving || !newCategoryName.trim()}
-                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                          isSaving || !newCategoryName.trim()
+                        className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isSaving || !newCategoryName.trim()
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
+                            : 'bg-teal-600 text-white hover:bg-teal-700'
+                          }`}
                       >
                         {isSaving ? (
                           <svg
@@ -525,7 +519,7 @@ function CategorySelector({
                   <button
                     type="button"
                     onClick={() => setIsCreating(true)}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-blue-600 hover:bg-blue-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-teal-600 hover:bg-teal-50 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -869,9 +863,8 @@ export function ItemEditor({
                 {Array.from({ length: totalItems }, (_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      i < currentItemIndex ? 'bg-blue-600' : 'bg-blue-200'
-                    }`}
+                    className={`w-2 h-2 rounded-full transition-colors ${i < currentItemIndex ? 'bg-blue-600' : 'bg-blue-200'
+                      }`}
                   />
                 ))}
               </div>
@@ -916,7 +909,7 @@ export function ItemEditor({
               <label htmlFor="item-name" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 Item Name
                 {aiFilledFields.name && (
-                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
                     <SparkleIcon className="w-3 h-3" />
                     AI
                   </span>
@@ -930,11 +923,10 @@ export function ItemEditor({
                   onChange={handleNameChange}
                   placeholder="e.g., Blue Coffee Mug"
                   maxLength={200}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${
-                    aiFilledFields.name
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${aiFilledFields.name
                       ? 'border-blue-300 bg-blue-50/50'
                       : 'border-gray-300 bg-white'
-                  }`}
+                    }`}
                 />
                 {/* Character count */}
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
@@ -961,7 +953,7 @@ export function ItemEditor({
               <label htmlFor="item-description" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 Description
                 {aiFilledFields.description && (
-                  <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
                     <SparkleIcon className="w-3 h-3" />
                     AI
                   </span>
@@ -975,11 +967,10 @@ export function ItemEditor({
                   placeholder="Add notes about this item..."
                   maxLength={1000}
                   rows={4}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-colors ${
-                    aiFilledFields.description
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-colors ${aiFilledFields.description
                       ? 'border-blue-300 bg-blue-50/50'
                       : 'border-gray-300 bg-white'
-                  }`}
+                    }`}
                 />
                 {/* Character count */}
                 <span className="absolute right-3 bottom-3 text-xs text-gray-400">
@@ -1006,9 +997,8 @@ export function ItemEditor({
                 type="button"
                 onClick={openLocationPicker}
                 disabled={locationsLoading}
-                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
-                  locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
-                } border-gray-300 bg-white`}
+                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  } border-gray-300 bg-white`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
@@ -1078,9 +1068,8 @@ export function ItemEditor({
                   )}
                 </span>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform ${
-                    isAdditionalFieldsExpanded ? 'rotate-180' : ''
-                  }`}
+                  className={`w-5 h-5 text-gray-400 transition-transform ${isAdditionalFieldsExpanded ? 'rotate-180' : ''
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1165,9 +1154,8 @@ export function ItemEditor({
                       type="date"
                       value={expirationDate ?? ''}
                       onChange={handleExpirationDateChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${
-                        isExpirationDatePast ? 'border-amber-300' : 'border-gray-300'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${isExpirationDatePast ? 'border-amber-300' : 'border-gray-300'
+                        }`}
                     />
                     {isExpirationDatePast && (
                       <p className="mt-1 text-xs text-amber-600">
@@ -1181,7 +1169,7 @@ export function ItemEditor({
                     <label htmlFor="item-brand" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                       Brand
                       {aiFilledFields.brand && (
-                        <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
                           <SparkleIcon className="w-3 h-3" />
                           AI
                         </span>
@@ -1195,11 +1183,10 @@ export function ItemEditor({
                         onChange={handleBrandChange}
                         placeholder="e.g., Apple, Samsung, Nike"
                         maxLength={100}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
-                          aiFilledFields.brand
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${aiFilledFields.brand
                             ? 'border-blue-300 bg-blue-50/50'
                             : 'border-gray-300 bg-white'
-                        }`}
+                          }`}
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
                         {brand.length}/100

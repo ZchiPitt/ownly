@@ -160,9 +160,9 @@ function ItemRowSkeleton() {
 function EmptyState({ onAddItem }: { onAddItem: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+      <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mb-4">
         <svg
-          className="w-10 h-10 text-blue-500"
+          className="w-10 h-10 text-teal-500"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -183,7 +183,7 @@ function EmptyState({ onAddItem }: { onAddItem: () => void }) {
       </p>
       <button
         onClick={onAddItem}
-        className="px-6 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors active:scale-95"
+        className="px-6 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors active:scale-95"
       >
         Add First Item
       </button>
@@ -252,7 +252,7 @@ function LoadingMoreSpinner() {
   return (
     <div className="flex items-center justify-center py-4">
       <svg
-        className="w-5 h-5 text-blue-600 animate-spin"
+        className="w-5 h-5 text-teal-600 animate-spin"
         fill="none"
         viewBox="0 0 24 24"
       >
@@ -437,7 +437,7 @@ export function ItemList({
       {isRefreshing && (
         <div className="flex items-center justify-center py-3 mb-2">
           <svg
-            className="w-5 h-5 text-blue-600 animate-spin"
+            className="w-5 h-5 text-teal-600 animate-spin"
             fill="none"
             viewBox="0 0 24 24"
           >

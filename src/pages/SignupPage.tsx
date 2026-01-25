@@ -222,11 +222,10 @@ export function SignupPage() {
               onChange={handleInputChange('email')}
               onBlur={handleBlur('email')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                (touched.email && errors.email) || showEmailExistsError
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${(touched.email && errors.email) || showEmailExistsError
+                ? 'border-red-500'
+                : 'border-gray-300'
+                }`}
             />
             {touched.email && errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -236,7 +235,7 @@ export function SignupPage() {
                 {submitError}{' '}
                 <Link
                   to="/login"
-                  className="text-blue-600 font-semibold hover:text-blue-700 underline"
+                  className="text-teal-600 font-semibold hover:text-teal-700 underline"
                 >
                   Log in
                 </Link>
@@ -261,11 +260,10 @@ export function SignupPage() {
               onChange={handleInputChange('password')}
               onBlur={handleBlur('password')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                touched.password && errors.password
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.password && errors.password
+                ? 'border-red-500'
+                : 'border-gray-300'
+                }`}
             />
             {touched.password && errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -289,11 +287,10 @@ export function SignupPage() {
               onChange={handleInputChange('confirmPassword')}
               onBlur={handleBlur('confirmPassword')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                touched.confirmPassword && errors.confirmPassword
-                  ? 'border-red-500'
-                  : 'border-gray-300'
-              }`}
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.confirmPassword && errors.confirmPassword
+                ? 'border-red-500'
+                : 'border-gray-300'
+                }`}
             />
             {touched.confirmPassword && errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-600">
@@ -306,11 +303,10 @@ export function SignupPage() {
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors flex items-center justify-center ${
-              isFormValid && !isSubmitting
-                ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-                : 'bg-gray-300 cursor-not-allowed'
-            }`}
+            className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center ${isFormValid && !isSubmitting
+              ? 'bg-teal-600 hover:bg-teal-700 active:bg-teal-800'
+              : 'bg-gray-300 cursor-not-allowed'
+              }`}
           >
             {isSubmitting ? (
               <>
@@ -350,7 +346,7 @@ export function SignupPage() {
           Already have an account?{' '}
           <Link
             to="/login"
-            className="text-blue-600 font-semibold hover:text-blue-700"
+            className="text-teal-600 font-semibold hover:text-teal-700"
           >
             Log in
           </Link>

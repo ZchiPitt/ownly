@@ -211,11 +211,10 @@ export function LoginPage() {
               onChange={handleInputChange('email')}
               onBlur={handleBlur('email')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                touched.email && errors.email
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.email && errors.email
                   ? 'border-red-500'
                   : 'border-gray-300'
-              }`}
+                }`}
             />
             {touched.email && errors.email && (
               <p className="mt-1 text-sm text-red-600">{errors.email}</p>
@@ -233,7 +232,7 @@ export function LoginPage() {
               </label>
               <Link
                 to="/reset-password"
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-teal-600 hover:text-teal-700"
               >
                 Forgot password?
               </Link>
@@ -247,11 +246,10 @@ export function LoginPage() {
               onChange={handleInputChange('password')}
               onBlur={handleBlur('password')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                touched.password && errors.password
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.password && errors.password
                   ? 'border-red-500'
                   : 'border-gray-300'
-              }`}
+                }`}
             />
             {touched.password && errors.password && (
               <p className="mt-1 text-sm text-red-600">{errors.password}</p>
@@ -269,11 +267,10 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={!isFormValid || isSubmitting}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors flex items-center justify-center ${
-              isFormValid && !isSubmitting
-                ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
+            className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center ${isFormValid && !isSubmitting
+                ? 'bg-teal-600 hover:bg-teal-700 active:bg-teal-800'
                 : 'bg-gray-300 cursor-not-allowed'
-            }`}
+              }`}
           >
             {isSubmitting ? (
               <>
@@ -313,7 +310,7 @@ export function LoginPage() {
           Don't have an account?{' '}
           <Link
             to="/signup"
-            className="text-blue-600 font-semibold hover:text-blue-700"
+            className="text-teal-600 font-semibold hover:text-teal-700"
           >
             Sign up
           </Link>

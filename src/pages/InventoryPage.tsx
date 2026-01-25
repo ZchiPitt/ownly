@@ -108,11 +108,10 @@ function ViewToggle({
       <button
         onClick={() => onViewChange('gallery')}
         disabled={isLoading}
-        className={`p-1.5 rounded-md transition-colors ${
-          viewMode === 'gallery'
-            ? 'bg-white text-blue-600 shadow-sm'
+        className={`p-1.5 rounded-md transition-colors ${viewMode === 'gallery'
+            ? 'bg-white text-teal-600 shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
-        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         aria-label="Gallery view"
         aria-pressed={viewMode === 'gallery'}
       >
@@ -123,11 +122,10 @@ function ViewToggle({
       <button
         onClick={() => onViewChange('list')}
         disabled={isLoading}
-        className={`p-1.5 rounded-md transition-colors ${
-          viewMode === 'list'
-            ? 'bg-white text-blue-600 shadow-sm'
+        className={`p-1.5 rounded-md transition-colors ${viewMode === 'list'
+            ? 'bg-white text-teal-600 shadow-sm'
             : 'text-gray-500 hover:text-gray-700'
-        } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         aria-label="List view"
         aria-pressed={viewMode === 'list'}
       >
@@ -415,11 +413,10 @@ export function InventoryPage() {
           {/* All Categories chip */}
           <button
             onClick={onCategoryChipClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              hasActiveCategories
-                ? 'bg-blue-600 text-white'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${hasActiveCategories
+                ? 'bg-teal-600 text-white'
                 : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
+              }`}
           >
             {/* Category icon */}
             <svg
@@ -455,11 +452,10 @@ export function InventoryPage() {
           {/* All Locations chip */}
           <button
             onClick={onLocationChipClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              hasActiveLocation
-                ? 'bg-blue-600 text-white'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${hasActiveLocation
+                ? 'bg-teal-600 text-white'
                 : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
+              }`}
           >
             {/* Location icon */}
             <svg
@@ -501,11 +497,10 @@ export function InventoryPage() {
           {/* Sort chip */}
           <button
             onClick={() => setIsSortSheetOpen(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              sortFromUrl !== 'newest'
-                ? 'bg-blue-600 text-white'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${sortFromUrl !== 'newest'
+                ? 'bg-teal-600 text-white'
                 : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
-            }`}
+              }`}
           >
             {/* Sort icon */}
             <svg
@@ -542,7 +537,7 @@ export function InventoryPage() {
           {hasAnyActiveFilter && (
             <button
               onClick={handleClearAllFilters}
-              className="ml-auto flex-shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
+              className="ml-auto flex-shrink-0 text-sm font-medium text-teal-600 hover:text-teal-700 whitespace-nowrap"
             >
               Clear All
             </button>
@@ -602,7 +597,7 @@ export function InventoryPage() {
       {/* FAB - Floating Action Button */}
       <button
         onClick={handleAddClick}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors flex items-center justify-center active:scale-95 z-20"
+        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors flex items-center justify-center active:scale-95 z-20"
         aria-label="Add new item"
       >
         <svg

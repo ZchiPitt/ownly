@@ -10,7 +10,7 @@ interface NavItem {
 function HomeIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-blue-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -48,7 +48,7 @@ function AddIcon() {
 function InventoryIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-blue-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -67,7 +67,7 @@ function InventoryIcon({ active }: { active: boolean }) {
 function ShopIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-blue-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -86,7 +86,7 @@ function ShopIcon({ active }: { active: boolean }) {
 function SettingsIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-blue-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -157,7 +157,7 @@ export function BottomNav() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className="flex items-center justify-center w-14 h-14 -mt-5 bg-blue-600 rounded-full shadow-lg active:bg-blue-700 transition-colors"
+                className="flex items-center justify-center w-14 h-14 -mt-5 bg-teal-600 rounded-full shadow-lg active:bg-teal-700 transition-colors"
                 aria-label={item.label}
               >
                 {item.icon}
@@ -174,9 +174,8 @@ export function BottomNav() {
             >
               {item.icon}
               <span
-                className={`text-xs mt-1 ${
-                  active ? 'text-blue-600 font-medium' : 'text-gray-500'
-                }`}
+                className={`text-xs mt-1 ${active ? 'text-teal-600 font-medium' : 'text-gray-500'
+                  }`}
               >
                 {item.label}
               </span>
