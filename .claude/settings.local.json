@@ -3,7 +3,8 @@
     "allow": [
       "Skill(prd)",
       "Skill(ralph)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm run lint:*)"
     ]
   }
 }

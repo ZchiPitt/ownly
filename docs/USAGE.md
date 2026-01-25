@@ -1,4 +1,4 @@
-# Cleke User Guide
+# Clekee User Guide
 
 **Clekee** is a smart home inventory app that helps you track your belongings through AI-powered photo recognition. Never forget where you stored something again!
 
@@ -248,27 +248,49 @@ Home
 
 Clekee works offline! Your cached inventory remains viewable when you have no internet connection. An offline banner appears at the top when you're disconnected.
 
+**Note:** AI features (photo analysis, shopping assistant) require an internet connection.
+
+### App Updates
+
+Clekee automatically checks for updates. When a new version is available:
+1. A banner appears at the bottom of the screen
+2. Tap **Update** to reload with the latest version
+3. Or tap **Dismiss** to update later
+
+The app will prompt you again on your next visit if you dismiss.
+
 ---
 
 ## FAQ
 
 **Q: Is my data private?**
-A: Yes. Your inventory is private and only accessible to you. We use Supabase for secure authentication and data storage.
-
-**Q: Can I export my data?**
-A: Export functionality is coming soon. In the meantime, your data is always accessible through the app.
+A: Yes. Your inventory is private and only accessible to you. We use Supabase for secure authentication and Row-Level Security to ensure your data is protected.
 
 **Q: What happens to deleted items?**
-A: Deleted items are kept for 30 days before permanent deletion. You can undo deletion within this period.
+A: Deleted items are kept for 30 days before permanent deletion. This allows you to recover accidentally deleted items.
 
-**Q: How does AI similarity detection work?**
-A: We use OpenAI's embedding models to create vector representations of your items. When you add a new item, we compare it against your existing inventory to find similar items.
+**Q: How does AI photo recognition work?**
+A: When you add a photo, we use OpenAI's GPT-4o Vision model to identify items, suggest categories, and extract relevant tags. The AI also detects visible brand names and provides confidence scores.
+
+**Q: How does the Shopping Assistant find similar items?**
+A: We use OpenAI's embedding models to create vector representations of your items. When you photograph something you're considering buying, we compare it against your inventory to find similar items you already own.
+
+**Q: Why can't I use AI features offline?**
+A: AI features require sending images and text to OpenAI's servers for processing. These features need an active internet connection. However, your cached inventory data is always available offline.
 
 **Q: Does this work on desktop?**
-A: Yes! Clekee is a Progressive Web App that works on any device with a web browser.
+A: Yes! Clekee is a Progressive Web App that works on any device with a modern web browser—phones, tablets, and desktop computers.
+
+**Q: How do I install the app on my phone?**
+A:
+- **Android/Chrome:** Look for the "Install" or "Add to Home Screen" banner that appears after browsing
+- **iOS Safari:** Tap the Share icon (box with arrow), then "Add to Home Screen"
+
+**Q: What image formats are supported?**
+A: JPEG, PNG, WebP, and HEIC (iOS photos). Images are automatically compressed if they exceed 2MB.
 
 ---
 
 ## Need Help?
 
-For technical support or feature requests, please contact the development team.
+For technical support or feature requests, please visit the project repository on GitHub.

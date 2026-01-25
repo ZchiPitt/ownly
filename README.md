@@ -69,35 +69,136 @@ VITE_VAPID_PUBLIC_KEY=your-vapid-public-key
 
 ### Database Setup
 
-The database schema is managed through Supabase migrations. Run the migration files in order:
+The database schema is managed through Supabase migrations located in `supabase/migrations/`.
 
-1. **Enable extensions:** `pgvector` for similarity search
-2. **Create tables:** profiles, user_settings, categories, locations, items, notifications, push_subscriptions
-3. **Enable RLS:** Row Level Security policies
-4. **Create triggers:** Automatic profile/user_settings creation, location item_count maintenance
+### Option 1: Supabase CLI (Recommended)
 
-See `scripts/ralph/prd.json` for detailed migration specifications (US-003 through US-010).
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Link to your project
+supabase link --project-ref <your-project-ref>
+
+# Run all migrations
+supabase db push
+```
+
+### Option 2: Manual Migration
+
+Run each migration file in order via the Supabase SQL Editor:
+
+| Migration | Purpose |
+|-----------|---------|
+| `20260123000001_create_profiles_table.sql` | User profiles extending auth.users |
+| `20260123000002_create_user_settings_table.sql` | Notification and display preferences |
+| `20260123000003_create_categories_table.sql` | Categories with 10 system presets |
+| `20260123000004_create_locations_table.sql` | Hierarchical storage locations |
+| `20260123000005_create_items_table.sql` | Core inventory items table |
+| `20260123000006_create_notifications_table.sql` | Reminder notifications |
+| `20260123000007_create_location_item_count_trigger.sql` | Auto-maintain location counts |
+| `20260123000008_add_pgvector_embedding.sql` | Vector embeddings for semantic search |
+| `20260123000009_create_items_storage_bucket.sql` | Storage bucket for photos |
+| `20260123000010_create_push_subscriptions_table.sql` | Web Push endpoints |
+| `20260123000011_create_shopping_usage_table.sql` | AI shopping assistant rate limits |
+
+### What Gets Created
+
+- **Tables:** profiles, user_settings, categories, locations, items, notifications, push_subscriptions, shopping_usage
+- **Extensions:** pgvector for similarity search
+- **RLS Policies:** Row-level security on all user tables
+- **Triggers:** Automatic profile/settings creation, location item_count maintenance
+- **Functions:** `search_similar_items()` for vector similarity search
 
 ### Storage Setup
 
-Create a Supabase Storage bucket named `items` with:
-- **Public:** false
-- **File size limit:** 10MB
-- **Allowed MIME types:** image/jpeg, image/png, image/webp, image/heic
-- **RLS Policy:** Users can only upload to `items/{user_id}/*`
+Create a Supabase Storage bucket named `items`:
 
-### Edge Functions
+1. Go to **Storage** in your Supabase Dashboard
+2. Click **New bucket**
+3. Configure:
+   - **Name:** `items`
+   - **Public bucket:** No (unchecked)
+   - **File size limit:** 10MB
+   - **Allowed MIME types:** `image/jpeg, image/png, image/webp, image/heic`
 
-Deploy the following Supabase Edge Functions (Deno):
+4. Add RLS policy via SQL Editor:
+```sql
+-- Allow users to upload to their own folder
+CREATE POLICY "Users can upload to own folder"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'items' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-```bash
-# From your Supabase project directory
-supabase functions deploy analyze-image
-supabase functions deploy shopping-analyze
-supabase functions deploy generate-embedding
+-- Allow users to read their own files
+CREATE POLICY "Users can read own files"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'items' AND (storage.foldername(name))[1] = auth.uid()::text);
+
+-- Allow users to delete their own files
+CREATE POLICY "Users can delete own files"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'items' AND (storage.foldername(name))[1] = auth.uid()::text);
 ```
 
-Each function requires environment variables for OpenAI API access.
+### Edge Functions Setup
+
+This project requires 6 Supabase Edge Functions for AI features and background tasks.
+
+#### Prerequisites
+
+1. **Get an OpenAI API key** from [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. **Install Supabase CLI:**
+   ```bash
+   npm install -g supabase
+   ```
+
+#### Set Edge Function Secrets
+
+```bash
+# Required for AI features
+supabase secrets set OPENAI_API_KEY=sk-your-openai-api-key
+
+# Optional for push notifications
+supabase secrets set VAPID_PRIVATE_KEY=your-vapid-private-key
+supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
+```
+
+#### Deploy All Functions
+
+```bash
+# From project root
+supabase functions deploy analyze-image
+supabase functions deploy generate-embedding
+supabase functions deploy shopping-analyze
+supabase functions deploy shopping-followup
+supabase functions deploy generate-reminders
+supabase functions deploy cleanup-deleted-items
+```
+
+#### Edge Function Reference
+
+| Function | Purpose | AI Model Used |
+|----------|---------|---------------|
+| `analyze-image` | Photo recognition - identifies items, suggests categories, extracts tags | GPT-4o Vision |
+| `generate-embedding` | Creates vector embeddings for semantic similarity search | text-embedding-3-small |
+| `shopping-analyze` | AI shopping assistant - analyzes photos and compares with inventory | GPT-4o Vision |
+| `shopping-followup` | Conversational follow-ups in shopping assistant | GPT-4o |
+| `generate-reminders` | Background job to create notification reminders | N/A |
+| `cleanup-deleted-items` | Background job to permanently delete soft-deleted items after 30 days | N/A |
+
+#### Scheduling Background Jobs (Optional)
+
+For production, set up cron jobs via Supabase Dashboard → Database → Extensions → pg_cron:
+
+```sql
+-- Generate reminders daily at 9am UTC
+SELECT cron.schedule('generate-reminders', '0 9 * * *',
+  $$SELECT net.http_post(url := '<project-url>/functions/v1/generate-reminders')$$);
+
+-- Cleanup deleted items weekly on Sunday at 3am UTC
+SELECT cron.schedule('cleanup-deleted', '0 3 * * 0',
+  $$SELECT net.http_post(url := '<project-url>/functions/v1/cleanup-deleted-items')$$);
+```
 
 ## Running the App
 
@@ -182,19 +283,23 @@ See [CLAUDE.md](./CLAUDE.md) for detailed development guidelines.
 
 ## Roadmap
 
-Current status: 83 of 90 user stories completed
+**Current status: ✅ 90 of 90 user stories completed**
 
-See `scripts/ralph/prd.json` for the full product roadmap and implementation status.
+The MVP is feature-complete. See `scripts/ralph/prd.json` for the full product roadmap and implementation details.
 
-### Remaining Features
+### Implemented Features
 
-- **US-084:** Confirmation dialog component
-- **US-085:** Bottom sheet component (refactor)
-- **US-086:** Item Detail loading/error states
-- **US-087:** Settings - view preferences
-- **US-088:** Settings - account section
-- **US-089:** Complete app router with 404
-- **US-090:** App update detection and prompt
+- User authentication (signup, login, password reset)
+- AI-powered photo recognition with GPT-4o Vision
+- Hierarchical location management
+- Category management with system presets
+- Full item CRUD with soft-delete
+- Gallery and list view modes
+- Text and voice search
+- AI shopping assistant with conversation mode
+- Push notifications and reminders
+- PWA with offline support
+- App update detection and prompt
 
 ## FAQ
 
@@ -204,19 +309,43 @@ A: No. Clekee requires Supabase for authentication, database, and storage. You'l
 
 **Q: Do I need OpenAI API keys?**
 
-A: Yes, for AI features (photo recognition, shopping assistant, embeddings). These are configured in Supabase Edge Functions, not in the frontend.
+A: Yes, for AI features (photo recognition, shopping assistant, embeddings). You need a paid OpenAI account with GPT-4o access. Set `OPENAI_API_KEY` as a Supabase Edge Function secret:
+```bash
+supabase secrets set OPENAI_API_KEY=sk-your-key
+```
+
+**Q: Can I use other LLM providers?**
+
+A: The Edge Functions are written for OpenAI's API. To use other providers (Anthropic, Google, etc.), you would need to modify the functions in `supabase/functions/`. The key functions to modify are `analyze-image` (Vision API) and `generate-embedding` (Embeddings API).
+
+**Q: What OpenAI models are used?**
+
+A:
+- **GPT-4o** for photo analysis and shopping assistant (requires GPT-4 API access)
+- **text-embedding-3-small** for semantic search embeddings
+
+**Q: How much does the AI cost?**
+
+A: Costs depend on usage. Approximate per-operation:
+- Photo analysis: ~$0.01-0.03 per image (GPT-4o Vision)
+- Embedding generation: ~$0.0001 per item (text-embedding-3-small)
+- Shopping assistant: ~$0.02-0.05 per conversation
 
 **Q: Can I use this offline?**
 
-A: Yes! Clekee is a PWA with offline support. Cached content remains viewable without internet, and an offline banner appears when disconnected.
+A: Yes! Clekee is a PWA with offline support. Cached content remains viewable without internet, and an offline banner appears when disconnected. AI features require internet.
 
 **Q: How do I deploy this?**
 
-A: Build the app (`npm run build`) and deploy the `dist/` folder to any static hosting service (Vercel, Netlify, Cloudflare Pages, etc.). You'll also need to deploy the Supabase Edge Functions.
+A:
+1. Build the app: `npm run build`
+2. Deploy `dist/` folder to any static host (Vercel, Netlify, Cloudflare Pages)
+3. Deploy Edge Functions: `supabase functions deploy --all`
+4. Set environment secrets: `supabase secrets set OPENAI_API_KEY=...`
 
 **Q: What's the Ralph agent?**
 
-A: Ralph is an autonomous coding agent that works through the PRD user stories. See `scripts/ralph/CLAUDE.md` for details.
+A: Ralph is an autonomous coding agent that implemented this project through 90 user stories. See `scripts/ralph/CLAUDE.md` for details. The project is now complete.
 
 ## License
 
