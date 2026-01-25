@@ -27,3 +27,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Misc
+supabase/
+.playwright-mcp/
+.vscode/
+.history/
+.cursor/
+.cursorrules/
