@@ -75,7 +75,7 @@ The database schema is managed through Supabase migrations located in `supabase/
 
 ```bash
 # Install Supabase CLI
-npm install -g supabase
+brew install supabase/tap/supabase
 
 # Link to your project
 supabase link --project-ref <your-project-ref>

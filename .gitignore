@@ -29,7 +29,7 @@ dist-ssr
 *.sw?
 
 # Misc
-supabase/
+supabase/.temp/
 .playwright-mcp/
 .vscode/
 .history/
