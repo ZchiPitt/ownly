@@ -68,10 +68,6 @@ USING (
     (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- =====================================================
--- DOCUMENTATION
--- =====================================================
-COMMENT ON TABLE storage.buckets IS 'Storage buckets for file uploads';
 
 -- Note: File path structure should be: items/{user_id}/{filename}
 -- Example: items/550e8400-e29b-41d4-a716-446655440000/photo-abc123.jpg
