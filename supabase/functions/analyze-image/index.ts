@@ -175,7 +175,7 @@ async function analyzeWithGemini(
   console.log(`[analyze-image] Calling Gemini with mimeType: ${mimeType}, base64 length: ${imageBase64.length}`);
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-3-flash-preview',
     contents: [
       {
         role: 'user',
@@ -416,7 +416,7 @@ Deno.serve(async (req: Request) => {
     // Build response
     const response: AnalyzeImageResponse = {
       detected_items: detectedItems,
-      analysis_model: 'gemini-2.0-flash',
+      analysis_model: 'gemini-3-flash-preview',
       analyzed_at: new Date().toISOString(),
     };
 
