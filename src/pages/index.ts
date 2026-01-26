@@ -18,3 +18,4 @@ export { SearchPage } from './SearchPage';
 export { NotificationsPage } from './NotificationsPage';
 export { ShoppingPage } from './ShoppingPage';
 export { NotFoundPage } from './NotFoundPage';
+export { LandingPage } from './LandingPage';

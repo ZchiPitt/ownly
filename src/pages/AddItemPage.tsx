@@ -680,9 +680,8 @@ export function AddItemPage() {
     </div>
   );
 
-  // Render preview view
   const renderPreviewView = () => (
-    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-black flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 bg-black/80">
         <h2 className="text-lg font-semibold text-white">Preview Photo</h2>
@@ -793,12 +792,11 @@ export function AddItemPage() {
     </div>
   );
 
-  // Render analyzing view - full-screen loading overlay
   const renderAnalyzingView = () => {
     const loadingText = getAnalysisLoadingText();
 
     return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+      <div className="fixed inset-0 z-[60] bg-black flex flex-col items-center justify-center">
         {/* Background image preview (blurred) */}
         {imagePreviewUrl && (
           <div
@@ -914,9 +912,8 @@ export function AddItemPage() {
     );
   };
 
-  // Render error view - analysis failed
   const renderErrorView = () => (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-white flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <button

@@ -122,7 +122,7 @@ export function MultiItemSelection({
   const allSelected = selectedCount === detectedItems.length;
 
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+    <div className="fixed inset-0 z-[60] bg-white flex flex-col">
       {/* Header */}
       <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <button
@@ -182,19 +182,17 @@ export function MultiItemSelection({
               <button
                 key={index}
                 onClick={() => toggleSelection(index)}
-                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left ${
-                  isSelected
+                className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left ${isSelected
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-gray-300'
-                }`}
+                  }`}
               >
                 {/* Checkbox */}
                 <div
-                  className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors mt-0.5 ${
-                    isSelected
+                  className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors mt-0.5 ${isSelected
                       ? 'bg-blue-600 border-blue-600'
                       : 'border-gray-300 bg-white'
-                  }`}
+                    }`}
                 >
                   {isSelected && (
                     <svg
@@ -297,11 +295,10 @@ export function MultiItemSelection({
         <button
           onClick={handleProceed}
           disabled={selectedCount === 0}
-          className={`w-full py-3.5 px-4 font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${
-            selectedCount > 0
+          className={`w-full py-3.5 px-4 font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${selectedCount > 0
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-          }`}
+            }`}
         >
           {selectedCount > 0 ? (
             <>
