@@ -7,7 +7,7 @@
  * @requires GOOGLE_AI_API_KEY environment variable
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { GoogleGenAI } from 'https://esm.sh/@google/genai@1.37.0';
 
 // CORS headers for cross-origin requests

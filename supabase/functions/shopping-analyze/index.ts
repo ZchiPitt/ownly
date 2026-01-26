@@ -10,7 +10,7 @@
  * @requires OPENAI_API_KEY environment variable (for embeddings only)
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { GoogleGenAI } from 'npm:@google/genai@1.37.0';
 import { corsHeaders } from '../_shared/cors.ts';
 

@@ -702,8 +702,8 @@ export function ShoppingPage() {
   useEffect(() => {
     const initialQuery = searchParams.get('query');
 
-    // Only process once and if there's a query
-    if (!initialQuery || initialQueryProcessed.current) return;
+    // Only process once and if there's a query AND session is available
+    if (!initialQuery || initialQueryProcessed.current || !session?.access_token) return;
     initialQueryProcessed.current = true;
 
     // Clear the URL parameter to prevent re-processing on navigation
@@ -713,7 +713,7 @@ export function ShoppingPage() {
     setViewState('chat');
 
     // Small delay to ensure the view has switched before submitting
-    setTimeout(async () => {
+    const submitQuery = async () => {
       // Check online status
       if (!requireOnline('send message')) {
         setToast({
@@ -728,19 +728,8 @@ export function ShoppingPage() {
       setIsTyping(true);
 
       try {
-        // Get the current session token
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-
-        if (!token) {
-          addMessage(
-            'assistant',
-            'text',
-            'Please sign in to continue the conversation.'
-          );
-          setIsTyping(false);
-          return;
-        }
+        // Use token from session (already validated above)
+        const token = session.access_token;
 
         // Call the Edge Function (no conversation history for first message)
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -811,8 +800,11 @@ export function ShoppingPage() {
       } finally {
         setIsTyping(false);
       }
-    }, 100);
-  }, [searchParams, setSearchParams, requireOnline, addMessage, updateUsage]);
+    };
+
+    // Execute after a small delay
+    setTimeout(submitQuery, 100);
+  }, [searchParams, setSearchParams, session, requireOnline, addMessage, updateUsage]);
 
   /**
    * Handle recent query click

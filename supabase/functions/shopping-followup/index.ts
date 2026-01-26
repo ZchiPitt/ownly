@@ -8,7 +8,7 @@
  * @requires OPENAI_API_KEY environment variable
  */
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Types for conversation messages
@@ -228,6 +228,7 @@ async function validateAuth(
   supabaseKey: string
 ): Promise<{ userId: string } | null> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.error('Auth validation failed: Missing or invalid Authorization header');
     return null;
   }
 
@@ -247,6 +248,7 @@ async function validateAuth(
   } = await supabase.auth.getUser();
 
   if (error || !user) {
+    console.error('Auth validation failed:', error?.message || 'No user returned');
     return null;
   }
 
@@ -297,7 +299,9 @@ Deno.serve(async (req: Request) => {
 
     // Validate auth token
     const authHeader = req.headers.get('Authorization');
+    console.log('Auth header present:', !!authHeader, 'starts with Bearer:', authHeader?.startsWith('Bearer '));
     const auth = await validateAuth(authHeader, supabaseUrl, supabaseAnonKey);
+    console.log('Auth result:', auth ? 'success' : 'failed');
 
     if (!auth) {
       const error: ApiError = {
