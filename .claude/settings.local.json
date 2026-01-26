@@ -4,7 +4,11 @@
       "Skill(prd)",
       "Skill(ralph)",
       "Bash(ls:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "WebSearch",
+      "Bash(supabase functions deploy:*)",
+      "Bash(supabase functions:*)",
+      "Bash(git add:*)"
     ]
   }
 }

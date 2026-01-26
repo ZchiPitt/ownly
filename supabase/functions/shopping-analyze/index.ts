@@ -162,15 +162,13 @@ async function detectItemWithGemini(
   imageUrl: string,
   apiKey: string
 ): Promise<DetectedItem | null> {
-  const genAI = new GoogleGenAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview',
-  });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const imageBase64 = await fetchImageAsBase64(imageUrl);
   const mimeType = detectMimeType(imageUrl);
 
-  const response = await model.generateContent({
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
     contents: [
       {
         role: 'user',
@@ -192,7 +190,7 @@ async function detectItemWithGemini(
     },
   });
 
-  const text = response.response.text();
+  const text = response.text;
 
   if (!text) {
     throw new Error('No response content from Gemini');
@@ -278,12 +276,10 @@ async function generateAdviceWithGemini(
   apiKey: string
 ): Promise<string | null> {
   try {
-    const genAI = new GoogleGenAI(apiKey);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-3-flash-preview',
-    });
+    const ai = new GoogleGenAI({ apiKey: apiKey });
 
-    const response = await model.generateContent({
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
       contents: [
         {
           role: 'user',
@@ -296,7 +292,7 @@ async function generateAdviceWithGemini(
       },
     });
 
-    return response.response.text()?.trim() || null;
+    return response.text?.trim() || null;
   } catch (error) {
     console.error('Error generating advice:', error);
     return null;

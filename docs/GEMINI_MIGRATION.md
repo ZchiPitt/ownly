@@ -171,18 +171,17 @@ function detectMimeType(url: string): string {
 
 /**
  * Call Gemini 3.0 Flash Vision API
+ * 使用 @google/genai@1.37.0 的正确 API 模式
  */
 async function analyzeWithGemini(imageUrl: string, apiKey: string): Promise<DetectedItem[]> {
-  const genAI = new GoogleGenAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-3-flash-preview',
-  });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   // Fetch and encode image
   const imageBase64 = await fetchImageAsBase64(imageUrl);
   const mimeType = detectMimeType(imageUrl);
 
-  const response = await model.generateContent({
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
     contents: [
       {
         role: 'user',
@@ -204,7 +203,7 @@ async function analyzeWithGemini(imageUrl: string, apiKey: string): Promise<Dete
     },
   });
 
-  const text = response.response.text();
+  const text = response.text; // 注意：直接访问 text 属性，不是 response.response.text()
 
   if (!text) {
     throw new Error('No response content from Gemini');
