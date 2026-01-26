@@ -1079,7 +1079,8 @@ export function ItemDetailPage() {
     try {
       // Use RPC to call SECURITY DEFINER function
       // This bypasses RLS issues caused by the update_location_item_count_trigger
-      const { error } = await supabase.rpc('soft_delete_item', { item_id: id });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any).rpc('soft_delete_item', { item_id: id });
 
       if (error) {
         console.error('[DELETE] RPC error:', error);
@@ -1122,7 +1123,8 @@ export function ItemDetailPage() {
     try {
       // Use RPC to call SECURITY DEFINER function
       // This bypasses RLS issues caused by the update_location_item_count_trigger
-      const { error: restoreError } = await supabase.rpc('restore_item', { item_id: itemId });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: restoreError } = await (supabase as any).rpc('restore_item', { item_id: itemId });
 
       if (restoreError) {
         throw restoreError;

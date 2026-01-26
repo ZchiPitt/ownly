@@ -333,6 +333,18 @@ export type Database = {
           similarity: number;
         }>;
       };
+      soft_delete_item: {
+        Args: {
+          item_id: string;
+        };
+        Returns: void;
+      };
+      restore_item: {
+        Args: {
+          item_id: string;
+        };
+        Returns: void;
+      };
     };
     Enums: {
       notification_type: NotificationType;
