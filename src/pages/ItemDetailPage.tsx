@@ -605,41 +605,6 @@ function MetadataSection({
 }
 
 /**
- * Sticky bottom action bar component (US-055)
- */
-function ActionBar({
-  onEdit,
-  onDelete,
-}: {
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe-area-pb z-[60]">
-      <div className="flex gap-3 max-w-lg mx-auto">
-        {/* Edit Item button (primary) */}
-        <button
-          onClick={onEdit}
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 text-white font-medium rounded-2xl hover:bg-teal-700 active:bg-teal-800 transition-colors"
-        >
-          <EditIcon className="w-5 h-5" />
-          <span>Edit Item</span>
-        </button>
-
-        {/* Delete button (red outline) */}
-        <button
-          onClick={onDelete}
-          className="flex items-center justify-center gap-2 px-4 py-3 border-2 border-red-500 text-red-600 font-medium rounded-2xl hover:bg-red-50 active:bg-red-100 transition-colors"
-        >
-          <TrashIcon className="w-5 h-5" />
-          <span>Delete</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/**
  * Full-screen photo viewer with pinch-to-zoom
  */
 function PhotoViewer({
@@ -1365,6 +1330,33 @@ export function ItemDetailPage() {
                   <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-blue-600' : 'text-gray-500'}`} />
                   <span>{item.keep_forever ? 'Unmark Keep Forever' : 'Mark as Keep Forever'}</span>
                 </button>
+
+                {/* Divider */}
+                <div className="my-1 border-t border-gray-200" />
+
+                {/* Edit Item option */}
+                <button
+                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                  onClick={() => {
+                    setIsOverflowMenuOpen(false);
+                    handleEdit();
+                  }}
+                >
+                  <EditIcon className="w-5 h-5 text-gray-500" />
+                  <span>Edit Item</span>
+                </button>
+
+                {/* Delete option */}
+                <button
+                  className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 flex items-center gap-3"
+                  onClick={() => {
+                    setIsOverflowMenuOpen(false);
+                    handleDelete();
+                  }}
+                >
+                  <TrashIcon className="w-5 h-5 text-red-500" />
+                  <span>Delete</span>
+                </button>
               </div>
             )}
           </div>
@@ -1451,12 +1443,6 @@ export function ItemDetailPage() {
         updatedAt={item.updated_at}
         lastViewedAt={item.last_viewed_at}
       />
-
-      {/* Bottom spacer to account for sticky action bar */}
-      <div className="h-24" />
-
-      {/* Sticky Action Bar (US-055) */}
-      <ActionBar onEdit={handleEdit} onDelete={handleDelete} />
 
       {/* Delete Confirmation Dialog (US-055) */}
       {showDeleteConfirm && (

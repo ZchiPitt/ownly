@@ -132,7 +132,7 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
 
   return (
     <div
-      className="fixed bottom-20 left-4 right-4 z-50 flex flex-col items-center pointer-events-none"
+      className="fixed bottom-24 left-4 right-4 z-50 flex flex-col items-center pointer-events-none"
       role="region"
       aria-label="Toast notifications"
     >
@@ -173,7 +173,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Simp
 
   return (
     <div
-      className={`fixed bottom-20 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 transition-opacity duration-300 ${
+      className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 transition-opacity duration-300 ${
         typeStyles[type]
       } ${isVisible ? 'opacity-100' : 'opacity-0'}`}
     >

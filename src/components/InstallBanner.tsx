@@ -57,7 +57,7 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
 
   return (
     <div
-      className={`fixed bottom-16 left-0 right-0 z-40 px-4 pb-4 transition-all duration-300 ${
+      className={`fixed bottom-24 left-0 right-0 z-40 px-4 pb-4 transition-all duration-300 ${
         isClosing ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
       }`}
     >

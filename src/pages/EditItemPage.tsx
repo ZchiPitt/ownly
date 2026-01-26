@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useBlocker } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
@@ -505,6 +505,7 @@ export function EditItemPage() {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isAdditionalFieldsExpanded, setIsAdditionalFieldsExpanded] = useState(false);
+  const [showFloatingSave, setShowFloatingSave] = useState(false);
 
   // Track if user wants to navigate away
   const pendingNavigationRef = useRef<(() => void) | null>(null);
@@ -532,19 +533,37 @@ export function EditItemPage() {
   }, [formValues, initialValues]);
 
   /**
-   * Block navigation when there are unsaved changes
+   * Warn user about unsaved changes when leaving the page
    */
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      hasChanges && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  // Show discard dialog when blocker is active
   useEffect(() => {
-    if (blocker.state === 'blocked') {
-      setShowDiscardDialog(true);
-    }
-  }, [blocker.state]);
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasChanges]);
+
+  /**
+   * Track scroll position for floating save button
+   * Show FAB when user has scrolled up (scroll position > 100px)
+   */
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      // Show floating save when scrolled down more than 100px
+      setShowFloatingSave(scrollTop > 100);
+    };
+
+    // Initial check
+    handleScroll();
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   /**
    * Fetch item data
@@ -690,24 +709,19 @@ export function EditItemPage() {
    */
   const handleDiscard = useCallback(() => {
     setShowDiscardDialog(false);
-    if (blocker.state === 'blocked') {
-      blocker.proceed();
-    } else if (pendingNavigationRef.current) {
+    if (pendingNavigationRef.current) {
       pendingNavigationRef.current();
       pendingNavigationRef.current = null;
     }
-  }, [blocker]);
+  }, []);
 
   /**
    * Handle keep editing (cancel discard)
    */
   const handleKeepEditing = useCallback(() => {
     setShowDiscardDialog(false);
-    if (blocker.state === 'blocked') {
-      blocker.reset();
-    }
     pendingNavigationRef.current = null;
-  }, [blocker]);
+  }, []);
 
   /**
    * Update form field
@@ -1112,7 +1126,13 @@ export function EditItemPage() {
         </div>
 
         {/* Sticky Bottom Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe-area-pb z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 px-4 py-3 pb-safe z-20">
+          {/* Helper text when no changes */}
+          {!hasChanges && !isSaving && (
+            <p className="text-xs text-gray-400 text-center mb-2">
+              修改内容后即可保存
+            </p>
+          )}
           <div className="flex gap-3 max-w-lg mx-auto">
             {/* Cancel button (text) */}
             <button
@@ -1127,7 +1147,11 @@ export function EditItemPage() {
             <button
               onClick={handleSave}
               disabled={isSaving || !hasChanges}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-medium rounded-lg transition-colors ${
+                hasChanges
+                  ? 'bg-teal-600 text-white hover:bg-teal-700 active:bg-teal-800'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
             >
               {isSaving ? (
                 <>
@@ -1154,6 +1178,42 @@ export function EditItemPage() {
             </button>
           </div>
         </div>
+
+        {/* Floating Save FAB - appears when scrolled */}
+        {showFloatingSave && hasChanges && !isSaving && (
+          <button
+            onClick={handleSave}
+            className="fixed bottom-24 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg flex items-center justify-center z-30 hover:bg-teal-700 active:bg-teal-800 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300"
+            aria-label="Save changes"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
+        )}
+
+        {/* Floating Save FAB - saving state */}
+        {showFloatingSave && isSaving && (
+          <div
+            className="fixed bottom-24 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg flex items-center justify-center z-30"
+          >
+            <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Location Picker Modal */}
