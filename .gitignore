@@ -35,3 +35,6 @@ supabase/.temp/
 .history/
 .cursor/
 .cursorrules/
+.claude/
+.claude/*
+.claude/settings.local.json
