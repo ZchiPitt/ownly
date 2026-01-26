@@ -1067,22 +1067,24 @@ export function ItemDetailPage() {
   /**
    * Execute soft delete (US-058)
    * Sets deleted_at timestamp and navigates back with undo option
-   * Uses SECURITY DEFINER function to bypass RLS issues with location count trigger
    */
   const handleConfirmDelete = useCallback(async () => {
-    console.log('[DELETE] handleConfirmDelete called - using RPC');
+    console.log('[DELETE] handleConfirmDelete called');
     if (!id || !item || !user?.id || isDeleting) return;
 
     setIsDeleting(true);
     setShowDeleteConfirm(false);
 
     try {
-      // Use RPC to call SECURITY DEFINER function
-      // This bypasses RLS issues caused by the update_location_item_count_trigger
-      const { error } = await supabase.rpc('soft_delete_item', { item_id: id });
+      // Soft delete: set deleted_at timestamp
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('items') as any)
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) {
-        console.error('[DELETE] RPC error:', error);
+        console.error('[DELETE] Error:', error);
         throw error;
       }
 
@@ -1108,7 +1110,6 @@ export function ItemDetailPage() {
   /**
    * Undo delete (US-058)
    * Clears deleted_at and navigates back to the item
-   * Uses SECURITY DEFINER function to bypass RLS issues with location count trigger
    */
   const handleUndo = useCallback(async () => {
     if (!undoToast || !user?.id) return;
@@ -1120,9 +1121,12 @@ export function ItemDetailPage() {
     setUndoToast(null);
 
     try {
-      // Use RPC to call SECURITY DEFINER function
-      // This bypasses RLS issues caused by the update_location_item_count_trigger
-      const { error: restoreError } = await supabase.rpc('restore_item', { item_id: itemId });
+      // Restore item: clear deleted_at timestamp
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: restoreError } = await (supabase.from('items') as any)
+        .update({ deleted_at: null })
+        .eq('id', itemId)
+        .eq('user_id', user.id);
 
       if (restoreError) {
         throw restoreError;
