@@ -1,14 +1,17 @@
 /**
  * Supabase Edge Function: shopping-analyze
  *
- * Analyzes shopping photos using OpenAI GPT-4o Vision API and compares
+ * Analyzes shopping photos using Google Gemini 3.0 Flash and compares
  * against user's existing inventory using vector similarity search.
+ * Uses OpenAI for embeddings (unchanged).
  * Includes rate limiting to manage API costs.
  *
- * @requires OPENAI_API_KEY environment variable
+ * @requires GOOGLE_AI_API_KEY environment variable
+ * @requires OPENAI_API_KEY environment variable (for embeddings only)
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { GoogleGenAI } from 'npm:@google/genai@1.37.0';
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Types matching src/types/api.ts
@@ -70,7 +73,7 @@ const SYSTEM_CATEGORIES = [
 ];
 
 /**
- * GPT-4o Vision prompt for shopping item detection
+ * Gemini 3.0 Flash Vision prompt for shopping item detection
  */
 const VISION_PROMPT = `You are a smart shopping assistant helping users avoid buying duplicates.
 
@@ -101,14 +104,17 @@ Important rules:
 - Always return valid JSON`;
 
 /**
- * GPT-4o prompt for generating shopping advice based on similar items
+ * Gemini prompt for generating shopping advice based on similar items
  */
 function generateAdvicePrompt(
   detectedItem: DetectedItem,
   similarItems: Array<{ name: string | null; similarity: number }>
 ): string {
   const itemsDesc = similarItems
-    .map((item, i) => `${i + 1}. "${item.name || 'Unnamed item'}" (${Math.round(item.similarity * 100)}% match)`)
+    .map(
+      (item, i) =>
+        `${i + 1}. "${item.name || 'Unnamed item'}" (${Math.round(item.similarity * 100)}% match)`
+    )
     .join('\n');
 
   return `The user is considering buying: "${detectedItem.name}"
@@ -125,66 +131,75 @@ Be friendly and concise. Start directly with the advice, no greeting needed.`;
 }
 
 /**
- * Call OpenAI GPT-4o Vision API for item detection
+ * Fetch image and convert to base64
  */
-async function detectItemWithOpenAI(
+async function fetchImageAsBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${response.status}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  const binary = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+  return btoa(binary);
+}
+
+/**
+ * Detect MIME type from URL or default to JPEG
+ */
+function detectMimeType(url: string): string {
+  const urlLower = url.toLowerCase();
+  if (urlLower.includes('.png')) return 'image/png';
+  if (urlLower.includes('.webp')) return 'image/webp';
+  if (urlLower.includes('.heic')) return 'image/heic';
+  return 'image/jpeg'; // Default
+}
+
+/**
+ * Call Gemini 3.0 Flash Vision API for item detection
+ */
+async function detectItemWithGemini(
   imageUrl: string,
   apiKey: string
 ): Promise<DetectedItem | null> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: VISION_PROMPT,
-            },
-            {
-              type: 'image_url',
-              image_url: {
-                url: imageUrl,
-                detail: 'high',
-              },
-            },
-          ],
-        },
-      ],
-      max_tokens: 500,
-      temperature: 0.3,
-    }),
+  const genAI = new GoogleGenAI(apiKey);
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-3-flash-preview',
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      `OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
-    );
-  }
+  const imageBase64 = await fetchImageAsBase64(imageUrl);
+  const mimeType = detectMimeType(imageUrl);
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const response = await model.generateContent({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: VISION_PROMPT },
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: imageBase64,
+            },
+          },
+        ],
+      },
+    ],
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 500,
+      responseMimeType: 'application/json',
+    },
+  });
 
-  if (!content) {
-    throw new Error('No response content from OpenAI');
-  }
+  const text = response.response.text();
 
-  // Parse JSON from response (handle potential markdown code blocks)
-  let jsonContent = content;
-  const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (jsonMatch) {
-    jsonContent = jsonMatch[1].trim();
+  if (!text) {
+    throw new Error('No response content from Gemini');
   }
 
   try {
-    const parsed = JSON.parse(jsonContent);
+    const parsed = JSON.parse(text);
     const item = parsed.item;
 
     if (!item) {
@@ -194,8 +209,7 @@ async function detectItemWithOpenAI(
     return {
       name: String(item.name || 'Unknown Item'),
       category_suggestion:
-        item.category_suggestion &&
-        SYSTEM_CATEGORIES.includes(String(item.category_suggestion))
+        item.category_suggestion && SYSTEM_CATEGORIES.includes(String(item.category_suggestion))
           ? String(item.category_suggestion)
           : null,
       tags: Array.isArray(item.tags)
@@ -208,18 +222,15 @@ async function detectItemWithOpenAI(
           : 0.5,
     };
   } catch {
-    console.error('Failed to parse OpenAI response:', content);
+    console.error('Failed to parse Gemini response:', text);
     return null;
   }
 }
 
 /**
- * Generate embedding for the detected item using OpenAI
+ * Generate embedding for the detected item using OpenAI (unchanged)
  */
-async function generateEmbedding(
-  item: DetectedItem,
-  apiKey: string
-): Promise<number[]> {
+async function generateEmbedding(item: DetectedItem, apiKey: string): Promise<number[]> {
   // Create text representation of the item for embedding
   const textParts = [item.name];
   if (item.category_suggestion) {
@@ -259,40 +270,33 @@ async function generateEmbedding(
 }
 
 /**
- * Generate shopping advice using OpenAI
+ * Generate shopping advice using Gemini 3.0 Flash
  */
-async function generateAdvice(
+async function generateAdviceWithGemini(
   detectedItem: DetectedItem,
   similarItems: Array<{ name: string | null; similarity: number }>,
   apiKey: string
 ): Promise<string | null> {
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using mini for cost efficiency on advice
-        messages: [
-          {
-            role: 'user',
-            content: generateAdvicePrompt(detectedItem, similarItems),
-          },
-        ],
-        max_tokens: 150,
-        temperature: 0.7,
-      }),
+    const genAI = new GoogleGenAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-3-flash-preview',
     });
 
-    if (!response.ok) {
-      console.error('Failed to generate advice');
-      return null;
-    }
+    const response = await model.generateContent({
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: generateAdvicePrompt(detectedItem, similarItems) }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 150,
+      },
+    });
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content?.trim() || null;
+    return response.response.text()?.trim() || null;
   } catch (error) {
     console.error('Error generating advice:', error);
     return null;
@@ -301,6 +305,7 @@ async function generateAdvice(
 
 /**
  * Search for similar items in user's inventory using vector similarity
+ * (unchanged)
  */
 async function findSimilarItems(
   embedding: number[],
@@ -372,6 +377,7 @@ async function findSimilarItems(
 
 /**
  * Get or create daily usage record for user
+ * (unchanged)
  */
 async function getDailyUsage(
   userId: string,
@@ -422,6 +428,7 @@ async function getDailyUsage(
 
 /**
  * Increment photo usage count
+ * (unchanged)
  */
 async function incrementPhotoUsage(
   userId: string,
@@ -439,6 +446,7 @@ async function incrementPhotoUsage(
 
 /**
  * Validate Supabase auth token
+ * (unchanged)
  */
 async function validateAuth(
   authHeader: string | null,
@@ -482,15 +490,16 @@ Deno.serve(async (req: Request) => {
 
   try {
     // Get environment variables
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_AI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY'); // Still needed for embeddings
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!openaiApiKey) {
+    if (!geminiApiKey || !openaiApiKey) {
       const error: ApiError = {
         error: {
-          message: 'OpenAI API key not configured',
+          message: 'API keys not configured',
           code: 'CONFIGURATION_ERROR',
         },
       };
@@ -601,15 +610,16 @@ Deno.serve(async (req: Request) => {
     await incrementPhotoUsage(auth.userId, supabaseUrl, supabaseServiceKey);
     const newPhotoCount = usage.photo_count + 1;
 
-    // Step 1: Detect item using OpenAI Vision
-    const detectedItem = await detectItemWithOpenAI(body.image_url, openaiApiKey);
+    // Step 1: Detect item using Gemini Vision
+    const detectedItem = await detectItemWithGemini(body.image_url, geminiApiKey);
 
     // If no item detected, return early
     if (!detectedItem) {
       const response: ShoppingAnalyzeResponse = {
         detected_item: null,
         similar_items: [],
-        advice: "I couldn't identify a clear item in this photo. Try taking a clearer picture of the item you're considering.",
+        advice:
+          "I couldn't identify a clear item in this photo. Try taking a clearer picture of the item you're considering.",
         analyzed_at: new Date().toISOString(),
         usage: {
           photo_count: newPhotoCount,
@@ -623,7 +633,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Step 2: Generate embedding for the detected item
+    // Step 2: Generate embedding for the detected item (using OpenAI)
     const embedding = await generateEmbedding(detectedItem, openaiApiKey);
 
     // Step 3: Search for similar items in user's inventory
@@ -634,14 +644,14 @@ Deno.serve(async (req: Request) => {
       supabaseServiceKey
     );
 
-    // Step 4: Generate shopping advice
-    const advice = await generateAdvice(
+    // Step 4: Generate shopping advice using Gemini
+    const advice = await generateAdviceWithGemini(
       detectedItem,
       similarItems.map((item) => ({
         name: item.name,
         similarity: item.similarity,
       })),
-      openaiApiKey
+      geminiApiKey
     );
 
     // Build response
