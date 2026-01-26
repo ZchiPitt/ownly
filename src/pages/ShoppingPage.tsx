@@ -11,6 +11,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Toast } from '@/components/Toast';
 import { validateImage, compressImage, uploadToStorage } from '@/lib/imageUtils';
 import { useAuth } from '@/hooks/useAuth';
@@ -185,6 +186,10 @@ export function ShoppingPage() {
     getPhotoWarningMessage,
     getTextWarningMessage,
   } = useShoppingUsage();
+
+  // URL search params for initial query
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQueryProcessed = useRef(false);
 
   // Load recent queries on mount
   useEffect(() => {
@@ -690,6 +695,124 @@ export function ShoppingPage() {
       handleSendMessage();
     }
   }, [handleSendMessage]);
+
+  /**
+   * Handle initial query from URL parameter (e.g., from Dashboard sample queries)
+   */
+  useEffect(() => {
+    const initialQuery = searchParams.get('query');
+
+    // Only process once and if there's a query
+    if (!initialQuery || initialQueryProcessed.current) return;
+    initialQueryProcessed.current = true;
+
+    // Clear the URL parameter to prevent re-processing on navigation
+    setSearchParams({}, { replace: true });
+
+    // Switch to chat view and submit the query
+    setViewState('chat');
+
+    // Small delay to ensure the view has switched before submitting
+    setTimeout(async () => {
+      // Check online status
+      if (!requireOnline('send message')) {
+        setToast({
+          message: "You're offline. Connect to send messages.",
+          type: 'warning',
+        });
+        return;
+      }
+
+      // Add user message
+      addMessage('user', 'text', initialQuery);
+      setIsTyping(true);
+
+      try {
+        // Get the current session token
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+
+        if (!token) {
+          addMessage(
+            'assistant',
+            'text',
+            'Please sign in to continue the conversation.'
+          );
+          setIsTyping(false);
+          return;
+        }
+
+        // Call the Edge Function (no conversation history for first message)
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const response = await fetch(`${supabaseUrl}/functions/v1/shopping-followup`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: initialQuery,
+            conversation_history: [],
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 429) {
+            const details = data.error?.details as { text_count?: number; text_limit?: number } | undefined;
+            if (details) {
+              updateUsage({
+                text_count: details.text_count ?? 50,
+                text_limit: details.text_limit ?? 50,
+              });
+            }
+            addMessage(
+              'assistant',
+              'text',
+              `You've used ${details?.text_count ?? 'all'} of your ${details?.text_limit ?? 50} daily questions. Try again tomorrow!`
+            );
+          } else if (response.status === 401) {
+            addMessage(
+              'assistant',
+              'text',
+              'Your session has expired. Please sign in again.'
+            );
+          } else {
+            addMessage(
+              'assistant',
+              'text',
+              data.error?.message || 'Something went wrong. Please try again.'
+            );
+          }
+          setIsTyping(false);
+          return;
+        }
+
+        // Successfully received response
+        const followupResponse = data as ShoppingFollowupResponse;
+
+        if (followupResponse.usage) {
+          updateUsage({
+            text_count: followupResponse.usage.text_count,
+            text_limit: followupResponse.usage.text_limit,
+          });
+        }
+
+        addMessage('assistant', 'text', followupResponse.response);
+
+      } catch (error) {
+        console.error('Error sending initial query:', error);
+        addMessage(
+          'assistant',
+          'text',
+          'Sorry, I had trouble responding. Please try again.'
+        );
+      } finally {
+        setIsTyping(false);
+      }
+    }, 100);
+  }, [searchParams, setSearchParams, requireOnline, addMessage, updateUsage]);
 
   /**
    * Handle recent query click
