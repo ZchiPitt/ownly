@@ -48,7 +48,7 @@ interface AnalysisResult {
 
 export function AddItemPage() {
   const navigate = useNavigate();
-  const { user, session } = useAuth();
+  const { user } = useAuth();
 
   // References to hidden file inputs
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -377,16 +377,18 @@ export function AddItemPage() {
    * Call the analyze-image Edge Function
    */
   const analyzeImage = async (
-    imageUrl: string,
+    storagePath: string,
     signal: AbortSignal
   ): Promise<AnalyzeImageResponse> => {
+    // Pass storage_path with bucket prefix for secure server-side download
+    const fullStoragePath = `items/${storagePath}`;
+    console.log('[AddItemPage] Calling analyze-image with storage_path:', fullStoragePath);
+
+    // Supabase client automatically includes the Authorization header from the current session
     const { data, error } = await supabase.functions.invoke<AnalyzeImageResponse>(
       'analyze-image',
       {
-        body: { image_url: imageUrl },
-        headers: {
-          Authorization: `Bearer ${session?.access_token}`,
-        },
+        body: { storage_path: fullStoragePath },
       }
     );
 
@@ -455,8 +457,8 @@ export function AddItemPage() {
       }, 15000);
       analysisTimersRef.current.push(timeoutTimer);
 
-      // Call AI analysis
-      const analysisResponse = await analyzeImage(uploadResult.imageUrl, signal);
+      // Call AI analysis using storage path for secure server-side download
+      const analysisResponse = await analyzeImage(uploadResult.imagePath, signal);
 
       // Clear timers on success
       clearAnalysisTimers();

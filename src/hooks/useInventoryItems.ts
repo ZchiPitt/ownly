@@ -28,6 +28,8 @@ export interface InventoryItem {
   location_name: string | null;
   location_path: string | null;
   quantity: number;
+  price: number | null;
+  currency: string;
   expiration_date: string | null;
   is_favorite: boolean;
   created_at: string;
@@ -105,6 +107,8 @@ interface RawInventoryItem {
   category_id: string | null;
   location_id: string | null;
   quantity: number;
+  price: number | null;
+  currency: string;
   expiration_date: string | null;
   is_favorite: boolean;
   created_at: string;
@@ -138,6 +142,8 @@ function transformRawItem(item: RawInventoryItem): InventoryItem {
     location_name: item.locations?.name || null,
     location_path: item.locations?.path || null,
     quantity: item.quantity,
+    price: item.price,
+    currency: item.currency,
     expiration_date: item.expiration_date,
     is_favorite: item.is_favorite,
     created_at: item.created_at,
@@ -180,6 +186,8 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         category_id,
         location_id,
         quantity,
+        price,
+        currency,
         expiration_date,
         is_favorite,
         created_at,

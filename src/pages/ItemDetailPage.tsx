@@ -615,7 +615,7 @@ function ActionBar({
   onDelete: () => void;
 }) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe-area-pb z-20">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe-area-pb z-[60]">
       <div className="flex gap-3 max-w-lg mx-auto">
         {/* Edit Item button (primary) */}
         <button
@@ -1067,23 +1067,26 @@ export function ItemDetailPage() {
   /**
    * Execute soft delete (US-058)
    * Sets deleted_at timestamp and navigates back with undo option
+   * Uses SECURITY DEFINER function to bypass RLS issues with location count trigger
    */
   const handleConfirmDelete = useCallback(async () => {
-    if (!id || !item || isDeleting) return;
+    console.log('[DELETE] handleConfirmDelete called - using RPC');
+    if (!id || !item || !user?.id || isDeleting) return;
 
     setIsDeleting(true);
     setShowDeleteConfirm(false);
 
     try {
-      const { error: deleteError } = await (supabase
-        .from('items') as ReturnType<typeof supabase.from>)
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', id)
-        .eq('user_id', user?.id as string);
+      // Use RPC to call SECURITY DEFINER function
+      // This bypasses RLS issues caused by the update_location_item_count_trigger
+      const { error } = await supabase.rpc('soft_delete_item', { item_id: id });
 
-      if (deleteError) {
-        throw deleteError;
+      if (error) {
+        console.error('[DELETE] RPC error:', error);
+        throw error;
       }
+
+      console.log('[DELETE] Successfully deleted item');
 
       // Navigate back first
       if (window.history.length > 1) {
@@ -1105,9 +1108,10 @@ export function ItemDetailPage() {
   /**
    * Undo delete (US-058)
    * Clears deleted_at and navigates back to the item
+   * Uses SECURITY DEFINER function to bypass RLS issues with location count trigger
    */
   const handleUndo = useCallback(async () => {
-    if (!undoToast) return;
+    if (!undoToast || !user?.id) return;
 
     const { itemId } = undoToast;
 
@@ -1116,11 +1120,9 @@ export function ItemDetailPage() {
     setUndoToast(null);
 
     try {
-      const { error: restoreError } = await (supabase
-        .from('items') as ReturnType<typeof supabase.from>)
-        .update({ deleted_at: null })
-        .eq('id', itemId)
-        .eq('user_id', user?.id as string);
+      // Use RPC to call SECURITY DEFINER function
+      // This bypasses RLS issues caused by the update_location_item_count_trigger
+      const { error: restoreError } = await supabase.rpc('restore_item', { item_id: itemId });
 
       if (restoreError) {
         throw restoreError;
@@ -1197,7 +1199,7 @@ export function ItemDetailPage() {
    * Toggles is_favorite and shows heart icon state change
    */
   const handleToggleFavorite = useCallback(async () => {
-    if (!id || !item || isUpdating) return;
+    if (!id || !item || !user?.id || isUpdating) return;
 
     setIsOverflowMenuOpen(false);
     setIsUpdating(true);
@@ -1205,11 +1207,11 @@ export function ItemDetailPage() {
     const newFavoriteStatus = !item.is_favorite;
 
     try {
-      const { error: updateError } = await (supabase
-        .from('items') as ReturnType<typeof supabase.from>)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (supabase.from('items') as any)
         .update({ is_favorite: newFavoriteStatus })
         .eq('id', id)
-        .eq('user_id', user?.id as string);
+        .eq('user_id', user.id);
 
       if (updateError) {
         throw updateError;
@@ -1235,7 +1237,7 @@ export function ItemDetailPage() {
    * Toggles keep_forever and shows toast explaining the effect
    */
   const handleToggleKeepForever = useCallback(async () => {
-    if (!id || !item || isUpdating) return;
+    if (!id || !item || !user?.id || isUpdating) return;
 
     setIsOverflowMenuOpen(false);
     setIsUpdating(true);
@@ -1243,11 +1245,11 @@ export function ItemDetailPage() {
     const newKeepForeverStatus = !item.keep_forever;
 
     try {
-      const { error: updateError } = await (supabase
-        .from('items') as ReturnType<typeof supabase.from>)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (supabase.from('items') as any)
         .update({ keep_forever: newKeepForeverStatus })
         .eq('id', id)
-        .eq('user_id', user?.id as string);
+        .eq('user_id', user.id);
 
       if (updateError) {
         throw updateError;

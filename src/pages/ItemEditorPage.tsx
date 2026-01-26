@@ -292,7 +292,7 @@ export function ItemEditorPage() {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-white flex flex-col">
+      <div className="fixed inset-0 z-[100] bg-white flex flex-col">
         {/* Header */}
         <div className="flex-shrink-0 border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between px-4 py-3">

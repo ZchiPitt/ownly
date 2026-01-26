@@ -21,7 +21,6 @@ import { SortBottomSheet } from '@/components/SortBottomSheet';
 import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomSheet';
 import { CategoryFilterBottomSheet } from '@/components/CategoryFilterBottomSheet';
 import { useLocations } from '@/hooks/useLocations';
-import { NotificationBell } from '@/components/NotificationBell';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Toast } from '@/components/Toast';
@@ -92,6 +91,7 @@ function ListIcon({ filled }: { filled: boolean }) {
 
 /**
  * View toggle component for switching between gallery and list views
+ * Ownly-style boxed toggle buttons
  */
 function ViewToggle({
   viewMode,
@@ -103,14 +103,14 @@ function ViewToggle({
   isLoading: boolean;
 }) {
   return (
-    <div className="flex items-center bg-gray-100 rounded-lg p-1">
+    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
       {/* Gallery view button */}
       <button
         onClick={() => onViewChange('gallery')}
         disabled={isLoading}
-        className={`p-1.5 rounded-md transition-colors ${viewMode === 'gallery'
-            ? 'bg-white text-teal-600 shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
+        className={`p-2 transition-colors ${viewMode === 'gallery'
+            ? 'bg-teal-50 text-teal-600 border-teal-500'
+            : 'bg-white text-gray-400 hover:text-gray-600'
           } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         aria-label="Gallery view"
         aria-pressed={viewMode === 'gallery'}
@@ -118,13 +118,16 @@ function ViewToggle({
         <GridIcon filled={viewMode === 'gallery'} />
       </button>
 
+      {/* Divider */}
+      <div className="w-px h-6 bg-gray-200" />
+
       {/* List view button */}
       <button
         onClick={() => onViewChange('list')}
         disabled={isLoading}
-        className={`p-1.5 rounded-md transition-colors ${viewMode === 'list'
-            ? 'bg-white text-teal-600 shadow-sm'
-            : 'text-gray-500 hover:text-gray-700'
+        className={`p-2 transition-colors ${viewMode === 'list'
+            ? 'bg-teal-50 text-teal-600'
+            : 'bg-white text-gray-400 hover:text-gray-600'
           } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
         aria-label="List view"
         aria-pressed={viewMode === 'list'}
@@ -195,10 +198,6 @@ export function InventoryPage() {
 
   // Compute effective view mode: user selection takes precedence over settings
   const viewMode: ViewMode = userSelectedView ?? settings?.default_view ?? 'gallery';
-
-  const handleSearchClick = () => {
-    navigate('/search');
-  };
 
   const handleAddClick = () => {
     navigate('/add');
@@ -358,54 +357,33 @@ export function InventoryPage() {
 
   return (
     <div className="min-h-full bg-gray-50 pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-4">
-        <div className="flex items-center justify-between">
+      {/* Header - Ownly style */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-4">
+        {/* Top row: Title and item count with view toggle */}
+        <div className="flex items-center justify-between mb-3">
           {/* Title and count */}
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">My Inventory</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h1 className="text-xs font-semibold text-gray-500 tracking-[0.2em] uppercase">
+              MY INVENTORY
+            </h1>
+            <p className="text-sm text-gray-900 mt-1 flex items-center gap-1.5">
               {itemsLoading ? (
-                <span className="inline-block w-16 h-4 bg-gray-200 rounded animate-pulse" />
+                <span className="inline-block w-20 h-4 bg-gray-200 rounded animate-pulse" />
               ) : (
-                `${totalCount} item${totalCount !== 1 ? 's' : ''}`
+                <>
+                  <span className="w-2 h-2 bg-teal-500 rounded-full" />
+                  <span className="font-medium">{totalCount} ITEMS ADDED</span>
+                </>
               )}
             </p>
           </div>
 
-          {/* Right side: View toggle + Notification bell + Search */}
-          <div className="flex items-center gap-2">
-            {/* View toggle */}
-            <ViewToggle
-              viewMode={viewMode}
-              onViewChange={handleViewChange}
-              isLoading={settingsLoading || isUpdatingView}
-            />
-
-            {/* Notification bell */}
-            <NotificationBell />
-
-            {/* Search icon button */}
-            <button
-              onClick={handleSearchClick}
-              className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
-              aria-label="Search items"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-            </button>
-          </div>
+          {/* Right side: View toggle */}
+          <ViewToggle
+            viewMode={viewMode}
+            onViewChange={handleViewChange}
+            isLoading={settingsLoading || isUpdatingView}
+          />
         </div>
 
         {/* Filter bar with chips */}
@@ -594,14 +572,15 @@ export function InventoryPage() {
         </div>
       </div>
 
-      {/* FAB - Floating Action Button */}
+      {/* FAB - Floating Action Button (Ownly style pill) */}
       <button
         onClick={handleAddClick}
-        className="fixed bottom-20 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors flex items-center justify-center active:scale-95 z-20"
+        className="fixed bottom-20 right-4 px-5 py-3.5 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 transition-colors flex items-center gap-2 active:scale-95 z-20"
         aria-label="Add new item"
       >
+        {/* Camera icon */}
         <svg
-          className="w-7 h-7"
+          className="w-5 h-5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -610,9 +589,16 @@ export function InventoryPage() {
             strokeLinecap="round"
             strokeLinejoin="round"
             strokeWidth={2}
-            d="M12 4v16m8-8H4"
+            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
+        <span className="text-sm font-semibold uppercase tracking-wide">Add New Items</span>
       </button>
 
       {/* Sort Bottom Sheet */}

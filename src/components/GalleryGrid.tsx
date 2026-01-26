@@ -1,12 +1,28 @@
 /**
- * Gallery Grid Component - 2-column grid view for inventory items
- * Displays items as cards with thumbnails, names, and category badges
+ * Gallery Grid Component - 3-column card grid view for inventory items
+ * Displays items as cards with category badges, location, and price
  * Supports infinite scroll pagination
  */
 
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { InventoryItem } from '@/hooks/useInventoryItems';
+
+/**
+ * Format price with currency symbol
+ */
+function formatPrice(price: number | null, currency: string): string | null {
+  if (price === null || price === undefined) return null;
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+
+  return formatter.format(price);
+}
 
 /**
  * Props for ItemCard component
@@ -17,19 +33,21 @@ interface ItemCardProps {
 }
 
 /**
- * Individual item card for gallery view
+ * Individual item card for gallery view - Ownly style
  */
 function ItemCard({ item, onClick }: ItemCardProps) {
   const imageUrl = item.thumbnail_url || item.photo_url;
   const displayName = item.name || 'Untitled Item';
+  const formattedPrice = formatPrice(item.price, item.currency);
+  const locationDisplay = item.location_name || item.location_path;
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 transition-transform active:scale-[0.98]"
+      className="w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
     >
-      {/* Thumbnail container - 1:1 aspect ratio */}
-      <div className="relative w-full aspect-square bg-gray-100">
+      {/* Image container - 4:5 aspect ratio */}
+      <div className="relative w-full aspect-[4/5] bg-gray-100">
         <img
           src={imageUrl}
           alt={displayName}
@@ -37,26 +55,18 @@ function ItemCard({ item, onClick }: ItemCardProps) {
           loading="lazy"
         />
 
-        {/* Category badge overlay */}
+        {/* Category badge overlay (top-left) */}
         {item.category_name && (
-          <div
-            className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-xs font-medium text-white shadow-sm backdrop-blur-sm"
-            style={{
-              backgroundColor: item.category_color
-                ? `${item.category_color}dd`
-                : 'rgba(75, 85, 99, 0.9)',
-            }}
-          >
-            {item.category_icon && (
-              <span className="mr-1">{item.category_icon}</span>
-            )}
-            {item.category_name}
+          <div className="absolute top-3 left-3">
+            <span className="inline-block px-2.5 py-1 bg-teal-500 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
+              {item.category_name}
+            </span>
           </div>
         )}
 
-        {/* Favorite indicator */}
+        {/* Favorite indicator (top-right) */}
         {item.is_favorite && (
-          <div className="absolute top-2 right-2 w-6 h-6 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
+          <div className="absolute top-3 right-3 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
             <svg
               className="w-4 h-4 text-red-500"
               fill="currentColor"
@@ -69,43 +79,48 @@ function ItemCard({ item, onClick }: ItemCardProps) {
 
         {/* Quantity badge (if > 1) */}
         {item.quantity > 1 && (
-          <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/70 rounded text-xs font-medium text-white">
-            ×{item.quantity}
+          <div className="absolute bottom-3 right-3 px-2 py-0.5 bg-black/70 rounded text-xs font-medium text-white">
+            x{item.quantity}
           </div>
         )}
       </div>
 
-      {/* Item info */}
+      {/* Item info section */}
       <div className="p-3">
-        <h3 className="text-sm font-medium text-gray-900 line-clamp-2 leading-tight">
+        {/* Item name */}
+        <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1.5">
           {displayName}
         </h3>
 
-        {/* Location name (if available) */}
-        {item.location_name && (
-          <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-            <svg
-              className="w-3 h-3 flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            <span className="truncate">{item.location_name}</span>
-          </p>
-        )}
+        {/* Location and price row */}
+        <div className="flex items-center justify-between">
+          {/* Location with icon */}
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            {locationDisplay ? (
+              <>
+                <svg
+                  className="w-3.5 h-3.5 text-teal-500 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                </svg>
+                <span className="text-xs text-gray-500 truncate uppercase tracking-wide">
+                  {locationDisplay}
+                </span>
+              </>
+            ) : (
+              <span className="text-xs text-gray-400">No location</span>
+            )}
+          </div>
+
+          {/* Price */}
+          {formattedPrice && (
+            <span className="text-sm font-semibold text-teal-600 ml-2 flex-shrink-0">
+              {formattedPrice}
+            </span>
+          )}
+        </div>
       </div>
     </button>
   );
@@ -116,14 +131,17 @@ function ItemCard({ item, onClick }: ItemCardProps) {
  */
 function ItemCardSkeleton() {
   return (
-    <div className="w-full bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
-      {/* Thumbnail skeleton */}
-      <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+    <div className="w-full bg-white rounded-2xl overflow-hidden shadow-sm">
+      {/* Image skeleton - 4:5 aspect ratio */}
+      <div className="w-full aspect-[4/5] bg-gray-200 animate-pulse" />
 
       {/* Info skeleton */}
-      <div className="p-3 space-y-2">
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
+      <div className="p-3">
+        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mb-2" />
+        <div className="flex items-center justify-between">
+          <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
+          <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+        </div>
       </div>
     </div>
   );
@@ -227,7 +245,7 @@ function LoadingMoreSpinner() {
   return (
     <div className="flex items-center justify-center py-4">
       <svg
-        className="w-5 h-5 text-blue-600 animate-spin"
+        className="w-5 h-5 text-teal-600 animate-spin"
         fill="none"
         viewBox="0 0 24 24"
       >
@@ -355,7 +373,7 @@ export function GalleryGrid({
   // Show loading skeletons on initial load
   if (isLoading && items.length === 0) {
     return (
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
         {Array.from({ length: 6 }).map((_, index) => (
           <ItemCardSkeleton key={index} />
         ))}
@@ -436,8 +454,8 @@ export function GalleryGrid({
         </div>
       )}
 
-      {/* Item grid */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Item grid - 2 columns on mobile, 3 on larger screens */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
         {items.map((item) => (
           <ItemCard
             key={item.id}

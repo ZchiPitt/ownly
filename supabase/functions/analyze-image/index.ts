@@ -8,8 +8,15 @@
  */
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { GoogleGenAI } from 'npm:@google/genai@1.37.0';
-import { corsHeaders } from '../_shared/cors.ts';
+import { GoogleGenAI } from 'https://esm.sh/@google/genai@1.37.0';
+
+// CORS headers for cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+};
 
 // Types matching src/types/api.ts
 interface DetectedItem {
@@ -21,7 +28,8 @@ interface DetectedItem {
 }
 
 interface AnalyzeImageRequest {
-  image_url: string;
+  image_url?: string;
+  storage_path?: string; // e.g., "items/user-id/filename.jpg"
 }
 
 interface AnalyzeImageResponse {
@@ -87,7 +95,7 @@ Important rules:
 - Always return valid JSON`;
 
 /**
- * Fetch image and convert to base64
+ * Fetch image from URL and convert to base64
  */
 async function fetchImageAsBase64(url: string): Promise<string> {
   const response = await fetch(url);
@@ -98,6 +106,49 @@ async function fetchImageAsBase64(url: string): Promise<string> {
   const bytes = new Uint8Array(arrayBuffer);
   const binary = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
   return btoa(binary);
+}
+
+/**
+ * Download image from Supabase Storage using service role key
+ */
+async function downloadFromStorage(
+  storagePath: string,
+  supabaseUrl: string,
+  serviceRoleKey: string
+): Promise<{ base64: string; mimeType: string }> {
+  // Create admin client with service role key
+  const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  // Extract bucket and path from storage_path (format: "bucket/path/to/file.jpg")
+  const pathParts = storagePath.split('/');
+  const bucket = pathParts[0];
+  const filePath = pathParts.slice(1).join('/');
+
+  console.log(`[analyze-image] Downloading from bucket: ${bucket}, path: ${filePath}`);
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .download(filePath);
+
+  if (error) {
+    console.error('[analyze-image] Storage download error:', error);
+    throw new Error(`Failed to download image from storage: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new Error('No data returned from storage');
+  }
+
+  // Convert Blob to base64
+  const arrayBuffer = await data.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  const binary = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), '');
+  const base64 = btoa(binary);
+
+  // Detect MIME type from file extension
+  const mimeType = detectMimeType(filePath);
+
+  return { base64, mimeType };
 }
 
 /**
@@ -114,15 +165,17 @@ function detectMimeType(url: string): string {
 /**
  * Call Gemini 3.0 Flash Vision API
  */
-async function analyzeWithGemini(imageUrl: string, apiKey: string): Promise<DetectedItem[]> {
+async function analyzeWithGemini(
+  imageData: { base64: string; mimeType: string },
+  apiKey: string
+): Promise<DetectedItem[]> {
   const ai = new GoogleGenAI({ apiKey: apiKey });
 
-  // Fetch and encode image
-  const imageBase64 = await fetchImageAsBase64(imageUrl);
-  const mimeType = detectMimeType(imageUrl);
+  const { base64: imageBase64, mimeType } = imageData;
+  console.log(`[analyze-image] Calling Gemini with mimeType: ${mimeType}, base64 length: ${imageBase64.length}`);
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-2.0-flash',
     contents: [
       {
         role: 'user',
@@ -144,11 +197,22 @@ async function analyzeWithGemini(imageUrl: string, apiKey: string): Promise<Dete
     },
   });
 
-  const text = response.text;
+  let text = response.text;
 
   if (!text) {
     throw new Error('No response content from Gemini');
   }
+
+  // Strip markdown code fence if present (```json ... ```)
+  text = text.trim();
+  if (text.startsWith('```')) {
+    // Remove opening fence (```json or ```)
+    text = text.replace(/^```(?:json)?\s*\n?/, '');
+    // Remove closing fence
+    text = text.replace(/\n?```\s*$/, '');
+  }
+
+  console.log(`[analyze-image] Cleaned Gemini response: ${text.substring(0, 200)}...`);
 
   try {
     const parsed = JSON.parse(text);
@@ -286,11 +350,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Validate request
-    if (!body.image_url) {
+    // Validate request - require either image_url or storage_path
+    if (!body.image_url && !body.storage_path) {
       const error: ApiError = {
         error: {
-          message: 'image_url is required',
+          message: 'Either image_url or storage_path is required',
           code: 'INVALID_REQUEST',
         },
       };
@@ -300,29 +364,59 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Validate URL format
-    try {
-      new URL(body.image_url);
-    } catch {
-      const error: ApiError = {
-        error: {
-          message: 'Invalid image_url format',
-          code: 'INVALID_REQUEST',
-        },
-      };
-      return new Response(JSON.stringify(error), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Get image data - either from URL or storage
+    let imageData: { base64: string; mimeType: string };
+
+    if (body.storage_path) {
+      // Download from Supabase Storage using service role key
+      const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (!serviceRoleKey) {
+        const error: ApiError = {
+          error: {
+            message: 'Service role key not configured',
+            code: 'CONFIGURATION_ERROR',
+          },
+        };
+        return new Response(JSON.stringify(error), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log(`[analyze-image] Using storage_path: ${body.storage_path}`);
+      imageData = await downloadFromStorage(body.storage_path, supabaseUrl, serviceRoleKey);
+    } else if (body.image_url) {
+      // Validate URL format
+      try {
+        new URL(body.image_url);
+      } catch {
+        const error: ApiError = {
+          error: {
+            message: 'Invalid image_url format',
+            code: 'INVALID_REQUEST',
+          },
+        };
+        return new Response(JSON.stringify(error), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log(`[analyze-image] Using image_url: ${body.image_url}`);
+      const base64 = await fetchImageAsBase64(body.image_url);
+      const mimeType = detectMimeType(body.image_url);
+      imageData = { base64, mimeType };
+    } else {
+      throw new Error('No image source provided');
     }
 
     // Call Gemini Vision API
-    const detectedItems = await analyzeWithGemini(body.image_url, geminiApiKey);
+    const detectedItems = await analyzeWithGemini(imageData, geminiApiKey);
 
     // Build response
     const response: AnalyzeImageResponse = {
       detected_items: detectedItems,
-      analysis_model: 'gemini-3-flash-preview',
+      analysis_model: 'gemini-2.0-flash',
       analyzed_at: new Date().toISOString(),
     };
 
