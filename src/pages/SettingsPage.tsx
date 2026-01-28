@@ -176,13 +176,12 @@ export function SettingsPage() {
   const handleConfirmLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await signOut();
-      // Show toast briefly before redirect
-      success('Logged out successfully');
-      // Small delay to allow user to see success message
-      setTimeout(() => {
-        navigate('/login', { replace: true });
-      }, 500);
+      const { error: signOutError } = await signOut();
+      if (signOutError) {
+        throw signOutError;
+      }
+      // Use hard redirect to ensure clean state - avoids React routing race conditions
+      window.location.href = '/login';
     } catch {
       setIsLoggingOut(false);
       setShowLogoutDialog(false);

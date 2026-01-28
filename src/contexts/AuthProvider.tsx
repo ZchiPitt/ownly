@@ -88,10 +88,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { error };
   }, []);
 
-  // Sign out
+  // Sign out - clears local session even if server call fails
   const signOut = useCallback(async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch {
+      // Server logout may fail (403), but we still clear local state
+      console.warn('Server logout failed, clearing local session');
+    }
+    // Always clear local state regardless of server response
+    setUser(null);
+    setSession(null);
+    return { error: null };
   }, []);
 
   // Send password reset email
