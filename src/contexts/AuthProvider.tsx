@@ -110,6 +110,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { error };
   }, []);
 
+  // Sign in with Google OAuth
+  const signInWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+    return { error };
+  }, []);
+
   // Memoize context value to prevent unnecessary re-renders
   const value = useMemo(
     () => ({
@@ -121,8 +132,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       signOut,
       resetPassword,
       updatePassword,
+      signInWithGoogle,
     }),
-    [user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword]
+    [user, session, loading, signUp, signIn, signOut, resetPassword, updatePassword, signInWithGoogle]
   );
 
   return (

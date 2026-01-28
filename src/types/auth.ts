@@ -24,4 +24,6 @@ export interface AuthContextValue {
   resetPassword: (email: string) => Promise<{ error: AuthError | null }>;
   /** Update password (after reset or for logged in user) */
   updatePassword: (newPassword: string) => Promise<{ error: AuthError | null }>;
+  /** Sign in with Google OAuth */
+  signInWithGoogle: () => Promise<{ error: AuthError | null }>;
 }
