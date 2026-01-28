@@ -15,7 +15,7 @@ export default defineConfig({
       manifest: false, // Use existing manifest.json in public folder
       workbox: {
         // Include version in cache name for updates
-        cacheId: 'clekee-v1',
+        cacheId: 'ownly-v1',
         // Cache app shell (HTML, CSS, JS) on install, serve cache-first
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         // Runtime caching strategies

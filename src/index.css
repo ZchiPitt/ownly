@@ -17,7 +17,7 @@
   --color-teal-950: #042f2e;
 }
 
-/* Mobile-first base styles for Clekee (rebranded to Ownly style) */
+/* Mobile-first base styles for Ownly */
 :root {
   font-family: var(--font-sans);
   line-height: 1.5;

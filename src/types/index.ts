@@ -1,5 +1,5 @@
 /**
- * Clekee Type Exports
+ * Ownly Type Exports
  * Central export point for all TypeScript types
  */
 

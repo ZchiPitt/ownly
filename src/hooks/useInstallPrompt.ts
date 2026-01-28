@@ -12,10 +12,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 // Storage keys
-const STORAGE_KEY_DISMISS_TIME = 'clekee_install_dismissed_at';
-const STORAGE_KEY_PAGES_VIEWED = 'clekee_pages_viewed';
-const STORAGE_KEY_FIRST_VISIT = 'clekee_first_visit_at';
-const STORAGE_KEY_INSTALLED = 'clekee_app_installed';
+const STORAGE_KEY_DISMISS_TIME = 'ownly_install_dismissed_at';
+const STORAGE_KEY_PAGES_VIEWED = 'ownly_pages_viewed';
+const STORAGE_KEY_FIRST_VISIT = 'ownly_first_visit_at';
+const STORAGE_KEY_INSTALLED = 'ownly_app_installed';
 
 // Configuration
 const MIN_PAGES_VIEWED = 2;

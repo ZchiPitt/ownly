@@ -1,5 +1,5 @@
 {
-  "project": "Clekee",
+  "project": "Ownly",
   "branchName": "ralph/smart-home-inventory-mvp",
   "description": "Smart Home Inventory App - A PWA that helps users track household belongings through AI-powered photo recognition with intelligent tagging, location tracking, and smart search",
   "userStories": [
@@ -1067,7 +1067,7 @@
       "acceptanceCriteria": [
         "When input empty, show 'Recent Searches' section",
         "Header: 'Recent Searches' + 'Clear All' link",
-        "List last 10 unique queries from localStorage (key: clekee_recent_searches)",
+        "List last 10 unique queries from localStorage (key: ownly_recent_searches)",
         "Tap query populates input and executes search",
         "Swipe left reveals Delete button (mobile), hover shows X (desktop)",
         "Clear All shows confirmation, clears all",
@@ -1229,7 +1229,7 @@
       "acceptanceCriteria": [
         "Capture beforeinstallprompt event, defer native prompt",
         "Show custom banner when: event captured, viewed >=2 pages, spent >=30s, not dismissed in 7 days, not already installed",
-        "Banner: app icon, 'Add Clekee to Home Screen', subtext, Not Now and Install buttons",
+        "Banner: app icon, 'Add Ownly to Home Screen', subtext, Not Now and Install buttons",
         "Install button triggers event.prompt()",
         "Not Now hides banner, stores dismiss timestamp",
         "After install: hide all install UI, toast 'App installed!'",

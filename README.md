@@ -1,4 +1,4 @@
-# Clekee
+# Ownly
 
 > Smart Home Inventory App - Track household belongings with AI-powered photo recognition
 
@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-19.2-blue)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-7.2-646CFF)](https://vite.dev/)
 
-**Clekee** is a Progressive Web App (PWA) that helps you track household belongings through AI-powered photo recognition. Never forget where you stored something again!
+**Ownly** is a Progressive Web App (PWA) that helps you track household belongings through AI-powered photo recognition. Never forget where you stored something again!
 
 ## Features
 
@@ -40,8 +40,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/clekee.git
-cd clekee
+git clone https://github.com/yourusername/ownly.git
+cd ownly
 
 # Install dependencies
 npm install
@@ -222,7 +222,7 @@ npm run preview
 ## Project Structure
 
 ```
-clekee/
+ownly/
 ├── src/
 │   ├── components/       # Reusable UI components
 │   │   ├── layout/      # AppShell, BottomNav
@@ -305,7 +305,7 @@ The MVP is feature-complete. See `scripts/ralph/prd.json` for the full product r
 
 **Q: Can I run this without Supabase?**
 
-A: No. Clekee requires Supabase for authentication, database, and storage. You'll need to create a free Supabase account and project.
+A: No. Ownly requires Supabase for authentication, database, and storage. You'll need to create a free Supabase account and project.
 
 **Q: Do I need OpenAI API keys?**
 
@@ -333,7 +333,7 @@ A: Costs depend on usage. Approximate per-operation:
 
 **Q: Can I use this offline?**
 
-A: Yes! Clekee is a PWA with offline support. Cached content remains viewable without internet, and an offline banner appears when disconnected. AI features require internet.
+A: Yes! Ownly is a PWA with offline support. Cached content remains viewable without internet, and an offline banner appears when disconnected. AI features require internet.
 
 **Q: How do I deploy this?**
 

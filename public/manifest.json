@@ -1,6 +1,6 @@
 {
-  "name": "Clekee - Smart Home Inventory",
-  "short_name": "Clekee",
+  "name": "Ownly - Smart Home Inventory",
+  "short_name": "Ownly",
   "description": "A PWA that helps users track household belongings through AI-powered photo recognition with intelligent tagging, location tracking, and smart search",
   "start_url": "/",
   "display": "standalone",

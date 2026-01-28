@@ -27,7 +27,7 @@ import type {
 } from '@/types/api';
 
 // Storage key for recent shopping queries
-const RECENT_QUERIES_KEY = 'clekee_shopping_queries';
+const RECENT_QUERIES_KEY = 'ownly_shopping_queries';
 const MAX_RECENT_QUERIES = 3;
 
 interface ToastState {

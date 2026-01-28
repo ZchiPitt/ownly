@@ -10,7 +10,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 
-const STORAGE_KEY = 'clekee_recent_searches';
+const STORAGE_KEY = 'ownly_recent_searches';
 const MAX_RECENT_SEARCHES = 10;
 
 export interface UseRecentSearchesResult {

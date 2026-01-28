@@ -1,5 +1,5 @@
 /**
- * Authentication Provider for Clekee
+ * Authentication Provider for Ownly
  * Provides authentication state and methods across the application
  */
 

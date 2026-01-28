@@ -1,5 +1,5 @@
 /**
- * API request and response types for Clekee
+ * API request and response types for Ownly
  * Used for Edge Functions and client-side data fetching
  */
 

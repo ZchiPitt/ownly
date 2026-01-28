@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Clekee** is a Progressive Web App (PWA) for smart home inventory management. Users can track household belongings through AI-powered photo recognition with intelligent tagging, location tracking, and semantic search.
+**Ownly** is a Progressive Web App (PWA) for smart home inventory management. Users can track household belongings through AI-powered photo recognition with intelligent tagging, location tracking, and semantic search.
 
 **Tech Stack:**
 - React 19.2 + TypeScript + Vite

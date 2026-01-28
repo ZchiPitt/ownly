@@ -1,5 +1,5 @@
 /**
- * Authentication types for Clekee
+ * Authentication types for Ownly
  */
 
 import type { User, Session, AuthError } from '@supabase/supabase-js';

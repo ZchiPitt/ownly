@@ -1,6 +1,6 @@
-# Clekee User Guide
+# Ownly User Guide
 
-**Clekee** is a smart home inventory app that helps you track your belongings through AI-powered photo recognition. Never forget where you stored something again!
+**Ownly** is a smart home inventory app that helps you track your belongings through AI-powered photo recognition. Never forget where you stored something again!
 
 ## Table of Contents
 
@@ -246,13 +246,13 @@ Home
 
 ### Offline Usage
 
-Clekee works offline! Your cached inventory remains viewable when you have no internet connection. An offline banner appears at the top when you're disconnected.
+Ownly works offline! Your cached inventory remains viewable when you have no internet connection. An offline banner appears at the top when you're disconnected.
 
 **Note:** AI features (photo analysis, shopping assistant) require an internet connection.
 
 ### App Updates
 
-Clekee automatically checks for updates. When a new version is available:
+Ownly automatically checks for updates. When a new version is available:
 1. A banner appears at the bottom of the screen
 2. Tap **Update** to reload with the latest version
 3. Or tap **Dismiss** to update later
@@ -279,7 +279,7 @@ A: We use OpenAI's embedding models to create vector representations of your ite
 A: AI features require sending images and text to OpenAI's servers for processing. These features need an active internet connection. However, your cached inventory data is always available offline.
 
 **Q: Does this work on desktop?**
-A: Yes! Clekee is a Progressive Web App that works on any device with a modern web browser—phones, tablets, and desktop computers.
+A: Yes! Ownly is a Progressive Web App that works on any device with a modern web browser—phones, tablets, and desktop computers.
 
 **Q: How do I install the app on my phone?**
 A:

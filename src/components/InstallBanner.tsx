@@ -68,7 +68,7 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
           <div className="flex-shrink-0">
             <img
               src="/icons/icon-192x192.png"
-              alt="Clekee"
+              alt="Ownly"
               className="w-14 h-14 rounded-xl shadow-md"
             />
           </div>
@@ -76,7 +76,7 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
           {/* Text content */}
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 text-base">
-              Add Clekee to Home Screen
+              Add Ownly to Home Screen
             </h3>
             <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
               Install this app for quick access to your inventory anytime

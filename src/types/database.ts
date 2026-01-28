@@ -1,5 +1,5 @@
 /**
- * TypeScript types for Clekee database entities
+ * TypeScript types for Ownly database entities
  * Generated from Supabase schema migrations
  */
 

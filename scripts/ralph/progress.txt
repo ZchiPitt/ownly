@@ -1,5 +1,5 @@
 # Ralph Progress Log
-# Project: Clekee - Smart Home Inventory App
+# Project: Ownly - Smart Home Inventory App
 # Branch: ralph/smart-home-inventory-mvp
 # Created: 2026-01-23
 
@@ -1664,7 +1664,7 @@
 ## 2026-01-24 - US-061
 - What was implemented:
   - Created useRecentSearches hook at `/src/hooks/useRecentSearches.ts`
-  - Stores last 10 unique queries in localStorage (key: clekee_recent_searches)
+  - Stores last 10 unique queries in localStorage (key: ownly_recent_searches)
   - Recent searches section shows when search input is empty
   - Header: 'Recent Searches' + 'Clear All' link with confirmation dialog
   - Tap recent query populates input and executes search
@@ -1860,8 +1860,8 @@
 ## 2026-01-24 - US-068
 - What was implemented:
   - Created /public/manifest.json with PWA configuration:
-    - name: "Clekee - Smart Home Inventory"
-    - short_name: "Clekee"
+    - name: "Ownly - Smart Home Inventory"
+    - short_name: "Ownly"
     - description: App description
     - start_url: "/"
     - display: "standalone"
@@ -1880,7 +1880,7 @@
     - Favicon links (PNG and ICO)
     - Apple touch icon link
     - Manifest link
-    - Updated title to "Clekee - Smart Home Inventory"
+    - Updated title to "Ownly - Smart Home Inventory"
   - Fixed pre-existing TypeScript errors in hooks (type casting for Supabase calls)
 
 - Files changed:
@@ -1918,7 +1918,7 @@
     - Supabase Edge Functions use network-first with 1h cache fallback
     - Supabase Storage images use cache-first with 30-day expiration
     - Images and fonts use cache-first for optimal performance
-  - Cache includes version (`clekee-v1`) for controlled updates
+  - Cache includes version (`ownly-v1`) for controlled updates
   - Service worker registered on app load in main.tsx with:
     - onNeedRefresh: dispatches custom 'pwa-update-available' event for UI (US-090)
     - onOfflineReady: logs when app can work offline
@@ -1947,10 +1947,10 @@
   - Created useInstallPrompt hook at /src/hooks/useInstallPrompt.ts
   - Captures beforeinstallprompt event and defers native prompt
   - Tracks engagement criteria via localStorage:
-    - Pages viewed count (clekee_pages_viewed)
-    - First visit timestamp (clekee_first_visit_at)
-    - Dismiss timestamp (clekee_install_dismissed_at)
-    - Installed flag (clekee_app_installed)
+    - Pages viewed count (ownly_pages_viewed)
+    - First visit timestamp (ownly_first_visit_at)
+    - Dismiss timestamp (ownly_install_dismissed_at)
+    - Installed flag (ownly_app_installed)
   - Banner shows when: event captured, 2+ pages viewed, 30+ seconds spent, not dismissed in 7 days, not installed
   - Detects standalone mode via display-mode media query and iOS navigator.standalone
   - Created InstallBanner component at /src/components/InstallBanner.tsx
@@ -1985,7 +1985,7 @@
   - Detects Safari browser (excludes CriOS/Chrome, FxiOS/Firefox, EdgiOS/Edge, OPT/Opera)
   - Checks standalone mode via display-mode media query and navigator.standalone
   - Reads engagement tracking from shared localStorage keys with Android hook
-  - 30-day dismiss cooldown stored in clekee_ios_install_dismissed_at
+  - 30-day dismiss cooldown stored in ownly_ios_install_dismissed_at
   - Created IOSInstallBanner component at /src/components/IOSInstallBanner.tsx
   - Banner shows: app icon, title, instructions to tap Share icon then "Add to Home Screen"
   - Got It button dismisses with 30-day cooldown
@@ -2070,7 +2070,7 @@
 
 - **Learnings for future iterations:**
   - BottomNav now has 5 tabs: Home, Add (FAB), Inventory, Shop, Settings
-  - ShoppingPage uses localStorage key 'clekee_shopping_queries' for recent queries
+  - ShoppingPage uses localStorage key 'ownly_shopping_queries' for recent queries
   - RecentQuery interface: { id: string, thumbnailUrl: string, itemName: string, timestamp: number }
   - Photo capture UI pattern is shared with AddItemPage - uses same validateImage util
   - US-074+ will implement the chat interface after photo capture

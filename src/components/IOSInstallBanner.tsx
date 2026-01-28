@@ -57,7 +57,7 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
             <div className="flex-shrink-0">
               <img
                 src="/icons/icon-192x192.png"
-                alt="Clekee"
+                alt="Ownly"
                 className="w-14 h-14 rounded-xl shadow-md"
               />
             </div>
@@ -68,7 +68,7 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
                 Install this app
               </h3>
               <p className="text-sm text-gray-500 mt-0.5">
-                Add Clekee to your Home Screen for quick access
+                Add Ownly to your Home Screen for quick access
               </p>
             </div>
           </div>

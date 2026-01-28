@@ -1,4 +1,4 @@
-# PRD: Smart Home Inventory App (Clekee)
+# PRD: Smart Home Inventory App (Ownly)
 
 ## Introduction
 
@@ -748,7 +748,7 @@ A Progressive Web App that helps users track and retrieve their household belong
 **Recent Searches Section (shown when input is empty):**
 - [ ] Section header: "Recent Searches" (left) + "Clear All" link (right)
 - [ ] Display last 10 unique search queries, newest first
-- [ ] Storage: localStorage key `clekee_recent_searches`, JSON array of strings
+- [ ] Storage: localStorage key `ownly_recent_searches`, JSON array of strings
 - [ ] Each row: query text, full width tappable area
 - [ ] Tap query → populate input field and execute search
 - [ ] Delete single: swipe left reveals red Delete button (mobile), or hover shows ✕ (desktop)
@@ -1064,8 +1064,8 @@ I didn't find anything like this in your inventory. Looks like it would be a new
 **Web App Manifest Configuration (`/manifest.json`):**
 ```json
 {
-  "name": "Clekee - Smart Home Inventory",
-  "short_name": "Clekee",
+  "name": "Ownly - Smart Home Inventory",
+  "short_name": "Ownly",
   "description": "Track and find your belongings with AI-powered inventory management",
   "start_url": "/?source=pwa",
   "display": "standalone",
@@ -1105,7 +1105,7 @@ I didn't find anything like this in your inventory. Looks like it would be a new
   - User hasn't dismissed prompt in last 7 days (check localStorage)
   - App not already installed (not in standalone mode)
 - [ ] Custom banner UI (fixed bottom, above nav):
-  - App icon (32x32) + "Add Clekee to Home Screen" text
+  - App icon (32x32) + "Add Ownly to Home Screen" text
   - Subtext: "Quick access anytime, even offline"
   - [Not Now] text button (left) + [Install] primary button (right)
 - [ ] [Install] tap → call stored `event.prompt()`, track outcome
@@ -1114,7 +1114,7 @@ I didn't find anything like this in your inventory. Looks like it would be a new
 
 **Install Prompt - Desktop Chrome:**
 - [ ] Show install button (⊕ icon) in app header when `beforeinstallprompt` available
-- [ ] Tooltip on hover: "Install Clekee app"
+- [ ] Tooltip on hover: "Install Ownly app"
 - [ ] Click → trigger install prompt
 - [ ] Hide button after install or if prompt not available
 

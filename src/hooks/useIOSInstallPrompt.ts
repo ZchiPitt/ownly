@@ -15,9 +15,9 @@
 import { useState, useEffect, useCallback } from 'react';
 
 // Storage keys - shared with useInstallPrompt for consistent tracking
-const STORAGE_KEY_IOS_DISMISS_TIME = 'clekee_ios_install_dismissed_at';
-const STORAGE_KEY_PAGES_VIEWED = 'clekee_pages_viewed';
-const STORAGE_KEY_FIRST_VISIT = 'clekee_first_visit_at';
+const STORAGE_KEY_IOS_DISMISS_TIME = 'ownly_ios_install_dismissed_at';
+const STORAGE_KEY_PAGES_VIEWED = 'ownly_pages_viewed';
+const STORAGE_KEY_FIRST_VISIT = 'ownly_first_visit_at';
 
 // Configuration
 const MIN_PAGES_VIEWED = 2;
