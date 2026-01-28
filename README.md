@@ -142,7 +142,7 @@ USING (bucket_id = 'items' AND (storage.foldername(name))[1] = auth.uid()::text)
 
 ### Edge Functions Setup
 
-This project requires 6 Supabase Edge Functions for AI features and background tasks.
+This project includes 6 Supabase Edge Functions in `supabase/functions/` for AI features and background tasks.
 
 #### Prerequisites
 
@@ -150,6 +150,10 @@ This project requires 6 Supabase Edge Functions for AI features and background t
 2. **Install Supabase CLI:**
    ```bash
    npm install -g supabase
+   ```
+3. **Link your project:**
+   ```bash
+   supabase link --project-ref <your-project-ref>
    ```
 
 #### Set Edge Function Secrets
@@ -166,7 +170,10 @@ supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
 #### Deploy All Functions
 
 ```bash
-# From project root
+# Deploy all functions at once
+supabase functions deploy --all
+
+# Or deploy individually
 supabase functions deploy analyze-image
 supabase functions deploy generate-embedding
 supabase functions deploy shopping-analyze
@@ -226,13 +233,23 @@ ownly/
 ├── src/
 │   ├── components/       # Reusable UI components
 │   │   ├── layout/      # AppShell, BottomNav
+│   │   ├── dashboard/   # Dashboard-specific components
 │   │   └── *.tsx        # Feature components
-│   ├── contexts/        # React contexts (Auth, Offline, Toast)
-│   ├── hooks/           # Custom React hooks
+│   ├── contexts/        # React contexts (Auth, Offline, Toast, Confirm)
+│   ├── hooks/           # Custom React hooks (21 hooks)
 │   ├── lib/             # Utilities (supabase, imageUtils)
 │   ├── pages/           # Route components
 │   ├── types/           # TypeScript definitions
 │   └── App.tsx          # Root component with routing
+├── supabase/
+│   ├── functions/       # Edge Functions (6 functions)
+│   │   ├── analyze-image/
+│   │   ├── generate-embedding/
+│   │   ├── shopping-analyze/
+│   │   ├── shopping-followup/
+│   │   ├── generate-reminders/
+│   │   └── cleanup-deleted-items/
+│   └── migrations/      # Database migrations (11 files)
 ├── docs/
 │   ├── requirements.md  # Product requirements
 │   └── USAGE.md         # User guide
@@ -265,8 +282,9 @@ This project uses strict TypeScript. Always run `npm run build` before committin
 
 - **AppShell** - Main layout with header, content, and bottom nav
 - **ItemEditor** - Reusable form for creating/editing items
-- **Bottom Sheets** - Used for filters and pickers
-- **Toast Notifications** - Use `useToast()` hook (not Toast component)
+- **Bottom Sheets** - Used for filters and pickers (BottomSheet base component)
+- **Toast Notifications** - Use `useToast()` hook
+- **Confirmation Dialogs** - Use `useConfirm()` hook
 
 ### Conventions
 

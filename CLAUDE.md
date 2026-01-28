@@ -108,26 +108,28 @@ API request/response types are in `src/types/api.ts`.
 
 ### Context Architecture
 
-Three main contexts (exported from `src/contexts/`):
+Four main contexts (exported from `src/contexts/`):
 
 1. **AuthContext** - User authentication state
 2. **OfflineContext** - Network status detection
 3. **ToastContext** - Toast notifications (replaces old Toast component usage)
+4. **ConfirmContext** - Confirmation dialog management
 
 **Pattern:** Context providers wrap the app in `App.tsx` in this order:
 ```
-QueryClientProvider > ToastProvider > OfflineProvider > AuthProvider > BrowserRouter
+QueryClientProvider > ToastProvider > ConfirmProvider > OfflineProvider > AuthProvider > BrowserRouter
 ```
 
 ### Routing Structure
 
 **Public routes** (no AppShell):
+- `/` - Landing page (marketing/intro)
 - `/login`, `/signup`, `/reset-password`, `/reset-password/confirm`
 
 **Protected routes** (with AppShell + bottom nav):
-- `/` → redirects to `/dashboard`
 - `/dashboard` - Home dashboard
-- `/add` - Add new item
+- `/add` - Add new item (photo capture)
+- `/add/edit` - Item editor after photo capture
 - `/inventory` - Browse all items
 - `/item/:id` - Item detail
 - `/item/:id/edit` - Edit item
@@ -154,10 +156,21 @@ QueryClientProvider > ToastProvider > OfflineProvider > AuthProvider > BrowserRo
 - AI-suggested field indicators (sparkle icon)
 
 **Bottom Sheets** - Used for filters and pickers:
+- `BottomSheet` - Base reusable bottom sheet component
 - `CategoryFilterBottomSheet` - Multi-select category filter
 - `LocationFilterBottomSheet` - Hierarchical location filter
 - `SortBottomSheet` - Sort options
 - `LocationPickerModal` - Select item location
+
+**Other UI Components:**
+- `ConfirmDialog` - Confirmation dialog (via ConfirmProvider)
+- `Skeleton` - Loading skeleton placeholders
+- `SearchResult` - Search result item display
+- `NotificationBell` - Notification indicator with badge
+- `PullToRefreshIndicator` - Pull-to-refresh visual feedback
+- `GalleryGrid` - Gallery view for items
+- `ItemList` - List view for items
+- `MultiItemSelection` - Batch selection toolbar
 
 ### Data Fetching Patterns
 
@@ -183,6 +196,19 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
 - `useSearch` - Text search with debounce
 - `useDashboardStats` - Quick stats for dashboard
 - `useToast` - Toast notifications (use this instead of Toast component)
+- `useConfirm` - Confirmation dialogs
+- `useTags` - Tags autocomplete
+- `useNotifications` - Notification management
+- `usePushNotifications` - Web Push subscription
+- `useUserSettings` - User preferences
+- `useExpiringItems` - Items nearing expiration
+- `useRecentItems` - Recently added items
+- `useRecentSearches` - Search history
+- `usePullToRefresh` - Pull-to-refresh gesture
+- `useOffline` - Network status
+- `useInstallPrompt` - PWA install prompt (Android)
+- `useIOSInstallPrompt` - PWA install prompt (iOS)
+- `useShoppingUsage` - AI shopping rate limits
 
 ### Image Handling
 
@@ -214,10 +240,21 @@ Caching strategies:
 
 ### Supabase Edge Functions
 
-Required functions (not in this repo, must be deployed separately):
-- `analyze-image` - OpenAI Vision API for item detection
-- `shopping-analyze` - Similarity search with embeddings
-- `generate-embedding` - Create embeddings for new items
+Edge functions are located in `supabase/functions/` and must be deployed to Supabase:
+
+| Function | Purpose |
+|----------|---------|
+| `analyze-image` | OpenAI Vision API for item detection and metadata extraction |
+| `generate-embedding` | Create vector embeddings for semantic search |
+| `shopping-analyze` | AI shopping assistant - analyzes photos and compares with inventory |
+| `shopping-followup` | Conversational follow-ups in shopping assistant |
+| `generate-reminders` | Background job to create notification reminders |
+| `cleanup-deleted-items` | Background job to permanently delete soft-deleted items |
+
+**Deploy with:**
+```bash
+supabase functions deploy --all
+```
 
 ### AI Features
 
@@ -278,10 +315,10 @@ import { Button, Input } from '@/components'
 ```
 
 Locations with barrel exports:
-- `src/contexts/index.ts`
-- `src/pages/index.ts`
-- `src/components/layout/index.ts`
-- `src/types/index.ts`
+- `src/contexts/index.ts` - All contexts and providers
+- `src/pages/index.ts` - All page components
+- `src/components/layout/index.ts` - AppShell and BottomNav
+- `src/types/index.ts` - Database and API types
 
 ## Common Gotchas
 
