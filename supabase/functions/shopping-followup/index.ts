@@ -43,6 +43,23 @@ interface ShoppingFollowupResponse {
   };
 }
 
+interface InventoryItem {
+  id: string;
+  name: string;
+  category_name: string | null;
+  location_path: string | null;
+  quantity: number;
+  created_at: string;
+  tags: string[];
+}
+
+interface InventorySummary {
+  total_items: number;
+  items_by_category: Record<string, number>;
+  recent_items: Array<{ name: string; category: string; added: string }>;
+  locations_used: string[];
+}
+
 interface ApiError {
   error: {
     message: string;
@@ -57,12 +74,18 @@ const DAILY_TEXT_LIMIT = 50;
 /**
  * Build conversation context from history
  */
-function buildConversationContext(history: ConversationMessage[]): string {
-  if (history.length === 0) {
-    return 'No previous conversation.';
-  }
-
+function buildConversationContext(
+  history: ConversationMessage[],
+  inventorySummary: InventorySummary,
+  inventorySampleItems: string[]
+): string {
   const contextParts: string[] = [];
+  contextParts.push(buildInventoryContext(inventorySummary, inventorySampleItems));
+
+  if (history.length === 0) {
+    contextParts.push('No previous conversation.');
+    return contextParts.join('\n');
+  }
 
   for (const msg of history.slice(-10)) { // Last 10 messages for context
     if (msg.type === 'image') {
@@ -89,16 +112,217 @@ function buildConversationContext(history: ConversationMessage[]): string {
   return contextParts.join('\n');
 }
 
+function normalizeCategoryName(categoryName: string | null | undefined): string {
+  if (!categoryName) {
+    return 'Uncategorized';
+  }
+  const trimmed = categoryName.trim();
+  return trimmed.length > 0 ? trimmed : 'Uncategorized';
+}
+
+function normalizeLocationPath(locationPath: string | null | undefined): string {
+  if (!locationPath) {
+    return 'Unknown location';
+  }
+  const trimmed = locationPath.trim();
+  return trimmed.length > 0 ? trimmed : 'Unknown location';
+}
+
+function buildInventoryContext(
+  summary: InventorySummary,
+  sampleItems: string[]
+): string {
+  const categories = Object.entries(summary.items_by_category)
+    .map(([category, count]) => `${category}: ${count}`)
+    .join(', ');
+  const recentItems = summary.recent_items.length > 0
+    ? summary.recent_items
+      .map(item => `${item.name} (${item.category}) on ${item.added}`)
+      .join('; ')
+    : 'None';
+  const locations = summary.locations_used.length > 0
+    ? summary.locations_used.join(', ')
+    : 'None';
+  const sampleList = sampleItems.length > 0
+    ? sampleItems.join('\n')
+    : 'No sample items available.';
+
+  return `You have access to the user's home inventory:
+- Total items: ${summary.total_items}
+- By category: ${categories || 'None'}
+- Recent additions: ${recentItems}
+- Storage locations: ${locations}
+
+Sample items from their inventory:
+${sampleList}
+
+Use this data to give personalized advice about their belongings.
+When they ask about what they have, refer to this inventory data.`;
+}
+
+function buildInventorySampleItems(items: InventoryItem[]): string[] {
+  return items.slice(0, 20).map(item => {
+    const category = normalizeCategoryName(item.category_name);
+    const location = normalizeLocationPath(item.location_path);
+    return `- ${item.name} (${category}) in ${location}`;
+  });
+}
+
+function buildInventorySummary(items: InventoryItem[]): InventorySummary {
+  const itemsByCategory: Record<string, number> = {};
+  const locationsUsed: string[] = [];
+  const locationSet = new Set<string>();
+
+  for (const item of items) {
+    const category = normalizeCategoryName(item.category_name);
+    itemsByCategory[category] = (itemsByCategory[category] || 0) + 1;
+
+    const location = normalizeLocationPath(item.location_path);
+    if (!locationSet.has(location)) {
+      locationSet.add(location);
+      locationsUsed.push(location);
+    }
+  }
+
+  const recentItems = items.slice(0, 10).map(item => ({
+    name: item.name,
+    category: normalizeCategoryName(item.category_name),
+    added: item.created_at,
+  }));
+
+  return {
+    total_items: items.length,
+    items_by_category: itemsByCategory,
+    recent_items: recentItems,
+    locations_used: locationsUsed,
+  };
+}
+
+function buildInventoryDirectResponse(
+  summary: InventorySummary,
+  sampleItems: string[]
+): string {
+  if (summary.total_items === 0) {
+    return 'Your inventory is empty.';
+  }
+
+  const categoryList = Object.entries(summary.items_by_category)
+    .map(([category, count]) => `${category} (${count})`)
+    .join(', ');
+  const recentItems = summary.recent_items.length > 0
+    ? summary.recent_items
+      .map(item => `${item.name} (${item.category})`)
+      .join(', ')
+    : 'None';
+  const locations = summary.locations_used.length > 0
+    ? summary.locations_used.join(', ')
+    : 'None';
+  const sampleList = sampleItems.length > 0
+    ? ` Sample items: ${sampleItems.join(' ')}`
+    : '';
+
+  return `You have ${summary.total_items} items. Categories: ${categoryList || 'None'}. Recent additions: ${recentItems}. Locations used: ${locations}.${sampleList}`;
+}
+
+async function fetchUserInventory(
+  userId: string,
+  supabaseUrl: string,
+  supabaseServiceKey: string
+): Promise<InventoryItem[]> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  const { data, error } = await supabase
+    .from('items')
+    .select(`
+      id,
+      name,
+      quantity,
+      created_at,
+      tags,
+      categories(name),
+      locations(path)
+    `)
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error('Error fetching inventory items:', error);
+    return [];
+  }
+
+  type RawItem = {
+    id: string;
+    name: string | null;
+    quantity: number | null;
+    created_at: string;
+    tags: string[] | null;
+    categories?: { name: string | null } | Array<{ name: string | null }> | null;
+    locations?: { path: string | null } | Array<{ path: string | null }> | null;
+  };
+
+  return (data as RawItem[] | null || []).map(item => {
+    const category =
+      Array.isArray(item.categories)
+        ? item.categories[0]?.name ?? null
+        : item.categories?.name ?? null;
+    const location =
+      Array.isArray(item.locations)
+        ? item.locations[0]?.path ?? null
+        : item.locations?.path ?? null;
+
+    return {
+      id: item.id,
+      name: item.name?.trim() || 'Unnamed item',
+      category_name: category,
+      location_path: location,
+      quantity: item.quantity ?? 0,
+      created_at: item.created_at,
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    };
+  });
+}
+
 /**
  * Generate a contextual response using OpenAI
  */
 async function generateFollowupResponse(
   userMessage: string,
   conversationContext: string,
+  inventorySummary: InventorySummary,
+  inventorySampleItems: string[],
   apiKey: string
 ): Promise<string> {
+  const categories = Object.entries(inventorySummary.items_by_category)
+    .map(([category, count]) => `${category}: ${count}`)
+    .join(', ');
+  const recentItems = inventorySummary.recent_items.length > 0
+    ? inventorySummary.recent_items
+      .map(item => `${item.name} (${item.category}) on ${item.added}`)
+      .join('; ')
+    : 'None';
+  const locations = inventorySummary.locations_used.length > 0
+    ? inventorySummary.locations_used.join(', ')
+    : 'None';
+  const sampleList = inventorySampleItems.length > 0
+    ? inventorySampleItems.join('\n')
+    : 'No sample items available.';
+
   const systemPrompt = `You are a friendly shopping assistant helping users decide whether to buy items.
 You have access to the user's home inventory and can search for similar items they already own.
+
+You have access to the user's home inventory:
+- Total items: ${inventorySummary.total_items}
+- By category: ${categories || 'None'}
+- Recent additions: ${recentItems}
+- Storage locations: ${locations}
+
+Sample items from their inventory:
+${sampleList}
+
+Use this data to give personalized advice about their belongings.
+When they ask about what they have, refer to this inventory data.
 
 Your role:
 - Answer follow-up questions about the items being discussed
@@ -371,15 +595,30 @@ Deno.serve(async (req: Request) => {
     await incrementTextUsage(auth.userId, supabaseUrl, supabaseServiceKey);
     const newTextCount = usage.text_count + 1;
 
+    // Fetch inventory and build summary
+    const inventoryItems = await fetchUserInventory(auth.userId, supabaseUrl, supabaseServiceKey);
+    const inventorySummary = buildInventorySummary(inventoryItems);
+    const inventorySampleItems = buildInventorySampleItems(inventoryItems);
+
     // Build conversation context
-    const conversationContext = buildConversationContext(body.conversation_history || []);
+    const conversationContext = buildConversationContext(
+      body.conversation_history || [],
+      inventorySummary,
+      inventorySampleItems
+    );
 
     // Generate response
-    const aiResponse = await generateFollowupResponse(
-      body.message.trim(),
-      conversationContext,
-      openaiApiKey
-    );
+    const normalizedMessage = body.message.trim().toLowerCase();
+    const isInventoryQuestion = normalizedMessage.includes('what do i have');
+    const aiResponse = isInventoryQuestion
+      ? buildInventoryDirectResponse(inventorySummary, inventorySampleItems)
+      : await generateFollowupResponse(
+        body.message.trim(),
+        conversationContext,
+        inventorySummary,
+        inventorySampleItems,
+        openaiApiKey
+      );
 
     const response: ShoppingFollowupResponse = {
       response: aiResponse,

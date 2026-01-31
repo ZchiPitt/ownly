@@ -1,69 +1,119 @@
-# US-FIX-006: AI Bounding Box Detection
+# US-SHOP-001: Basic Inventory Context for Shopping Assistant
 
-**Description:** As a system, I want AI to return bounding box coordinates for each detected item so I can crop individual thumbnails.
-
-**Technical Context:**
-- Gemini Vision can return object locations
-- Bounding box format: `[x, y, width, height]` as percentages
-- Frontend can crop using Canvas API
-- More complex implementation, may have accuracy issues
+**Description:** As a user chatting with the shopping assistant, I want it to know what items I own so it can give relevant advice based on my actual inventory.
 
 ## Acceptance Criteria
 
-**AI Prompt Update:**
-- [ ] Add to VISION_PROMPT in `supabase/functions/analyze-image/index.ts`:
-  ```
-  For each item, also provide approximate bounding box as percentage of image:
-  "bbox": [x_percent, y_percent, width_percent, height_percent]
-  Example: "bbox": [10, 20, 30, 40] means item starts at 10% from left, 20% from top, spans 30% width and 40% height
-  ```
-- [ ] Parse bbox from response, validate format
-- [ ] Default to full image if bbox missing/invalid
+1. Create `fetchUserInventory()` function that queries items table with user_id filter
+2. Query includes: id, name, category (joined), location path (joined), quantity, created_at, tags
+3. Filter out deleted items (deleted_at IS NULL)
+4. Limit to 100 most recent items to prevent token explosion
+5. Create `buildInventorySummary()` that returns: total_items, items_by_category count, recent 10 items, unique locations
+6. Update `buildConversationContext()` to include inventory summary
+7. Include 20 sample items formatted as: '- Item Name (Category) in Location'
+8. Update system prompt to explain inventory data is available
+9. User asks 'what do I have' → AI responds with inventory summary
+10. User with empty inventory → AI says 'Your inventory is empty'
+11. User with 500+ items → Function completes under 3 seconds
+12. npm run build passes
+13. Deploy to Supabase and test manually
 
-**Frontend Cropping:**
-- [ ] Create `cropImageToBbox(imageUrl, bbox)` function in `src/lib/imageUtils.ts`
-- [ ] Use Canvas API to crop
-- [ ] Generate cropped thumbnail (200x200)
-- [ ] Upload cropped thumbnail to storage
+## Technical Details
 
-**Fallback Behavior:**
-- [ ] If bbox missing: use full image (current behavior)
-- [ ] If bbox invalid (out of bounds): use full image
-- [ ] If crop fails: use full image, log warning
-
-## Files to modify
-
+**File to Modify:**
 ```
-supabase/functions/analyze-image/index.ts
-  - Update VISION_PROMPT with bbox request
-  - Parse and validate bbox in response
-
-src/types/api.ts
-  - Add bbox field to DetectedItem interface
-
-src/lib/imageUtils.ts
-  - Add cropImageToBbox() function
-  - Add validateBbox() helper
-
-src/pages/AddItemPage.tsx
-  - Process bboxes after AI analysis
-  - Generate individual thumbnails for each detected item
+supabase/functions/shopping-followup/index.ts
 ```
 
-## Test Cases
+**New Types:**
+```typescript
+interface InventoryItem {
+  id: string;
+  name: string;
+  category_name: string | null;
+  location_path: string | null;
+  quantity: number;
+  created_at: string;
+  tags: string[];
+}
 
-- [ ] AI returns valid bbox → cropped thumbnail generated
-- [ ] AI returns invalid bbox → falls back to full image
-- [ ] AI returns no bbox → falls back to full image
-- [ ] Cropped thumbnail displays correctly in Gallery
+interface InventorySummary {
+  total_items: number;
+  items_by_category: Record<string, number>;
+  recent_items: Array<{name: string, category: string, added: string}>;
+  locations_used: string[];
+}
+```
+
+**New Functions to Add:**
+
+```typescript
+// Fetch user's inventory items (limit 100)
+async function fetchUserInventory(
+  userId: string,
+  supabaseUrl: string,
+  supabaseServiceKey: string
+): Promise<InventoryItem[]> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  
+  const { data, error } = await supabase
+    .from('items')
+    .select(`
+      id,
+      name,
+      quantity,
+      created_at,
+      tags,
+      categories(name),
+      locations(path)
+    `)
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(100);
+  
+  // Transform and return
+}
+
+// Build summary from items
+function buildInventorySummary(items: InventoryItem[]): InventorySummary {
+  // Count by category
+  // Get recent 10
+  // Get unique locations
+}
+```
+
+**System Prompt Addition:**
+```
+You have access to the user's home inventory:
+- Total items: {total}
+- By category: {Kitchen: 12, Clothing: 23, ...}
+- Recent additions: {list of last 10}
+- Storage locations: {list}
+
+Sample items from their inventory:
+{20 items formatted as "- Name (Category) in Location"}
+
+Use this data to give personalized advice about their belongings.
+When they ask about what they have, refer to this inventory data.
+```
+
+**Update Main Handler:**
+- Call `fetchUserInventory()` after auth validation
+- Call `buildInventorySummary()` 
+- Pass both to `buildConversationContext()`
+- Include in AI prompt
 
 ## Instructions
 
-1. Read this story carefully
-2. Implement all acceptance criteria
-3. Run `npm run build` to verify
-4. If build passes, commit with: `feat: [US-FIX-006] AI bounding box detection`
-5. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Read `supabase/functions/shopping-followup/index.ts`
+2. Add the new types and functions
+3. Update `buildConversationContext()` to accept and format inventory
+4. Update the system prompt in `generateFollowupResponse()`
+5. Update the main handler to fetch inventory and pass it through
+6. Run `npm run build` to verify no TypeScript errors
+7. Commit with: `feat: [US-SHOP-001] Add inventory context to shopping assistant`
+8. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>
