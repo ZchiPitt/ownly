@@ -16,215 +16,228 @@ The AI has no data to work with and gives generic responses.
 
 ---
 
-## US-SHOP-001: Basic Inventory Context
+## User Stories
 
-**Priority:** P0 | **Effort:** 2 hrs
+```json
+{
+  "stories": [
+    {
+      "id": "US-SHOP-001",
+      "title": "Basic Inventory Context for Shopping Assistant",
+      "description": "As a user chatting with the shopping assistant, I want it to know what items I own so it can give relevant advice based on my actual inventory.",
+      "acceptanceCriteria": [
+        "Create fetchUserInventory() function that queries items table with user_id filter",
+        "Query includes: id, name, category (joined), location path (joined), quantity, created_at, tags",
+        "Filter out deleted items (deleted_at IS NULL)",
+        "Limit to 100 most recent items to prevent token explosion",
+        "Create buildInventorySummary() that returns: total_items, items_by_category count, recent 10 items, unique locations",
+        "Update buildConversationContext() to include inventory summary",
+        "Include 20 sample items formatted as: '- Item Name (Category) in Location'",
+        "Update system prompt to explain inventory data is available",
+        "User asks 'what do I have' → AI responds with inventory summary",
+        "User with empty inventory → AI says 'Your inventory is empty'",
+        "User with 500+ items → Function completes under 3 seconds",
+        "npm run build passes",
+        "Deploy to Supabase and test manually"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "MVP - enables basic inventory-aware responses"
+    },
+    {
+      "id": "US-SHOP-002",
+      "title": "Smart Inventory Search by Intent",
+      "description": "As a user asking specific questions about my inventory, I want the AI to find relevant items using semantic search and intent detection so I get precise answers.",
+      "acceptanceCriteria": [
+        "Create detectIntent() function that classifies user message into: declutter, organize, find, compare, general",
+        "Intent detection uses keyword matching: declutter=['drop','donate','sell','get rid of','throw away'], find=['where is','do I have','find my'], organize=['organize','sort','arrange']",
+        "Create fetchRelevantItems() that queries differently based on intent",
+        "Declutter intent: return oldest 10 items (by created_at), items with quantity>1, items with no location",
+        "Find intent: extract search terms, use search_items_by_embedding RPC for semantic search",
+        "Organize intent: return items with no location, categories with most items",
+        "Compare intent: generate embedding for user description, search similar items",
+        "Add relevantItems array to conversation context",
+        "Format relevant items with reasoning: 'Items you might consider removing: [list with reasons]'",
+        "Update system prompt with intent-specific guidance",
+        "User asks 'what can I drop' → AI suggests oldest/duplicate items with reasons",
+        "User asks 'where is my passport' → AI searches and returns location if found",
+        "User asks 'do I have a blue shirt' → AI uses semantic search and responds",
+        "No matching items → AI says 'I couldn't find anything matching that'",
+        "npm run build passes",
+        "Deploy to Supabase and test manually"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Requires US-SHOP-001. Makes assistant actually smart."
+    }
+  ]
+}
+```
 
-**Description:** As a user chatting with the shopping assistant, I want it to know what items I own so it can give relevant advice.
+---
 
-### Technical Context
+## Technical Details
 
-- Current `shopping-followup` only uses `conversation_history`
-- Need to query `items` table for user's inventory
-- Must handle large inventories without token explosion
-- Supabase client already available in the function
+### US-SHOP-001: Basic Inventory Context
 
-### Acceptance Criteria
-
-**Database Query:**
-- [ ] Query user's items with fields: `id`, `name`, `category_id`, `location_id`, `quantity`, `created_at`, `tags`
-- [ ] Join with `categories` to get category name
-- [ ] Join with `locations` to get location path
-- [ ] Filter: `deleted_at IS NULL` and `user_id = auth.userId`
-- [ ] Limit to 100 most recent items (prevent token explosion)
-
-**Inventory Summary:**
-- [ ] Generate summary stats:
-  ```typescript
-  interface InventorySummary {
-    total_items: number;
-    items_by_category: Record<string, number>;  // e.g., {"Kitchen": 15, "Clothing": 23}
-    recent_items: Array<{name: string, category: string, added: string}>;  // last 10
-    locations_used: string[];  // unique location paths
-  }
-  ```
-
-**Context Integration:**
-- [ ] Add `inventorySummary` to context passed to AI
-- [ ] Update `buildConversationContext()` to include inventory data
-- [ ] Format inventory as readable text for AI
-
-**System Prompt Update:**
-- [ ] Add to system prompt:
-  ```
-  You have access to the user's home inventory summary:
-  - Total items they own
-  - Breakdown by category
-  - Their 10 most recently added items
-  - Storage locations they use
-  
-  Use this data to give personalized advice when they ask about their belongings.
-  ```
-
-**Sample Items List:**
-- [ ] Include first 20 items with: name, category, location
-- [ ] Format: "- Blue T-Shirt (Clothing) in Bedroom > Closet"
-
-### Files to Modify
-
+**Files to Modify:**
 ```
 supabase/functions/shopping-followup/index.ts
-  - Add fetchUserInventory() function
-  - Add buildInventorySummary() function
-  - Update buildConversationContext() to include inventory
-  - Update system prompt with inventory context
 ```
 
-### Test Cases
+**New Functions:**
+```typescript
+// Fetch user's inventory items
+async function fetchUserInventory(
+  userId: string,
+  supabaseUrl: string,
+  supabaseServiceKey: string
+): Promise<InventoryItem[]>
 
-- [ ] User asks "what do I have?" → AI lists summary
-- [ ] User asks "what can I drop?" → AI suggests based on inventory
-- [ ] User with 0 items → AI says inventory is empty
-- [ ] User with 500 items → Only fetches 100, no timeout
+// Build summary statistics
+function buildInventorySummary(items: InventoryItem[]): InventorySummary
+
+// Updated context builder
+function buildConversationContext(
+  history: ConversationMessage[],
+  inventory: InventorySummary,
+  sampleItems: InventoryItem[]
+): string
+```
+
+**Types:**
+```typescript
+interface InventoryItem {
+  id: string;
+  name: string;
+  category_name: string | null;
+  location_path: string | null;
+  quantity: number;
+  created_at: string;
+  tags: string[];
+}
+
+interface InventorySummary {
+  total_items: number;
+  items_by_category: Record<string, number>;
+  recent_items: Array<{name: string, category: string, added: string}>;
+  locations_used: string[];
+}
+```
+
+**System Prompt Addition:**
+```
+You have access to the user's home inventory:
+- Total items: {total}
+- Categories: {breakdown}
+- Recent additions: {list}
+- Storage locations: {locations}
+- Sample items: {list}
+
+Use this data to give personalized advice about their belongings.
+```
 
 ---
 
-## US-SHOP-002: Smart Inventory Search
+### US-SHOP-002: Smart Inventory Search
 
-**Priority:** P1 | **Effort:** 3 hrs
-
-**Description:** As a user asking specific questions about my inventory, I want the AI to find relevant items using semantic search.
-
-### Technical Context
-
-- `items` table has `embedding` column (pgvector)
-- `search_items_by_embedding` RPC already exists
-- Need to detect user intent and query accordingly
-- Different intents need different item selection strategies
-
-### Acceptance Criteria
-
-**Intent Detection:**
-- [ ] Detect user intent from message:
-  ```typescript
-  type UserIntent = 
-    | 'declutter'      // "what can I drop/donate/sell"
-    | 'organize'       // "what should I organize"
-    | 'find'           // "do I have X", "where is my X"
-    | 'compare'        // "do I have something similar"
-    | 'general'        // other questions
-  ```
-- [ ] Use keyword matching + AI classification
-- [ ] Keywords: declutter → ["drop", "donate", "sell", "get rid of", "throw away", "declutter"]
-
-**Intent-Specific Queries:**
-
-**Declutter Intent:**
-- [ ] Find potential items to drop:
-  - Oldest items (by `created_at`)
-  - Items with quantity > 1 (duplicates)
-  - Items with no location set (disorganized)
-  - Items in "Other" category (uncategorized)
-- [ ] Return up to 10 candidates with reasoning
-
-**Organize Intent:**
-- [ ] Find items needing organization:
-  - Items with no location
-  - Categories with most items
-  - Recently added items not yet organized
-- [ ] Suggest organization priorities
-
-**Find Intent:**
-- [ ] Extract search query from user message
-- [ ] Use `search_items_by_embedding` for semantic search
-- [ ] Return matching items with location info
-
-**Compare Intent:**
-- [ ] Extract item description from message
-- [ ] Generate embedding for description
-- [ ] Search for similar items in inventory
-- [ ] Return matches with similarity scores
-
-**Context Enhancement:**
-- [ ] Add `relevantItems` array to context
-- [ ] Format based on intent:
-  - Declutter: "Items you might consider removing: ..."
-  - Find: "Found these items matching your query: ..."
-  - Organize: "Items that need organization: ..."
-
-**System Prompt Update:**
-- [ ] Add intent-aware instructions:
-  ```
-  When the user asks about decluttering:
-  - Suggest items they've had the longest
-  - Point out duplicates (same category, similar names)
-  - Mention uncategorized items
-  
-  When the user is looking for something:
-  - Search their inventory semantically
-  - Include location information
-  - Suggest similar alternatives if exact match not found
-  ```
-
-### Files to Modify
-
+**Files to Modify:**
 ```
 supabase/functions/shopping-followup/index.ts
-  - Add detectIntent() function
-  - Add fetchRelevantItems() function with intent-based logic
-  - Add declutter/organize/find/compare query strategies
-  - Update context builder with relevant items
-  - Update system prompt with intent-specific guidance
 ```
 
-### Test Cases
+**New Functions:**
+```typescript
+// Detect user intent from message
+function detectIntent(message: string): UserIntent
 
-- [ ] "what can I drop" → Intent: declutter, returns oldest/duplicate items
-- [ ] "do I have a blue shirt" → Intent: find, searches semantically
-- [ ] "where's my passport" → Intent: find, returns location if found
-- [ ] "I bought too much, help me organize" → Intent: organize, suggests priorities
-- [ ] "is this similar to what I have" (after photo) → Intent: compare, uses embedding
+// Fetch items relevant to the intent
+async function fetchRelevantItems(
+  intent: UserIntent,
+  message: string,
+  userId: string,
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  openaiApiKey: string
+): Promise<RelevantItem[]>
+```
 
----
+**Types:**
+```typescript
+type UserIntent = 'declutter' | 'organize' | 'find' | 'compare' | 'general';
 
-## Implementation Order
+interface RelevantItem {
+  id: string;
+  name: string;
+  category_name: string | null;
+  location_path: string | null;
+  reason: string;  // Why this item is relevant
+  similarity?: number;  // For search results
+}
+```
 
-1. **US-SHOP-001** first - basic context
-2. Deploy and test
-3. **US-SHOP-002** - smart search
-4. Deploy and test
-
----
-
-## Database Considerations
-
-**Existing RPC functions available:**
-- `search_items_by_embedding(query_embedding, match_threshold, match_count, search_user_id)`
-- `search_similar_items` (similar)
-
-**May need new RPC:**
-- `get_declutter_candidates(user_id, limit)` - oldest + duplicates + uncategorized
+**Intent Keywords:**
+```typescript
+const INTENT_KEYWORDS = {
+  declutter: ['drop', 'donate', 'sell', 'get rid of', 'throw away', 'declutter', 'remove', 'toss'],
+  find: ['where is', 'where are', 'do I have', 'find my', 'looking for', 'search for'],
+  organize: ['organize', 'sort', 'arrange', 'tidy', 'clean up', 'put away'],
+  compare: ['similar', 'like this', 'compared to', 'already have something']
+};
+```
 
 ---
 
 ## Token Budget
 
-Estimate for 100-item inventory:
-- Summary stats: ~100 tokens
-- 20 sample items: ~400 tokens
-- System prompt addition: ~200 tokens
-- **Total addition: ~700 tokens** ✅ (within budget)
+| Component | Tokens |
+|-----------|--------|
+| Inventory summary | ~100 |
+| 20 sample items | ~400 |
+| System prompt addition | ~200 |
+| **US-SHOP-001 Total** | **~700** |
+| Relevant items (10) | ~200 |
+| Intent context | ~100 |
+| **US-SHOP-002 Total** | **~300** |
+| **Grand Total** | **~1000** ✅ |
 
-For smart search (US-SHOP-002):
-- Relevant items (10): ~200 tokens
-- Intent context: ~100 tokens
-- **Total addition: ~300 tokens** ✅
+---
+
+## Test Scenarios
+
+### US-SHOP-001
+
+| Input | Expected Output |
+|-------|-----------------|
+| "What do I have?" | Summary: "You have 47 items across 8 categories..." |
+| "How many kitchen items?" | "You have 12 items in Kitchen category" |
+| (empty inventory) | "Your inventory is empty. Start by adding some items!" |
+
+### US-SHOP-002
+
+| Input | Expected Output |
+|-------|-----------------|
+| "What can I drop?" | "Based on your inventory, here are items to consider: [oldest items], [duplicates]" |
+| "Where is my passport?" | "I found 'Passport' in Documents > Filing Cabinet" |
+| "Do I have a blue shirt?" | Semantic search → "Yes, you have 'Navy Blue T-Shirt' in Bedroom > Closet" |
+| "Help me organize" | "You have 8 items without a location. Start with these..." |
+
+---
+
+## Implementation Order
+
+1. ✅ Create this spec document
+2. ⬜ US-SHOP-001: Basic inventory context
+3. ⬜ Deploy and manual test
+4. ⬜ US-SHOP-002: Smart search
+5. ⬜ Deploy and manual test
 
 ---
 
 ## Edge Cases
 
-- Empty inventory → Special message: "Your inventory is empty. Add some items first!"
-- Very large inventory (1000+) → Summary only, no item list
-- No matching items for search → "I couldn't find anything matching that description"
-- Ambiguous intent → Default to general, ask clarifying question
+- **Empty inventory** → Special message, no search
+- **Very large inventory (1000+)** → Summary only, limit queries
+- **No matching items** → Friendly "not found" message
+- **Ambiguous intent** → Default to general, include summary
+- **Multiple intents** → Pick primary based on keyword order
