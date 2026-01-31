@@ -1,78 +1,68 @@
-# US-FIX-008: Color Tag UI Highlight
+# US-FIX-006: AI Bounding Box Detection
 
-**Description:** As a user viewing tags, I want color tags to be visually distinct so I can quickly identify item colors.
+**Description:** As a system, I want AI to return bounding box coordinates for each detected item so I can crop individual thumbnails.
 
 **Technical Context:**
-- Tags currently display as gray chips
-- Color tags should stand out visually
-- Can show actual color swatch/dot
+- Gemini Vision can return object locations
+- Bounding box format: `[x, y, width, height]` as percentages
+- Frontend can crop using Canvas API
+- More complex implementation, may have accuracy issues
 
 ## Acceptance Criteria
 
-**Color Detection Utility:**
-- [ ] Create `src/lib/colorUtils.ts`:
-  ```typescript
-  // Returns hex color if tag is a color word, null otherwise
-  function getColorHex(tag: string): string | null;
-  
-  // Check if tag contains color word
-  function isColorTag(tag: string): boolean;
-  
-  // Color mapping
-  const COLOR_MAP: Record<string, string> = {
-    'red': '#EF4444',
-    'blue': '#3B82F6',
-    'green': '#22C55E',
-    // ... etc
-  };
+**AI Prompt Update:**
+- [ ] Add to VISION_PROMPT in `supabase/functions/analyze-image/index.ts`:
   ```
+  For each item, also provide approximate bounding box as percentage of image:
+  "bbox": [x_percent, y_percent, width_percent, height_percent]
+  Example: "bbox": [10, 20, 30, 40] means item starts at 10% from left, 20% from top, spans 30% width and 40% height
+  ```
+- [ ] Parse bbox from response, validate format
+- [ ] Default to full image if bbox missing/invalid
 
-**Tag Display:**
-- [ ] Color tags show colored dot before text
-- [ ] Dot is 8x8px circle with the actual color
-- [ ] Color tags have subtle tinted background matching color
-- [ ] Color tags appear first in tag list (already from AI)
+**Frontend Cropping:**
+- [ ] Create `cropImageToBbox(imageUrl, bbox)` function in `src/lib/imageUtils.ts`
+- [ ] Use Canvas API to crop
+- [ ] Generate cropped thumbnail (200x200)
+- [ ] Upload cropped thumbnail to storage
 
-**Component Updates:**
-- [ ] TagChip component: accept `isColor` prop, render dot
-- [ ] Apply in: ItemEditor, ItemDetailPage, GalleryGrid, SearchResult
-
-**Accessibility:**
-- [ ] Color dot has `aria-label="Color: blue"`
-- [ ] Don't rely on color alone (text still shows color name)
+**Fallback Behavior:**
+- [ ] If bbox missing: use full image (current behavior)
+- [ ] If bbox invalid (out of bounds): use full image
+- [ ] If crop fails: use full image, log warning
 
 ## Files to modify
 
 ```
-src/lib/colorUtils.ts (new)
-  - COLOR_MAP constant
-  - getColorHex() function
-  - isColorTag() function
+supabase/functions/analyze-image/index.ts
+  - Update VISION_PROMPT with bbox request
+  - Parse and validate bbox in response
 
-src/components/TagsInput.tsx
-  - Import colorUtils
-  - Render color dot for color tags
+src/types/api.ts
+  - Add bbox field to DetectedItem interface
 
-src/components/GalleryGrid.tsx
-  - Show color tag with dot in item card
+src/lib/imageUtils.ts
+  - Add cropImageToBbox() function
+  - Add validateBbox() helper
 
-src/pages/ItemDetailPage.tsx
-  - Render color-enhanced tags
+src/pages/AddItemPage.tsx
+  - Process bboxes after AI analysis
+  - Generate individual thumbnails for each detected item
 ```
 
 ## Test Cases
 
-- [ ] Tag "blue" shows blue dot
-- [ ] Tag "cotton" shows no dot (not a color)
-- [ ] Tag "navy blue" shows navy blue dot
-- [ ] Multiple color tags all show appropriate dots
+- [ ] AI returns valid bbox → cropped thumbnail generated
+- [ ] AI returns invalid bbox → falls back to full image
+- [ ] AI returns no bbox → falls back to full image
+- [ ] Cropped thumbnail displays correctly in Gallery
 
 ## Instructions
 
 1. Read this story carefully
 2. Implement all acceptance criteria
 3. Run `npm run build` to verify
-4. If build passes, commit with: `feat: [US-FIX-008] Color tag UI highlight`
+4. If build passes, commit with: `feat: [US-FIX-006] AI bounding box detection`
 5. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:

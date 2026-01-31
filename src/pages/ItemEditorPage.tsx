@@ -197,9 +197,9 @@ export function ItemEditorPage() {
             state: {
               detectedItem: nextItem,
               imageUrl: state.imageUrl,
-              thumbnailUrl: state.thumbnailUrl,
+              thumbnailUrl: nextItem.thumbnail_url || state.thumbnailUrl,
               imagePath: state.imagePath,
-              thumbnailPath: state.thumbnailPath,
+              thumbnailPath: nextItem.thumbnail_path || state.thumbnailPath,
               itemQueue: remainingQueue,
               totalItems: state.totalItems,
               currentItemIndex: state.currentItemIndex + 1,

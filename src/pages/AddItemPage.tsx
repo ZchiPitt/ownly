@@ -22,7 +22,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Toast } from '@/components/Toast';
 import { MultiItemSelection } from '@/components/MultiItemSelection';
 import type { ImageInfo } from '@/components/MultiItemSelection';
-import { validateImage, processAndUploadImage, deleteFromStorage } from '@/lib/imageUtils';
+import {
+  validateImage,
+  processAndUploadImage,
+  deleteFromStorage,
+  cropImageToBbox,
+  validateBbox,
+  uploadToStorage,
+} from '@/lib/imageUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import type { DetectedItem, AnalyzeImageResponse } from '@/types/api';
@@ -46,6 +53,8 @@ interface AnalysisResult {
   imagePath: string;
   thumbnailPath: string;
 }
+
+const DEFAULT_BBOX: [number, number, number, number] = [0, 0, 100, 100];
 
 interface HeicErrorModalProps {
   isOpen: boolean;
@@ -455,9 +464,16 @@ export function AddItemPage() {
     // If we uploaded images, clean them up
     if (analysisResult) {
       try {
+        const extraThumbnailPaths = analysisResult.items
+          .map((item) => item.thumbnail_path)
+          .filter((path): path is string => Boolean(path))
+          .filter((path) => path !== analysisResult.thumbnailPath);
+        const uniqueExtraPaths = Array.from(new Set(extraThumbnailPaths));
+
         await Promise.all([
           deleteFromStorage(analysisResult.imagePath),
           deleteFromStorage(analysisResult.thumbnailPath),
+          ...uniqueExtraPaths.map((path) => deleteFromStorage(path)),
         ]);
       } catch (error) {
         console.error('Failed to delete uploaded images:', error);
@@ -507,6 +523,65 @@ export function AddItemPage() {
 
     return data;
   };
+
+  const buildDetectedItemsWithThumbnails = useCallback(
+    async (
+      items: DetectedItem[],
+      imageUrl: string,
+      fallbackThumbnailUrl: string,
+      fallbackThumbnailPath: string,
+      signal: AbortSignal
+    ): Promise<DetectedItem[]> => {
+      if (!user) return items;
+
+      const results: DetectedItem[] = [];
+
+      for (const item of items) {
+        if (signal.aborted) {
+          throw new Error('Analysis cancelled');
+        }
+
+        const bbox = validateBbox(item.bbox) ? item.bbox : DEFAULT_BBOX;
+        const shouldCrop =
+          validateBbox(item.bbox) &&
+          !(bbox[0] === 0 && bbox[1] === 0 && bbox[2] === 100 && bbox[3] === 100);
+
+        if (!shouldCrop) {
+          results.push({
+            ...item,
+            bbox,
+            thumbnail_url: fallbackThumbnailUrl,
+            thumbnail_path: fallbackThumbnailPath,
+          });
+          continue;
+        }
+
+        try {
+          const cropped = await cropImageToBbox(imageUrl, bbox);
+          const filename = `${crypto.randomUUID()}_thumb.jpg`;
+          const uploaded = await uploadToStorage(cropped, user.id, filename);
+
+          results.push({
+            ...item,
+            bbox,
+            thumbnail_url: uploaded.url,
+            thumbnail_path: uploaded.path,
+          });
+        } catch (error) {
+          console.warn('[AddItemPage] Failed to crop thumbnail, using full image.', error);
+          results.push({
+            ...item,
+            bbox,
+            thumbnail_url: fallbackThumbnailUrl,
+            thumbnail_path: fallbackThumbnailPath,
+          });
+        }
+      }
+
+      return results;
+    },
+    [user]
+  );
 
   /**
    * Handle Continue button click - starts AI analysis
@@ -569,9 +644,21 @@ export function AddItemPage() {
 
       if (signal.aborted) return;
 
+      const detectedItems = analysisResponse.detected_items.length > 0
+        ? await buildDetectedItemsWithThumbnails(
+          analysisResponse.detected_items,
+          uploadResult.imageUrl,
+          uploadResult.thumbnailUrl,
+          uploadResult.thumbnailPath,
+          signal
+        )
+        : [];
+
+      if (signal.aborted) return;
+
       // Update result with detected items
       const result: AnalysisResult = {
-        items: analysisResponse.detected_items,
+        items: detectedItems,
         imageUrl: uploadResult.imageUrl,
         thumbnailUrl: uploadResult.thumbnailUrl,
         imagePath: uploadResult.imagePath,
@@ -580,13 +667,13 @@ export function AddItemPage() {
       setAnalysisResult(result);
 
       // Handle results based on number of items detected
-      if (analysisResponse.detected_items.length === 0) {
+      if (detectedItems.length === 0) {
         // No items detected - show error state
         setAnalysisError("Couldn't identify any items in this photo.");
         setViewState('error');
-      } else if (analysisResponse.detected_items.length === 1) {
+      } else if (detectedItems.length === 1) {
         // Single item - show quick add choice screen
-        setSingleDetectedItem(analysisResponse.detected_items[0]);
+        setSingleDetectedItem(detectedItems[0]);
         setShowSingleItemChoice(true);
         setViewState('preview');
       } else {
@@ -977,16 +1064,19 @@ export function AddItemPage() {
       if (selectedItems.length === 0) return;
 
       const sourceBatchId = selectedItems.length > 1 ? crypto.randomUUID() : null;
+      const firstItem = selectedItems[0];
+      const thumbnailUrl = firstItem.thumbnail_url || imageInfo.thumbnailUrl;
+      const thumbnailPath = firstItem.thumbnail_path || imageInfo.thumbnailPath;
 
       // Navigate to Item Editor with the first selected item
       // Pass remaining items as queue for sequential editing
       navigate('/add/edit', {
         state: {
-          detectedItem: selectedItems[0],
+          detectedItem: firstItem,
           imageUrl: imageInfo.imageUrl,
-          thumbnailUrl: imageInfo.thumbnailUrl,
+          thumbnailUrl,
           imagePath: imageInfo.imagePath,
-          thumbnailPath: imageInfo.thumbnailPath,
+          thumbnailPath,
           // Queue remaining items for sequential editing (US-035)
           itemQueue: selectedItems.slice(1),
           totalItems: selectedItems.length,
@@ -1034,7 +1124,7 @@ export function AddItemPage() {
           .insert({
             user_id: user.id,
             photo_url: analysisResult.imageUrl,
-            thumbnail_url: analysisResult.thumbnailUrl,
+            thumbnail_url: item.thumbnail_url || analysisResult.thumbnailUrl,
             source_batch_id: sourceBatchId,
             name: item.name || 'Unnamed Item',
             category_id: categoryId,
@@ -1123,14 +1213,14 @@ export function AddItemPage() {
       }
 
       // Create the item
-      const { error } = await (supabase
-        .from('items') as ReturnType<typeof supabase.from>)
-        .insert({
-          user_id: user.id,
-          photo_url: analysisResult.imageUrl,
-          thumbnail_url: analysisResult.thumbnailUrl,
-          name: singleDetectedItem.name || 'Unnamed Item',
-          category_id: categoryId,
+        const { error } = await (supabase
+          .from('items') as ReturnType<typeof supabase.from>)
+          .insert({
+            user_id: user.id,
+            photo_url: analysisResult.imageUrl,
+            thumbnail_url: singleDetectedItem.thumbnail_url || analysisResult.thumbnailUrl,
+            name: singleDetectedItem.name || 'Unnamed Item',
+            category_id: categoryId,
           tags: singleDetectedItem.tags || [],
           brand: singleDetectedItem.brand,
           quantity: 1,
@@ -1181,9 +1271,9 @@ export function AddItemPage() {
       state: {
         detectedItem: singleDetectedItem,
         imageUrl: analysisResult.imageUrl,
-        thumbnailUrl: analysisResult.thumbnailUrl,
+        thumbnailUrl: singleDetectedItem.thumbnail_url || analysisResult.thumbnailUrl,
         imagePath: analysisResult.imagePath,
-        thumbnailPath: analysisResult.thumbnailPath,
+        thumbnailPath: singleDetectedItem.thumbnail_path || analysisResult.thumbnailPath,
         itemQueue: [],
         totalItems: 1,
         currentItemIndex: 1,
@@ -1213,7 +1303,7 @@ export function AddItemPage() {
           {/* Image Preview */}
           <div className="aspect-square w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-gray-100 mb-6">
             <img
-              src={analysisResult.thumbnailUrl || analysisResult.imageUrl}
+              src={singleDetectedItem.thumbnail_url || analysisResult.thumbnailUrl || analysisResult.imageUrl}
               alt="Detected item"
               className="w-full h-full object-cover"
             />

@@ -281,6 +281,9 @@ export interface DetectedItem {
   tags: string[];
   brand: string | null;
   confidence: number;
+  bbox?: [number, number, number, number];
+  thumbnail_url?: string | null;
+  thumbnail_path?: string | null;
 }
 
 export interface AnalyzeImageRequest {

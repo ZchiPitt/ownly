@@ -14,6 +14,8 @@ const MAX_FILE_SIZE = 2 * 1024 * 1024;
 // Thumbnail dimensions
 const THUMBNAIL_SIZE = 200;
 
+export type Bbox = [number, number, number, number];
+
 /**
  * Validation result interface
  */
@@ -89,6 +91,32 @@ export async function validateImage(file: File): Promise<ImageValidationResult> 
       format,
     };
   }
+}
+
+export function validateBbox(bbox: unknown): bbox is Bbox {
+  if (!Array.isArray(bbox) || bbox.length !== 4) {
+    return false;
+  }
+
+  const [x, y, width, height] = bbox;
+  if (
+    !Number.isFinite(x) ||
+    !Number.isFinite(y) ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(height)
+  ) {
+    return false;
+  }
+
+  if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+    return false;
+  }
+
+  if (x + width > 100 || y + height > 100) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -313,6 +341,23 @@ function loadImage(blob: Blob): Promise<HTMLImageElement> {
   });
 }
 
+function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+
+    img.onload = () => {
+      resolve(img);
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = url;
+  });
+}
+
 /**
  * Resizes an image using canvas.
  * @param img - The HTMLImageElement to resize
@@ -354,6 +399,62 @@ function resizeImage(
       },
       'image/jpeg',
       quality
+    );
+  });
+}
+
+/**
+ * Crops an image to the provided bounding box and returns a 200x200 thumbnail.
+ * @param imageUrl - The source image URL
+ * @param bbox - Bounding box percentages [x, y, width, height]
+ * @returns Promise with the cropped thumbnail Blob
+ */
+export async function cropImageToBbox(imageUrl: string, bbox: Bbox): Promise<Blob> {
+  if (!validateBbox(bbox)) {
+    throw new Error('Invalid bounding box');
+  }
+
+  const img = await loadImageFromUrl(imageUrl);
+  const [xPercent, yPercent, widthPercent, heightPercent] = bbox;
+
+  const srcX = Math.round((xPercent / 100) * img.naturalWidth);
+  const srcY = Math.round((yPercent / 100) * img.naturalHeight);
+  const rawWidth = Math.round((widthPercent / 100) * img.naturalWidth);
+  const rawHeight = Math.round((heightPercent / 100) * img.naturalHeight);
+
+  const srcWidth = Math.max(1, Math.min(rawWidth, img.naturalWidth - srcX));
+  const srcHeight = Math.max(1, Math.min(rawHeight, img.naturalHeight - srcY));
+
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = THUMBNAIL_SIZE;
+    canvas.height = THUMBNAIL_SIZE;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      reject(new Error('Failed to get canvas context'));
+      return;
+    }
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
+    ctx.drawImage(
+      img,
+      srcX, srcY, srcWidth, srcHeight,
+      0, 0, THUMBNAIL_SIZE, THUMBNAIL_SIZE
+    );
+
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create cropped thumbnail'));
+        }
+      },
+      'image/jpeg',
+      0.85
     );
   });
 }

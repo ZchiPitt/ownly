@@ -25,6 +25,7 @@ interface DetectedItem {
   tags: string[];
   brand: string | null;
   confidence: number;
+  bbox: [number, number, number, number];
 }
 
 interface AnalyzeImageRequest {
@@ -75,6 +76,9 @@ Analyze this image and identify all distinct items you can see. For each item, p
    Example: "tags": ["navy blue", "cotton", "casual", "medium"]
 4. Brand name if visible on the item
 5. Confidence score from 0.0 to 1.0 (how certain you are about the identification)
+6. For each item, also provide approximate bounding box as percentage of image:
+   "bbox": [x_percent, y_percent, width_percent, height_percent]
+   Example: "bbox": [10, 20, 30, 40] means item starts at 10% from left, 20% from top, spans 30% width and 40% height
 
 Return your analysis as a JSON object with this exact structure:
 {
@@ -84,7 +88,8 @@ Return your analysis as a JSON object with this exact structure:
       "category_suggestion": "category from list or null",
       "tags": ["tag1", "tag2", "tag3"],
       "brand": "brand name or null",
-      "confidence": 0.95
+      "confidence": 0.95,
+      "bbox": [10, 20, 30, 40]
     }
   ]
 }
@@ -106,11 +111,35 @@ const COLOR_WORDS = [
   'multicolor', 'neutral', 'clear', 'transparent',
 ];
 
+const DEFAULT_BBOX: [number, number, number, number] = [0, 0, 100, 100];
+
 // Check if first tag contains a color
 function hasColorTag(tags: string[]): boolean {
   if (!tags || tags.length === 0) return false;
   const firstTag = tags[0].toLowerCase();
   return COLOR_WORDS.some((color) => firstTag.includes(color));
+}
+
+function sanitizeBbox(value: unknown): [number, number, number, number] {
+  if (!Array.isArray(value) || value.length !== 4) {
+    return DEFAULT_BBOX;
+  }
+
+  const numbers = value.map((entry) => Number(entry));
+  if (numbers.some((entry) => !Number.isFinite(entry))) {
+    return DEFAULT_BBOX;
+  }
+
+  const [x, y, width, height] = numbers;
+  if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+    return DEFAULT_BBOX;
+  }
+
+  if (x + width > 100 || y + height > 100) {
+    return DEFAULT_BBOX;
+  }
+
+  return [x, y, width, height];
 }
 
 /**
@@ -259,6 +288,7 @@ async function analyzeWithGemini(
           typeof item.confidence === 'number'
             ? Math.min(Math.max(item.confidence, 0), 1) // Clamp to 0-1
             : 0.5,
+        bbox: sanitizeBbox(item.bbox),
       };
     }) as DetectedItem[];
   } catch {

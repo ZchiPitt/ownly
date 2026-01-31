@@ -10,3 +10,15 @@
 - Updated inventory item query/types to include tags for gallery tag previews.
 - Files changed: src/lib/colorUtils.ts, src/components/TagChip.tsx, src/components/TagsInput.tsx, src/components/GalleryGrid.tsx, src/components/SearchResult.tsx, src/pages/ItemDetailPage.tsx, src/hooks/useInventoryItems.ts
 ---
+## 2026-01-31 10:15 PST - US-FIX-006
+- Added AI bbox parsing on analyze-image edge function and defaulted invalid/missing bboxes to full image.
+- Implemented bbox validation + crop-to-bbox thumbnail generation (200x200) with fallback to full image and storage uploads.
+- Wired per-item thumbnails through add flow (multi-item, quick add, editor queue) with cleanup on cancel.
+- Files changed: supabase/functions/analyze-image/index.ts, src/types/api.ts, src/lib/imageUtils.ts, src/pages/AddItemPage.tsx, src/pages/ItemEditorPage.tsx
+---
+## 2026-01-30 23:50 PST - US-FIX-006
+- Verified production build (`npm run build`).
+---
+## 2026-01-30 23:54 PST - US-FIX-006
+- Verified production build (`npm run build`).
+---
