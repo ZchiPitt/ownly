@@ -176,14 +176,15 @@ supabase functions deploy generate-reminders
 supabase functions deploy cleanup-deleted-items
 
 # Deploy user-facing functions with --no-verify-jwt
-# These functions implement their own JWT validation via validateAuth()
+# These functions implement their own JWT validation
 # The flag bypasses Supabase gateway JWT verification which may reject valid tokens
 supabase functions deploy analyze-image --no-verify-jwt
 supabase functions deploy shopping-analyze --no-verify-jwt
 supabase functions deploy shopping-followup --no-verify-jwt
+supabase functions deploy convert-image --no-verify-jwt
 ```
 
-> **Note:** The `--no-verify-jwt` flag is required for `analyze-image`, `shopping-analyze`, and `shopping-followup` because Supabase's gateway JWT verification may reject valid tokens with "Invalid JWT" errors. These functions implement their own authentication via `validateAuth()` which properly validates user tokens.
+> **Note:** The `--no-verify-jwt` flag is required for `analyze-image`, `shopping-analyze`, `shopping-followup`, and `convert-image` because Supabase's gateway JWT verification may reject valid tokens with "Invalid JWT" errors. These functions implement their own authentication which properly validates user tokens.
 
 #### Edge Function Reference
 

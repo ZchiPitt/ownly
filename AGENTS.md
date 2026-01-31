@@ -51,6 +51,7 @@
     supabase functions deploy analyze-image --no-verify-jwt
     supabase functions deploy shopping-analyze --no-verify-jwt
     supabase functions deploy shopping-followup --no-verify-jwt
+    supabase functions deploy convert-image --no-verify-jwt
     ```
 - Function secrets: `supabase secrets set KEY=VALUE` (scoped to the linked project).
 

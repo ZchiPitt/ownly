@@ -256,12 +256,13 @@ Edge functions are located in `supabase/functions/` and must be deployed to Supa
 supabase functions deploy --all
 ```
 
-**Important - JWT Verification:** Functions that handle user authentication (`analyze-image`, `shopping-analyze`, `shopping-followup`) must be deployed with `--no-verify-jwt` to bypass Supabase gateway JWT verification. These functions implement their own auth validation via `validateAuth()`:
+**Important - JWT Verification:** Functions that handle user authentication (`analyze-image`, `shopping-analyze`, `shopping-followup`, `convert-image`) must be deployed with `--no-verify-jwt` to bypass Supabase gateway JWT verification. These functions implement their own auth validation:
 
 ```bash
 supabase functions deploy analyze-image --no-verify-jwt
 supabase functions deploy shopping-analyze --no-verify-jwt
 supabase functions deploy shopping-followup --no-verify-jwt
+supabase functions deploy convert-image --no-verify-jwt
 ```
 
 Without this flag, Supabase's gateway may reject valid JWT tokens with "Invalid JWT" errors before they reach the function code.
