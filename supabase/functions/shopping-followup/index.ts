@@ -53,6 +53,17 @@ interface InventoryItem {
   tags: string[];
 }
 
+type UserIntent = 'declutter' | 'organize' | 'find' | 'compare' | 'general';
+
+interface RelevantItem {
+  id: string;
+  name: string;
+  category_name: string | null;
+  location_path: string | null;
+  reason: string;
+  similarity?: number;
+}
+
 interface InventorySummary {
   total_items: number;
   items_by_category: Record<string, number>;
@@ -71,13 +82,296 @@ interface ApiError {
 // Rate limits
 const DAILY_TEXT_LIMIT = 50;
 
+const INTENT_KEYWORDS: Record<UserIntent, string[]> = {
+  declutter: ['drop', 'donate', 'sell', 'get rid of', 'throw away', 'declutter', 'remove', 'toss', 'discard'],
+  find: ['where is', 'where are', 'do i have', 'find my', 'looking for', 'search for', 'got any', 'have any'],
+  organize: ['organize', 'sort', 'arrange', 'tidy', 'clean up', 'put away', 'need space'],
+  compare: ['similar', 'like this', 'compared to', 'already have something like'],
+  general: [],
+};
+
+function detectIntent(message: string): UserIntent {
+  const lowerMessage = message.toLowerCase();
+
+  for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS)) {
+    if (keywords.some(keyword => lowerMessage.includes(keyword))) {
+      return intent as UserIntent;
+    }
+  }
+
+  return 'general';
+}
+
+function normalizeSearchQuery(message: string): string {
+  const pattern = INTENT_KEYWORDS.find.join('|');
+  return message
+    .toLowerCase()
+    .replace(new RegExp(pattern, 'g'), '')
+    .replace(/[?!.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function addRelevantCandidate(
+  candidates: Map<string, RelevantItem>,
+  item: InventoryItem,
+  reason: string,
+  similarity?: number
+): void {
+  const existing = candidates.get(item.id);
+  if (existing) {
+    if (!existing.reason.includes(reason)) {
+      existing.reason = `${existing.reason}; ${reason}`;
+    }
+    if (similarity !== undefined) {
+      existing.similarity = similarity;
+    }
+    return;
+  }
+
+  candidates.set(item.id, {
+    id: item.id,
+    name: item.name,
+    category_name: item.category_name,
+    location_path: item.location_path,
+    reason,
+    similarity,
+  });
+}
+
+function fetchDeclutterCandidates(items: InventoryItem[]): RelevantItem[] {
+  const candidates = new Map<string, RelevantItem>();
+
+  const oldestItems = [...items].sort((a, b) =>
+    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  oldestItems.slice(0, 10).forEach(item => {
+    addRelevantCandidate(candidates, item, 'Oldest item in your inventory');
+  });
+
+  items.filter(item => (item.quantity ?? 0) > 1).slice(0, 10).forEach(item => {
+    addRelevantCandidate(candidates, item, 'Multiple quantities of this item');
+  });
+
+  items.filter(item => !item.location_path || item.location_path.trim().length === 0)
+    .slice(0, 10)
+    .forEach(item => {
+      addRelevantCandidate(candidates, item, 'No storage location set');
+    });
+
+  return Array.from(candidates.values());
+}
+
+function fetchOrganizeCandidates(items: InventoryItem[]): RelevantItem[] {
+  const candidates = new Map<string, RelevantItem>();
+
+  items.filter(item => !item.location_path || item.location_path.trim().length === 0)
+    .slice(0, 10)
+    .forEach(item => {
+      addRelevantCandidate(candidates, item, 'No storage location set');
+    });
+
+  const counts: Record<string, number> = {};
+  for (const item of items) {
+    const category = normalizeCategoryName(item.category_name);
+    counts[category] = (counts[category] || 0) + 1;
+  }
+
+  const topCategories = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2);
+
+  for (const [category, count] of topCategories) {
+    items.filter(item => normalizeCategoryName(item.category_name) === category)
+      .slice(0, 3)
+      .forEach(item => {
+        addRelevantCandidate(candidates, item, `Category "${category}" has many items (${count})`);
+      });
+  }
+
+  return Array.from(candidates.values());
+}
+
+async function generateQueryEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-3-small',
+      input: text,
+      dimensions: 1536,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      `OpenAI embeddings error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
+    );
+  }
+
+  const data = await response.json();
+  return data.data[0].embedding as number[];
+}
+
+async function fetchSearchResults(
+  message: string,
+  userId: string,
+  inventoryItems: InventoryItem[],
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  openaiApiKey: string
+): Promise<RelevantItem[]> {
+  const searchQuery = normalizeSearchQuery(message);
+  if (!searchQuery) {
+    return [];
+  }
+
+  const embedding = await generateQueryEmbedding(searchQuery, openaiApiKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const embeddingStr = `[${embedding.join(',')}]`;
+
+  const { data, error } = await supabase.rpc('search_items_by_embedding', {
+    query_embedding: embeddingStr,
+    match_threshold: 0.5,
+    match_count: 5,
+    search_user_id: userId,
+  });
+
+  if (error || !data) {
+    console.error('Error searching by embedding:', error);
+    return [];
+  }
+
+  return (data as Array<{ id: string; name?: string | null; similarity: number }>).map(item => {
+    const inventoryItem = inventoryItems.find(entry => entry.id === item.id);
+    return {
+      id: item.id,
+      name: item.name?.trim() || inventoryItem?.name || 'Unnamed item',
+      category_name: inventoryItem?.category_name ?? null,
+      location_path: inventoryItem?.location_path ?? null,
+      reason: `${Math.round(item.similarity * 100)}% match`,
+      similarity: item.similarity,
+    };
+  });
+}
+
+async function fetchSimilarItems(
+  message: string,
+  userId: string,
+  inventoryItems: InventoryItem[],
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  openaiApiKey: string
+): Promise<RelevantItem[]> {
+  const query = message.trim();
+  if (!query) {
+    return [];
+  }
+
+  const embedding = await generateQueryEmbedding(query, openaiApiKey);
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+  const embeddingStr = `[${embedding.join(',')}]`;
+
+  const { data, error } = await supabase.rpc('search_items_by_embedding', {
+    query_embedding: embeddingStr,
+    match_threshold: 0.5,
+    match_count: 5,
+    search_user_id: userId,
+  });
+
+  if (error || !data) {
+    console.error('Error fetching similar items:', error);
+    return [];
+  }
+
+  return (data as Array<{ id: string; name?: string | null; similarity: number }>).map(item => {
+    const inventoryItem = inventoryItems.find(entry => entry.id === item.id);
+    return {
+      id: item.id,
+      name: item.name?.trim() || inventoryItem?.name || 'Unnamed item',
+      category_name: inventoryItem?.category_name ?? null,
+      location_path: inventoryItem?.location_path ?? null,
+      reason: `${Math.round(item.similarity * 100)}% match`,
+      similarity: item.similarity,
+    };
+  });
+}
+
+async function fetchRelevantItems(
+  intent: UserIntent,
+  message: string,
+  userId: string,
+  inventoryItems: InventoryItem[],
+  supabaseUrl: string,
+  supabaseServiceKey: string,
+  openaiApiKey: string
+): Promise<RelevantItem[]> {
+  switch (intent) {
+    case 'declutter':
+      return fetchDeclutterCandidates(inventoryItems);
+    case 'find':
+      return await fetchSearchResults(
+        message,
+        userId,
+        inventoryItems,
+        supabaseUrl,
+        supabaseServiceKey,
+        openaiApiKey
+      );
+    case 'organize':
+      return fetchOrganizeCandidates(inventoryItems);
+    case 'compare':
+      return await fetchSimilarItems(
+        message,
+        userId,
+        inventoryItems,
+        supabaseUrl,
+        supabaseServiceKey,
+        openaiApiKey
+      );
+    default:
+      return [];
+  }
+}
+
+function formatRelevantItems(intent: UserIntent, items: RelevantItem[]): string {
+  if (items.length === 0) {
+    return '';
+  }
+
+  const headers: Record<UserIntent, string> = {
+    declutter: 'Items you might consider removing:',
+    find: 'Found these items matching your search:',
+    organize: 'Items that need organization:',
+    compare: 'Similar items you already have:',
+    general: '',
+  };
+
+  const header = headers[intent];
+  const itemList = items
+    .map(item => {
+      const location = item.location_path ? ` (in ${item.location_path})` : '';
+      return `- ${item.name}${location}: ${item.reason}`;
+    })
+    .join('\n');
+
+  return header ? `\n${header}\n${itemList}` : '';
+}
+
 /**
  * Build conversation context from history
  */
 function buildConversationContext(
   history: ConversationMessage[],
   inventorySummary: InventorySummary,
-  inventorySampleItems: string[]
+  inventorySampleItems: string[],
+  relevantItemsBlock: string,
+  relevantItems: RelevantItem[]
 ): string {
   const contextParts: string[] = [];
   contextParts.push(buildInventoryContext(inventorySummary, inventorySampleItems));
@@ -107,6 +401,14 @@ function buildConversationContext(
       const role = msg.role === 'user' ? 'User' : 'Assistant';
       contextParts.push(`${role}: ${msg.content}`);
     }
+  }
+
+  if (relevantItemsBlock) {
+    contextParts.push(relevantItemsBlock);
+  }
+
+  if (relevantItems.length > 0) {
+    contextParts.push(`Relevant items (structured): ${JSON.stringify(relevantItems)}`);
   }
 
   return contextParts.join('\n');
@@ -292,6 +594,8 @@ async function generateFollowupResponse(
   conversationContext: string,
   inventorySummary: InventorySummary,
   inventorySampleItems: string[],
+  intent: UserIntent,
+  relevantItemsBlock: string,
   apiKey: string
 ): Promise<string> {
   const categories = Object.entries(inventorySummary.items_by_category)
@@ -324,6 +628,13 @@ ${sampleList}
 Use this data to give personalized advice about their belongings.
 When they ask about what they have, refer to this inventory data.
 
+Intent guidance:
+- Declutter: suggest oldest items, duplicates (quantity > 1), and items with no location.
+- Find: answer with item names and locations if found.
+- Organize: highlight items missing locations and crowded categories.
+- Compare: point out similar items the user already owns.
+- If no relevant items exist, respond with: "I couldn't find anything matching that."
+
 Your role:
 - Answer follow-up questions about the items being discussed
 - Provide helpful shopping advice based on what the user already owns
@@ -337,6 +648,11 @@ Remember:
 
   const userPrompt = `Previous conversation:
 ${conversationContext}
+
+Detected intent: ${intent}
+
+Relevant items:
+${relevantItemsBlock || 'None'}
 
 User's new question: ${userMessage}
 
@@ -599,26 +915,48 @@ Deno.serve(async (req: Request) => {
     const inventoryItems = await fetchUserInventory(auth.userId, supabaseUrl, supabaseServiceKey);
     const inventorySummary = buildInventorySummary(inventoryItems);
     const inventorySampleItems = buildInventorySampleItems(inventoryItems);
+    const intent = detectIntent(body.message);
+    const relevantItems = await fetchRelevantItems(
+      intent,
+      body.message,
+      auth.userId,
+      inventoryItems,
+      supabaseUrl,
+      supabaseServiceKey,
+      openaiApiKey
+    );
+    const relevantItemsBlock = formatRelevantItems(intent, relevantItems);
 
     // Build conversation context
     const conversationContext = buildConversationContext(
       body.conversation_history || [],
       inventorySummary,
-      inventorySampleItems
+      inventorySampleItems,
+      relevantItemsBlock,
+      relevantItems
     );
 
     // Generate response
     const normalizedMessage = body.message.trim().toLowerCase();
     const isInventoryQuestion = normalizedMessage.includes('what do i have');
-    const aiResponse = isInventoryQuestion
-      ? buildInventoryDirectResponse(inventorySummary, inventorySampleItems)
-      : await generateFollowupResponse(
+    let aiResponse: string;
+
+    if (intent !== 'general' && relevantItems.length === 0) {
+      aiResponse = "I couldn't find anything matching that.";
+    } else if (isInventoryQuestion) {
+      aiResponse = buildInventoryDirectResponse(inventorySummary, inventorySampleItems);
+    } else {
+      const generated = await generateFollowupResponse(
         body.message.trim(),
         conversationContext,
         inventorySummary,
         inventorySampleItems,
+        intent,
+        relevantItemsBlock,
         openaiApiKey
       );
+      aiResponse = relevantItemsBlock ? `${relevantItemsBlock}\n\n${generated}` : generated;
+    }
 
     const response: ShoppingFollowupResponse = {
       response: aiResponse,

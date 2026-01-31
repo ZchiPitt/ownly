@@ -89,3 +89,26 @@
 - Ran npm run build (warnings about CSS import order and chunk size). Build succeeded.
 - Files changed: scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 01:23 PST - US-SHOP-002
+- Added intent detection, relevant item fetching, and formatted intent-specific lists for shopping follow-ups.
+- Wired semantic search/compare embeddings and declutter/organize candidate logic into the follow-up handler and prompts.
+- Verified production build (npm run build) with existing CSS warnings.
+- Files changed: supabase/functions/shopping-followup/index.ts, scripts/ralph-fixes/progress.txt
+---
+
+## 2026-01-31 12:45 PST - US-SHOP-002
+- Added structured relevant items array to shopping-followup conversation context for intent-aware responses.
+- Verified production build (npm run build) with existing CSS warnings.
+- Files changed: supabase/functions/shopping-followup/index.ts, scripts/ralph-fixes/progress.txt
+---
+
+## 2026-01-31 13:10 PST - US-SHOP-002
+- Verified intent-aware relevant item flow and no-match response handling in shopping-followup.
+- Ran npm run build (warnings about CSS import order and chunk size). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 01:27 PST - US-SHOP-002
+- Verified intent-aware relevant item flow and no-match responses in shopping-followup.
+- Ran npm run build (warnings about CSS import order, CSS token, and chunk size). Build succeeded.
+- Files changed: supabase/functions/shopping-followup/index.ts, scripts/ralph-fixes/progress.txt
+---
