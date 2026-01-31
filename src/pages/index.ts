@@ -19,3 +19,4 @@ export { NotificationsPage } from './NotificationsPage';
 export { ShoppingPage } from './ShoppingPage';
 export { NotFoundPage } from './NotFoundPage';
 export { LandingPage } from './LandingPage';
+export { MyListingsPage } from './MyListingsPage';

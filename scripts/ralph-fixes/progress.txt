@@ -209,3 +209,22 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: src/hooks/useListings.ts, src/components/ListingFormModal.tsx, src/pages/ItemDetailPage.tsx, src/hooks/useInventoryItems.ts, src/components/GalleryGrid.tsx, src/components/ItemList.tsx, scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 06:29 PST - US-MKT-003
+- Verified listing form modal, listing hook, and item detail listing actions are present.
+- Confirmed Listed badges render in gallery and list views via active listing lookups.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---
+---
+## 2026-01-31 12:58 PST - US-MKT-004
+- Added My Listings page with status tabs, list cards, pull-to-refresh, and empty state.
+- Added Edit Listing modal with update, mark sold, and remove actions using confirm dialogs and toasts.
+- Wired listings hook updates, App route, and Settings link.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useListings.ts, src/components/EditListingModal.tsx, src/pages/MyListingsPage.tsx, src/pages/index.ts, src/App.tsx, src/pages/SettingsPage.tsx, scripts/ralph-fixes/progress.txt
+## 2026-01-31 06:37 PST - US-MKT-004
+- Added My Listings management page with filters, pull-to-refresh, and edit modal actions for updating, marking sold, and removing listings.
+- Wired route + settings link, and exposed listing hooks for listing updates.
+- Verified production build (npm run build).
+- Files changed: src/pages/MyListingsPage.tsx, src/components/EditListingModal.tsx, src/hooks/useListings.ts, src/pages/index.ts, src/App.tsx, src/pages/SettingsPage.tsx, scripts/ralph-fixes/progress.txt
+---

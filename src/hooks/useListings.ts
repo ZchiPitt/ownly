@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import type { Listing, ItemCondition, PriceType } from '@/types/database';
+import type { Listing, ItemCondition, PriceType, ListingStatus } from '@/types/database';
 
 interface CreateListingInput {
   item_id: string;
@@ -14,6 +14,15 @@ interface CreateListingInput {
   price_type: PriceType;
   condition: ItemCondition;
   description: string;
+}
+
+export interface ListingWithItem extends Listing {
+  item: {
+    id: string;
+    name: string | null;
+    photo_url: string;
+    thumbnail_url: string | null;
+  };
 }
 
 export function useListings() {
@@ -96,5 +105,63 @@ export function useListings() {
     return (data as Listing | null) ?? null;
   }, [user]);
 
-  return { createListing, getListingByItemId };
+  const getMyListings = useCallback(async (status?: ListingStatus): Promise<ListingWithItem[]> => {
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const sellerId = await getSellerProfileId();
+
+    let query = (supabase.from('listings') as ReturnType<typeof supabase.from>)
+      .select('*, item:items(id, name, photo_url, thumbnail_url)')
+      .eq('seller_id', sellerId)
+      .order('created_at', { ascending: false });
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching listings:', error);
+      throw new Error(error.message);
+    }
+
+    return (data as ListingWithItem[]) ?? [];
+  }, [getSellerProfileId, user]);
+
+  const updateListing = useCallback(async (id: string, data: Partial<Listing>): Promise<boolean> => {
+    if (!user) {
+      return false;
+    }
+
+    const { error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+      .update(data as Record<string, unknown>)
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating listing:', error);
+      return false;
+    }
+
+    return true;
+  }, [user]);
+
+  const markAsSold = useCallback(async (id: string): Promise<boolean> => (
+    updateListing(id, { status: 'sold' })
+  ), [updateListing]);
+
+  const removeListing = useCallback(async (id: string): Promise<boolean> => (
+    updateListing(id, { status: 'removed' })
+  ), [updateListing]);
+
+  return {
+    createListing,
+    getListingByItemId,
+    getMyListings,
+    updateListing,
+    markAsSold,
+    removeListing,
+  };
 }

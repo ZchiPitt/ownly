@@ -1,136 +1,131 @@
-# US-MKT-003: List Item for Sale UI
+# US-MKT-004: My Listings Management Page
 
-**Description:** As a user, I want to list my inventory items for sale so others in the community can purchase them.
+**Description:** As a seller, I want to manage my listings so I can update prices, mark items as sold, or remove listings.
 
 ## Acceptance Criteria
 
-1. Add 'Sell / Share' button on ItemDetailPage (only visible for item owner)
-2. Button opens ListingFormModal with fields: price (number input), price_type (radio: Fixed/Negotiable/Free), condition (dropdown: New/Like New/Good/Fair/Poor), description (textarea max 500 chars)
-3. When price_type is 'Free', hide price input field
-4. Form validation: price required if not free, condition required, description optional
-5. Submit creates new listing in database with status='active'
-6. On success: show toast 'Item listed!', close modal, refresh page
-7. On error: show error toast, keep modal open
-8. Item card in Inventory/Gallery shows 'Listed' badge when item has active listing
-9. Cannot list item that is already listed (show 'Already Listed' disabled state)
-10. npm run build passes
+1. Create new page `/my-listings` with route in App.tsx
+2. Page accessible from Settings page (add link)
+3. Display all user's listings in a list view
+4. Each listing card shows: item photo, item name, price, status badge, view count, created date
+5. Status tabs/filter at top: All, Active, Sold, Removed
+6. Tap listing opens edit modal with: price, price_type, condition, description
+7. Edit modal has actions: Save Changes, Mark as Sold, Remove Listing
+8. Mark as Sold: sets status='sold', shows success toast
+9. Remove Listing: sets status='removed', shows success toast
+10. Empty state: 'No listings yet. List your first item!' with link to inventory
+11. Pull-to-refresh to reload listings
+12. npm run build passes
 
 ## Technical Details
 
-**Files to Create/Modify:**
+**Files to Create:**
 
-### 1. Create ListingFormModal Component
-`src/components/ListingFormModal.tsx`
+### 1. MyListingsPage.tsx
+`src/pages/MyListingsPage.tsx`
 
 ```typescript
-interface ListingFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
+import { AppShell } from '@/components/layout';
+import { useAuth } from '@/hooks/useAuth';
+import { useListings, ListingWithItem } from '@/hooks/useListings';
+import { useToast } from '@/hooks/useToast';
+import { EditListingModal } from '@/components/EditListingModal';
+
+type TabFilter = 'all' | 'active' | 'sold' | 'removed';
+
+export function MyListingsPage() {
+  const { user } = useAuth();
+  const { getMyListings } = useListings();
+  const { success, error: showError } = useToast();
+  
+  const [activeTab, setActiveTab] = useState<TabFilter>('all');
+  const [listings, setListings] = useState<ListingWithItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedListing, setSelectedListing] = useState<ListingWithItem | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  // ... fetch and render logic
+}
+```
+
+### 2. EditListingModal.tsx
+`src/components/EditListingModal.tsx`
+
+Similar to ListingFormModal but:
+- Pre-filled with existing listing data
+- Has "Mark as Sold" button (green, only for active)
+- Has "Remove Listing" button (red outline, only for active)
+- Uses confirm dialog before destructive actions
+
+### 3. Update useListings.ts
+
+Add to hook:
+```typescript
+export interface ListingWithItem extends Listing {
   item: {
     id: string;
-    name: string;
+    name: string | null;
     photo_url: string;
+    thumbnail_url: string | null;
   };
-  onSuccess: () => void;
 }
 
-// Form fields
-interface ListingFormData {
-  price: number | null;
-  price_type: 'fixed' | 'negotiable' | 'free';
-  condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-  description: string;
-}
+async function getMyListings(status?: ListingStatus): Promise<ListingWithItem[]>;
+async function updateListing(id: string, data: Partial<Listing>): Promise<boolean>;
+async function markAsSold(id: string): Promise<boolean>;
+async function removeListing(id: string): Promise<boolean>;
 ```
 
-Modal should include:
-- Item preview (thumbnail + name) at top
-- Price type radio buttons (Fixed / Negotiable / Free)
-- Price input (hidden when Free selected)
-- Condition dropdown
-- Description textarea (500 char limit with counter)
-- Cancel and Submit buttons
-
-### 2. Update ItemDetailPage
-`src/pages/ItemDetailPage.tsx`
-
-- Import ListingFormModal
-- Add state: `showListingModal`, `existingListing`
-- Fetch existing listing for this item on load
-- Add "Sell / Share" button in action area (only if owner and not already listed)
-- If already listed, show "Listed" badge and "Edit Listing" button instead
-
-### 3. Create Hook for Listings
-`src/hooks/useListings.ts`
-
-```typescript
-export function useListings() {
-  const { user } = useAuth();
-  
-  async function createListing(data: {
-    item_id: string;
-    price: number | null;
-    price_type: 'fixed' | 'negotiable' | 'free';
-    condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-    description: string;
-  }): Promise<{ data: Listing | null; error: Error | null }>;
-  
-  async function getListingByItemId(itemId: string): Promise<Listing | null>;
-  
-  return { createListing, getListingByItemId };
-}
+### 4. Update App.tsx
+Add route:
+```tsx
+import { MyListingsPage } from '@/pages';
+// ...
+<Route path="/my-listings" element={<ProtectedRoute><MyListingsPage /></ProtectedRoute>} />
 ```
 
-### 4. Update GalleryGrid/ItemList
-Add "Listed" badge overlay on items that have active listings.
-
-Query to check: join with listings table where status='active'
-
-## Database Query
-
-```typescript
-// Create listing
-const { data, error } = await supabase
-  .from('listings')
-  .insert({
-    item_id: itemId,
-    seller_id: userProfileId,  // Need to get from profiles table
-    price: priceType === 'free' ? null : price,
-    price_type: priceType,
-    condition: condition,
-    description: description,
-    status: 'active'
-  })
-  .select()
-  .single();
-
-// Check if item already listed
-const { data: existing } = await supabase
-  .from('listings')
-  .select('id, status')
-  .eq('item_id', itemId)
-  .eq('status', 'active')
-  .single();
+### 5. Update SettingsPage.tsx
+Add link in account section:
+```tsx
+<Link to="/my-listings" className="flex items-center justify-between p-4 hover:bg-gray-50">
+  <div className="flex items-center gap-3">
+    <TagIcon className="w-5 h-5 text-gray-500" />
+    <span>My Listings</span>
+  </div>
+  <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+</Link>
 ```
 
-## UI Components
+### 6. Update src/pages/index.ts
+Export MyListingsPage
 
-Use existing Tailwind patterns:
-- Modal: similar to ConfirmDialog pattern
-- Radio buttons: styled radio group
-- Dropdown: existing select styling
-- Textarea: existing input styling with character counter
-- Buttons: existing Button component
+## Listing Card UI
+
+```
+┌─────────────────────────────────────────┐
+│ [Photo]  Item Name                      │
+│  60x60   $25.00 · Negotiable            │
+│          ● Active  👁 12  📅 Jan 30     │
+└─────────────────────────────────────────┘
+```
+
+Status colors:
+- Active: green badge
+- Sold: blue badge  
+- Removed: gray badge
 
 ## Instructions
 
-1. Create `src/hooks/useListings.ts` with createListing and getListingByItemId
-2. Create `src/components/ListingFormModal.tsx` with the form UI
-3. Update `src/pages/ItemDetailPage.tsx` to add Sell button and modal
-4. Update `src/components/GalleryGrid.tsx` to show Listed badge (optional, can be next story)
-5. Run `npm run build` to verify
-6. Commit with: `feat: [US-MKT-003] Add list item for sale UI`
-7. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Update `src/hooks/useListings.ts` with getMyListings, updateListing, markAsSold, removeListing
+2. Create `src/components/EditListingModal.tsx`
+3. Create `src/pages/MyListingsPage.tsx`
+4. Update `src/pages/index.ts` to export MyListingsPage
+5. Add route in `src/App.tsx`
+6. Add link in `src/pages/SettingsPage.tsx`
+7. Run `npm run build` to verify
+8. Commit with: `feat: [US-MKT-004] Add my listings management page`
+9. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

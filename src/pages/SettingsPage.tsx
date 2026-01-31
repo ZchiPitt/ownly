@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -30,6 +30,27 @@ const EXPIRATION_REMINDER_OPTIONS = [
   { value: 14, label: '14 days before' },
   { value: 30, label: '30 days before' },
 ];
+
+function TagIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M7 7h.01M3 11l8.586 8.586a2 2 0 002.828 0l6.586-6.586a2 2 0 000-2.828L12.414 1.586a2 2 0 00-1.414-.586H5a2 2 0 00-2 2v6.586a2 2 0 00.586 1.414z"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -256,6 +277,18 @@ export function SettingsPage() {
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
+
+            {/* My Listings Link */}
+            <Link
+              to="/my-listings"
+              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <TagIcon className="w-5 h-5 text-gray-500" />
+                <span className="text-base font-medium text-gray-900">My Listings</span>
+              </div>
+              <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            </Link>
           </div>
         </section>
 
