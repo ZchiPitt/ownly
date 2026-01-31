@@ -4,7 +4,7 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { ItemCondition, PriceType } from '@/types/database';
+import type { ItemCondition, ListingStatus, PriceType } from '@/types/database';
 
 export interface MarketplaceFilters {
   categories: string[];
@@ -23,7 +23,9 @@ export interface MarketplaceListing {
   price: number | null;
   price_type: PriceType;
   condition: ItemCondition;
+  status: ListingStatus;
   description: string | null;
+  view_count: number;
   created_at: string;
   item: {
     id: string;
@@ -33,9 +35,13 @@ export interface MarketplaceListing {
   };
   seller: {
     id: string;
+    user_id: string;
     display_name: string | null;
+    avatar_url: string | null;
     location_city: string | null;
     seller_rating: number | null;
+    review_count: number | null;
+    created_at: string;
   };
 }
 
@@ -47,9 +53,32 @@ export interface MarketplaceQueryOptions {
   excludeUserId?: string;
 }
 
-interface RawMarketplaceListing extends Omit<MarketplaceListing, 'item'> {
+interface RawMarketplaceListing extends Omit<MarketplaceListing, 'item' | 'seller'> {
   item: MarketplaceListing['item'] & {
     category_id: string | null;
+  };
+  seller: MarketplaceListing['seller'];
+}
+
+function normalizeListing(raw: RawMarketplaceListing): MarketplaceListing {
+  return {
+    ...raw,
+    item: {
+      id: raw.item.id,
+      name: raw.item.name,
+      photo_url: raw.item.photo_url,
+      thumbnail_url: raw.item.thumbnail_url,
+    },
+    seller: {
+      id: raw.seller.id,
+      user_id: raw.seller.user_id,
+      display_name: raw.seller.display_name,
+      avatar_url: raw.seller.avatar_url,
+      location_city: raw.seller.location_city,
+      seller_rating: raw.seller.seller_rating,
+      review_count: raw.seller.review_count,
+      created_at: raw.seller.created_at,
+    },
   };
 }
 
@@ -74,10 +103,12 @@ export function useMarketplace() {
         price,
         price_type,
         condition,
+        status,
         description,
+        view_count,
         created_at,
         item:items!inner(id, name, photo_url, thumbnail_url, category_id),
-        seller:profiles!inner(id, display_name, location_city, seller_rating)
+        seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
       `)
       .eq('status', 'active');
 
@@ -133,15 +164,7 @@ export function useMarketplace() {
     }
 
     const rawListings = (data as RawMarketplaceListing[] | null) ?? [];
-    const listings = rawListings.map(({ item, ...listing }) => ({
-      ...listing,
-      item: {
-        id: item.id,
-        name: item.name,
-        photo_url: item.photo_url,
-        thumbnail_url: item.thumbnail_url,
-      },
-    }));
+    const listings = rawListings.map(normalizeListing);
 
     return {
       listings,
@@ -149,5 +172,34 @@ export function useMarketplace() {
     };
   }, []);
 
-  return { getListings };
+  const getListingById = useCallback(async (id: string) => {
+    const { data, error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+      .select(`
+        id,
+        item_id,
+        price,
+        price_type,
+        condition,
+        status,
+        description,
+        view_count,
+        created_at,
+        item:items!inner(id, name, photo_url, thumbnail_url, category_id),
+        seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return normalizeListing(data as RawMarketplaceListing);
+  }, []);
+
+  return { getListings, getListingById };
 }

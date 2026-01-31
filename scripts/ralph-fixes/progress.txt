@@ -235,3 +235,14 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: src/hooks/useMarketplace.ts, src/components/MarketplaceCard.tsx, src/components/MarketplaceFilterSheet.tsx, src/pages/MarketplacePage.tsx, src/pages/index.ts, src/App.tsx, scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 14:45 PST - US-MKT-006
+- Added marketplace listing detail page with hero image viewer, seller section, share, and sticky actions.
+- Extended marketplace hook to fetch listing detail data with seller info and status handling.
+- Added placeholder seller profile page and routed listing detail + seller routes.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useMarketplace.ts, src/pages/ListingDetailPage.tsx, src/pages/SellerProfilePage.tsx, src/pages/index.ts, src/App.tsx, scripts/ralph-fixes/progress.txt
+## 2026-01-31 12:50 PST - US-MKT-006
+- Verified listing detail page route, layout, seller card, share action, and owner/unavailable states.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---

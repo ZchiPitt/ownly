@@ -18,6 +18,8 @@ export { SearchPage } from './SearchPage';
 export { NotificationsPage } from './NotificationsPage';
 export { ShoppingPage } from './ShoppingPage';
 export { MarketplacePage } from './MarketplacePage';
+export { ListingDetailPage } from './ListingDetailPage';
 export { NotFoundPage } from './NotFoundPage';
 export { LandingPage } from './LandingPage';
 export { MyListingsPage } from './MyListingsPage';
+export { SellerProfilePage } from './SellerProfilePage';
