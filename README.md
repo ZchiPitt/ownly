@@ -170,17 +170,20 @@ supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
 #### Deploy All Functions
 
 ```bash
-# Deploy all functions at once
-supabase functions deploy --all
-
-# Or deploy individually
-supabase functions deploy analyze-image
+# Deploy background job functions (no auth required)
 supabase functions deploy generate-embedding
-supabase functions deploy shopping-analyze
-supabase functions deploy shopping-followup
 supabase functions deploy generate-reminders
 supabase functions deploy cleanup-deleted-items
+
+# Deploy user-facing functions with --no-verify-jwt
+# These functions implement their own JWT validation via validateAuth()
+# The flag bypasses Supabase gateway JWT verification which may reject valid tokens
+supabase functions deploy analyze-image --no-verify-jwt
+supabase functions deploy shopping-analyze --no-verify-jwt
+supabase functions deploy shopping-followup --no-verify-jwt
 ```
+
+> **Note:** The `--no-verify-jwt` flag is required for `analyze-image`, `shopping-analyze`, and `shopping-followup` because Supabase's gateway JWT verification may reject valid tokens with "Invalid JWT" errors. These functions implement their own authentication via `validateAuth()` which properly validates user tokens.
 
 #### Edge Function Reference
 
