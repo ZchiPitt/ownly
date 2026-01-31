@@ -17,6 +17,7 @@ export { EditItemPage } from './EditItemPage';
 export { SearchPage } from './SearchPage';
 export { NotificationsPage } from './NotificationsPage';
 export { ShoppingPage } from './ShoppingPage';
+export { MarketplacePage } from './MarketplacePage';
 export { NotFoundPage } from './NotFoundPage';
 export { LandingPage } from './LandingPage';
 export { MyListingsPage } from './MyListingsPage';

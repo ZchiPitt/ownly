@@ -228,3 +228,10 @@
 - Verified production build (npm run build).
 - Files changed: src/pages/MyListingsPage.tsx, src/components/EditListingModal.tsx, src/hooks/useListings.ts, src/pages/index.ts, src/App.tsx, src/pages/SettingsPage.tsx, scripts/ralph-fixes/progress.txt
 ---
+---
+## 2026-01-31 13:33 PST - US-MKT-005
+- Added marketplace browse page with search, filters, sort, pull-to-refresh, and infinite scroll.
+- Created marketplace hook, listing cards, and filter bottom sheet; wired routes and exports.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useMarketplace.ts, src/components/MarketplaceCard.tsx, src/components/MarketplaceFilterSheet.tsx, src/pages/MarketplacePage.tsx, src/pages/index.ts, src/App.tsx, scripts/ralph-fixes/progress.txt
+---
