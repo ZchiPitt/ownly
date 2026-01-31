@@ -197,3 +197,9 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 12:10 PST - US-MKT-002
+- Added marketplace profile fields migration with updated RLS policies and indexes.
+- Updated Profile TypeScript interface with seller fields and last_active_at.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260131120000_extend_profiles_for_marketplace.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---

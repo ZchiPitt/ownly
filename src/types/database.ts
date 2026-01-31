@@ -15,7 +15,15 @@ export interface Profile {
   id: string;
   user_id: string;
   display_name: string | null;
+  bio: string | null;
   avatar_url: string | null;
+  location_city: string | null;
+  seller_rating: number | null;
+  review_count: number;
+  is_verified: boolean;
+  total_sold: number;
+  response_rate: number | null;
+  last_active_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -1,199 +1,87 @@
-# US-MKT-001: Marketplace Database Schema
+# US-MKT-002: Seller Profile Extension
 
-**Description:** As a developer, I need the database schema for marketplace functionality including listings, transactions, and messages tables.
+**Description:** As a user, I want to have a public profile so buyers can see my information and trustworthiness.
 
 ## Acceptance Criteria
 
-1. Create listings table with: id (UUID PK), item_id (FK to items), seller_id (FK to profiles), status (active/sold/reserved/removed), price (decimal 10,2), price_type (fixed/negotiable/free), condition (new/like_new/good/fair/poor), description (text), created_at, updated_at
-2. Create transactions table with: id (UUID PK), listing_id (FK), buyer_id (FK to profiles), seller_id (FK to profiles), status (pending/accepted/completed/cancelled), agreed_price (decimal 10,2), message (text), created_at, updated_at
-3. Create messages table with: id (UUID PK), listing_id (FK), sender_id (FK to profiles), receiver_id (FK to profiles), content (text), read_at (timestamp nullable), created_at
-4. Add RLS policies: users can only see their own transactions (as buyer or seller)
-5. Add RLS policies: sellers can see all transactions for their listings
-6. Add RLS policies: messages visible only to sender or receiver
-7. Add RLS policies: listings readable by all authenticated users, writable only by seller
-8. Create indexes on: listings(seller_id, status), listings(item_id), transactions(buyer_id), transactions(seller_id), transactions(listing_id), messages(listing_id), messages(sender_id), messages(receiver_id)
-9. Migration runs successfully
-10. TypeScript types added to src/types/database.ts
-11. npm run build passes
+1. Add to profiles table: display_name (varchar 100), bio (text), avatar_url (text), location_city (varchar 100)
+2. Add to profiles table: seller_rating (decimal 3,2 default null), review_count (integer default 0), is_verified (boolean default false)
+3. Add to profiles table: total_sold (integer default 0), response_rate (decimal 3,2 default null)
+4. Create RLS policy: display_name, avatar_url, location_city, seller_rating, review_count, is_verified, total_sold are publicly readable by authenticated users
+5. Create RLS policy: users can only update their own profile fields
+6. Migration runs successfully
+7. Update TypeScript Profile interface in database.ts
+8. npm run build passes
 
 ## Technical Details
 
-**Migration File:** `supabase/migrations/YYYYMMDDHHMMSS_create_marketplace_tables.sql`
+**Migration File:** `supabase/migrations/YYYYMMDDHHMMSS_extend_profiles_for_marketplace.sql`
 
 ```sql
--- Enable UUID extension if not already
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+-- Extend profiles table for marketplace seller features
+ALTER TABLE profiles
+ADD COLUMN IF NOT EXISTS display_name VARCHAR(100),
+ADD COLUMN IF NOT EXISTS bio TEXT,
+ADD COLUMN IF NOT EXISTS avatar_url TEXT,
+ADD COLUMN IF NOT EXISTS location_city VARCHAR(100),
+ADD COLUMN IF NOT EXISTS seller_rating DECIMAL(3, 2),
+ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS total_sold INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS response_rate DECIMAL(3, 2),
+ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;
 
--- Listings table
-CREATE TABLE listings (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-  seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'reserved', 'removed')),
-  price DECIMAL(10, 2),
-  price_type TEXT NOT NULL DEFAULT 'fixed' CHECK (price_type IN ('fixed', 'negotiable', 'free')),
-  condition TEXT NOT NULL CHECK (condition IN ('new', 'like_new', 'good', 'fair', 'poor')),
-  description TEXT,
-  view_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Update RLS policies for profiles (keep existing + add new)
+-- Note: profiles table should already have RLS enabled
 
--- Transactions table
-CREATE TABLE transactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
-  buyer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'completed', 'cancelled')),
-  agreed_price DECIMAL(10, 2),
-  message TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Messages table
-CREATE TABLE messages (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
-  sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  receiver_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  read_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Indexes
-CREATE INDEX idx_listings_seller_status ON listings(seller_id, status);
-CREATE INDEX idx_listings_item ON listings(item_id);
-CREATE INDEX idx_listings_status ON listings(status) WHERE status = 'active';
-CREATE INDEX idx_transactions_buyer ON transactions(buyer_id);
-CREATE INDEX idx_transactions_seller ON transactions(seller_id);
-CREATE INDEX idx_transactions_listing ON transactions(listing_id);
-CREATE INDEX idx_messages_listing ON messages(listing_id);
-CREATE INDEX idx_messages_sender ON messages(sender_id);
-CREATE INDEX idx_messages_receiver ON messages(receiver_id);
-CREATE INDEX idx_messages_conversation ON messages(sender_id, receiver_id, listing_id);
-
--- Enable RLS
-ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
--- Listings policies
-CREATE POLICY "Listings are viewable by authenticated users" ON listings
-  FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Users can create listings for their items" ON listings
-  FOR INSERT TO authenticated
-  WITH CHECK (seller_id = auth.uid());
-
-CREATE POLICY "Sellers can update their own listings" ON listings
-  FOR UPDATE TO authenticated
-  USING (seller_id = auth.uid())
-  WITH CHECK (seller_id = auth.uid());
-
-CREATE POLICY "Sellers can delete their own listings" ON listings
-  FOR DELETE TO authenticated
-  USING (seller_id = auth.uid());
-
--- Transactions policies
-CREATE POLICY "Users can view their own transactions" ON transactions
+-- Policy for reading public seller info (anyone authenticated can read)
+DROP POLICY IF EXISTS "Public profiles are viewable by authenticated users" ON profiles;
+CREATE POLICY "Public profiles are viewable by authenticated users" ON profiles
   FOR SELECT TO authenticated
-  USING (buyer_id = auth.uid() OR seller_id = auth.uid());
+  USING (true);
 
-CREATE POLICY "Buyers can create transactions" ON transactions
-  FOR INSERT TO authenticated
-  WITH CHECK (buyer_id = auth.uid());
-
-CREATE POLICY "Participants can update transactions" ON transactions
+-- Policy for users updating their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
+CREATE POLICY "Users can update own profile" ON profiles
   FOR UPDATE TO authenticated
-  USING (buyer_id = auth.uid() OR seller_id = auth.uid());
+  USING (id = auth.uid())
+  WITH CHECK (id = auth.uid());
 
--- Messages policies
-CREATE POLICY "Users can view their own messages" ON messages
-  FOR SELECT TO authenticated
-  USING (sender_id = auth.uid() OR receiver_id = auth.uid());
-
-CREATE POLICY "Users can send messages" ON messages
-  FOR INSERT TO authenticated
-  WITH CHECK (sender_id = auth.uid());
-
-CREATE POLICY "Users can update their sent messages" ON messages
-  FOR UPDATE TO authenticated
-  USING (sender_id = auth.uid() OR receiver_id = auth.uid());
-
--- Updated_at trigger function
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ language 'plpgsql';
-
--- Apply triggers
-CREATE TRIGGER update_listings_updated_at
-  BEFORE UPDATE ON listings
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_transactions_updated_at
-  BEFORE UPDATE ON transactions
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Index for seller lookups
+CREATE INDEX IF NOT EXISTS idx_profiles_seller_rating ON profiles(seller_rating DESC NULLS LAST);
+CREATE INDEX IF NOT EXISTS idx_profiles_location ON profiles(location_city);
 ```
 
-**TypeScript Types to Add (src/types/database.ts):**
+**TypeScript Types Update (src/types/database.ts):**
+
+Find the existing Profile interface and add/update these fields:
 
 ```typescript
-// Marketplace types
-export type ListingStatus = 'active' | 'sold' | 'reserved' | 'removed';
-export type PriceType = 'fixed' | 'negotiable' | 'free';
-export type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
-export type TransactionStatus = 'pending' | 'accepted' | 'completed' | 'cancelled';
-
-export interface Listing {
+export interface Profile {
   id: string;
-  item_id: string;
-  seller_id: string;
-  status: ListingStatus;
-  price: number | null;
-  price_type: PriceType;
-  condition: ItemCondition;
-  description: string | null;
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Transaction {
-  id: string;
-  listing_id: string;
-  buyer_id: string;
-  seller_id: string;
-  status: TransactionStatus;
-  agreed_price: number | null;
-  message: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Message {
-  id: string;
-  listing_id: string | null;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  read_at: string | null;
-  created_at: string;
+  user_id: string;
+  // ... existing fields ...
+  
+  // Marketplace seller fields
+  display_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  location_city: string | null;
+  seller_rating: number | null;
+  review_count: number;
+  is_verified: boolean;
+  total_sold: number;
+  response_rate: number | null;
+  last_active_at: string | null;
 }
 ```
 
 ## Instructions
 
 1. Create the migration file in `supabase/migrations/` with timestamp prefix
-2. Add the TypeScript types to `src/types/database.ts`
+2. Update the Profile interface in `src/types/database.ts` to include new fields
 3. Run `npm run build` to verify types compile
-4. Commit with: `feat: [US-MKT-001] Add marketplace database schema`
+4. Commit with: `feat: [US-MKT-002] Extend profiles for marketplace sellers`
 5. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
