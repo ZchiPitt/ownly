@@ -1,20 +1,17 @@
 /**
- * ListingFormModal - modal form to list an inventory item for sale or share
+ * EditListingModal - modal form to edit a marketplace listing
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { useListings } from '@/hooks/useListings';
+import { useListings, type ListingWithItem } from '@/hooks/useListings';
 import { useToast } from '@/hooks/useToast';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { ItemCondition, PriceType } from '@/types/database';
 
-export interface ListingFormModalProps {
+export interface EditListingModalProps {
   isOpen: boolean;
+  listing: ListingWithItem | null;
   onClose: () => void;
-  item: {
-    id: string;
-    name: string;
-    photo_url: string;
-  };
   onSuccess: () => void;
 }
 
@@ -41,43 +38,44 @@ const conditionOptions: Array<{ label: string; value: ItemCondition }> = [
   { label: 'Poor', value: 'poor' },
 ];
 
-const defaultFormData: ListingFormData = {
-  price: null,
-  price_type: 'fixed',
-  condition: '',
-  description: '',
-};
-
 /**
- * Internal form component that initializes fresh state on mount.
- * Re-mounts when item changes via key prop from parent.
+ * Internal form component that receives listing as initial data.
+ * Re-mounts when listing changes via key prop from parent.
  */
-function ListingForm({
-  item,
+function EditListingForm({
+  listing,
   onClose,
   onSuccess,
 }: {
-  item: { id: string; name: string; photo_url: string };
+  listing: ListingWithItem;
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const { createListing } = useListings();
+  const { updateListing, markAsSold, removeListing } = useListings();
   const { success, error } = useToast();
+  const { confirm } = useConfirm();
 
-  // Initialize fresh form state on mount (no useEffect needed)
-  const [formData, setFormData] = useState<ListingFormData>(defaultFormData);
+  // Initialize form data directly from listing (no useEffect needed)
+  const [formData, setFormData] = useState<ListingFormData>({
+    price: listing.price,
+    price_type: listing.price_type,
+    condition: listing.condition,
+    description: listing.description || '',
+  });
   const [formErrors, setFormErrors] = useState<{ price?: string; condition?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const isFree = formData.price_type === 'free';
   const descriptionCount = formData.description.length;
+  const isActiveListing = listing.status === 'active';
 
   const canSubmit = useMemo(() => {
-    if (isSubmitting) return false;
+    if (isSubmitting || isUpdatingStatus) return false;
     if (!isFree && (formData.price === null || Number.isNaN(formData.price))) return false;
     if (!formData.condition) return false;
     return true;
-  }, [formData.condition, formData.price, isFree, isSubmitting]);
+  }, [formData.condition, formData.price, isFree, isSubmitting, isUpdatingStatus]);
 
   const handlePriceChange = useCallback((value: string) => {
     if (value === '') {
@@ -109,24 +107,70 @@ function ListingForm({
 
     setIsSubmitting(true);
 
-    const { error: submitError } = await createListing({
-      item_id: item.id,
-      price: formData.price,
+    const updateSuccess = await updateListing(listing.id, {
+      price: isFree ? null : formData.price,
       price_type: formData.price_type,
       condition: formData.condition as ItemCondition,
-      description: formData.description.trim(),
+      description: formData.description.trim() || null,
     });
 
-    if (submitError) {
-      error('Failed to list item');
+    if (!updateSuccess) {
+      error('Failed to update listing');
       setIsSubmitting(false);
       return;
     }
 
-    success('Item listed!');
+    success('Listing updated');
     onSuccess();
     onClose();
-  }, [createListing, error, formData, isFree, item.id, onClose, onSuccess, success]);
+  }, [error, formData, isFree, listing.id, onClose, onSuccess, success, updateListing]);
+
+  const handleMarkAsSold = useCallback(async () => {
+    const confirmed = await confirm({
+      title: 'Mark listing as sold?',
+      message: 'This will move the listing to Sold and hide it from shoppers.',
+      confirmText: 'Mark as Sold',
+    });
+
+    if (!confirmed) return;
+
+    setIsUpdatingStatus(true);
+    const updateSuccess = await markAsSold(listing.id);
+
+    if (!updateSuccess) {
+      error('Failed to update listing');
+      setIsUpdatingStatus(false);
+      return;
+    }
+
+    success('Listing marked as sold');
+    onSuccess();
+    onClose();
+  }, [confirm, error, listing.id, markAsSold, onClose, onSuccess, success]);
+
+  const handleRemoveListing = useCallback(async () => {
+    const confirmed = await confirm({
+      title: 'Remove listing?',
+      message: 'This will remove the listing from the marketplace.',
+      confirmText: 'Remove Listing',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    setIsUpdatingStatus(true);
+    const updateSuccess = await removeListing(listing.id);
+
+    if (!updateSuccess) {
+      error('Failed to update listing');
+      setIsUpdatingStatus(false);
+      return;
+    }
+
+    success('Listing removed');
+    onSuccess();
+    onClose();
+  }, [confirm, error, listing.id, onClose, onSuccess, removeListing, success]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -141,7 +185,7 @@ function ListingForm({
       <div className="relative w-full sm:max-w-lg bg-white sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">List item</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Edit listing</h2>
           <button
             type="button"
             onClick={onClose}
@@ -159,13 +203,13 @@ function ListingForm({
           {/* Item preview */}
           <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
             <img
-              src={item.photo_url}
-              alt={item.name}
+              src={listing.item.thumbnail_url || listing.item.photo_url}
+              alt={listing.item.name || 'Listing item'}
               className="w-14 h-14 rounded-lg object-cover"
             />
             <div>
               <p className="text-sm text-gray-500">Listing</p>
-              <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+              <p className="text-sm font-semibold text-gray-900">{listing.item.name || 'Untitled item'}</p>
             </div>
           </div>
 
@@ -268,21 +312,45 @@ function ListingForm({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Listing...' : 'Submit'}
-            </button>
+          <div className="flex flex-col gap-3 pt-2 border-t border-gray-200">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting || isUpdatingStatus}
+                className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!canSubmit}
+                className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+
+            {isActiveListing && (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={handleMarkAsSold}
+                  disabled={isSubmitting || isUpdatingStatus}
+                  className="flex-1 px-4 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Mark as Sold
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemoveListing}
+                  disabled={isSubmitting || isUpdatingStatus}
+                  className="flex-1 px-4 py-3 border border-red-400 text-red-600 font-medium rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Remove Listing
+                </button>
+              </div>
+            )}
           </div>
         </form>
       </div>
@@ -292,18 +360,18 @@ function ListingForm({
 
 /**
  * Wrapper component that handles conditional rendering and uses key
- * to force form remount when item changes, resetting form state.
+ * to force form remount when listing changes.
  */
-export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFormModalProps) {
-  if (!isOpen) {
+export function EditListingModal({ isOpen, listing, onClose, onSuccess }: EditListingModalProps) {
+  if (!isOpen || !listing) {
     return null;
   }
 
-  // Key forces remount when item changes, resetting form state
+  // Key forces remount when listing changes, resetting form state
   return (
-    <ListingForm
-      key={item.id}
-      item={item}
+    <EditListingForm
+      key={listing.id}
+      listing={listing}
       onClose={onClose}
       onSuccess={onSuccess}
     />

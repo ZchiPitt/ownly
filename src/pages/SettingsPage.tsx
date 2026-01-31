@@ -7,7 +7,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -30,6 +30,43 @@ const EXPIRATION_REMINDER_OPTIONS = [
   { value: 14, label: '14 days before' },
   { value: 30, label: '30 days before' },
 ];
+
+function ShoppingBagIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M6 2l1.5 4h9L18 2" />
+      <path d="M4 6h16l-1.5 14h-13L4 6z" />
+      <path d="M9 10v6" />
+      <path d="M15 10v6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -242,6 +279,18 @@ export function SettingsPage() {
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
+
+            {/* My Listings Link */}
+            <Link
+              to="/my-listings"
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between border-b border-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <ShoppingBagIcon className="text-gray-400" />
+                <span className="text-base font-medium text-gray-900">My Listings</span>
+              </div>
+              <ChevronRightIcon className="text-gray-400" />
+            </Link>
 
             {/* Change Password Link */}
             <button

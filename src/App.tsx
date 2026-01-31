@@ -4,7 +4,7 @@ import { AuthProvider, OfflineProvider, ToastProvider, ConfirmProvider } from '@
 import { AppShell } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ToastContainer } from '@/components/Toast'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage, NotFoundPage, LandingPage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage, MyListingsPage, NotFoundPage, LandingPage } from '@/pages'
 import { useEffect } from 'react'
 import { useToast } from '@/hooks/useToast'
 
@@ -50,6 +50,7 @@ function AppContent() {
                       <Route path="/item/:id" element={<ItemDetailPage />} />
                       <Route path="/item/:id/edit" element={<EditItemPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/my-listings" element={<MyListingsPage />} />
                       <Route path="/search" element={<SearchPage />} />
                       <Route path="/notifications" element={<NotificationsPage />} />
                       <Route path="/shopping" element={<ShoppingPage />} />
