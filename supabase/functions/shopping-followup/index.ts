@@ -82,13 +82,61 @@ interface ApiError {
 // Rate limits
 const DAILY_TEXT_LIMIT = 50;
 
+const INTENT_EXAMPLES: Record<UserIntent, string[]> = {
+  declutter: [
+    'what can I get rid of',
+    'what should I throw away',
+    'help me clear out stuff',
+    'what can I donate or sell',
+    'I have too much stuff what should go',
+  ],
+  find: [
+    'where is my passport',
+    'do I have a blue shirt',
+    'can you find my charger',
+    'looking for my headphones',
+    'can you locate my keys',
+  ],
+  organize: [
+    'help me organize my closet',
+    'I need to tidy up my stuff',
+    'what needs to be put away',
+    'how should I arrange my items',
+  ],
+  compare: [
+    'do I have something similar to this',
+    'is this like what I already own',
+    'would this be a duplicate',
+    'do I already have one of these',
+  ],
+  general: [
+    'tell me about my inventory',
+    'what do I have',
+    'give me a summary',
+    'show me what is in my inventory',
+  ],
+};
+
 const INTENT_KEYWORDS: Record<UserIntent, string[]> = {
   declutter: ['drop', 'donate', 'sell', 'get rid of', 'throw away', 'declutter', 'remove', 'toss', 'discard'],
-  find: ['where is', 'where are', 'do i have', 'find my', 'looking for', 'search for', 'got any', 'have any'],
+  find: [
+    'where is',
+    'where are',
+    'do i have',
+    'find my',
+    'locate my',
+    'looking for',
+    'search for',
+    'got any',
+    'have any',
+  ],
   organize: ['organize', 'sort', 'arrange', 'tidy', 'clean up', 'put away', 'need space'],
   compare: ['similar', 'like this', 'compared to', 'already have something like'],
   general: [],
 };
+
+// Module-level cache for intent embeddings
+let intentEmbeddingsCache: Map<string, number[][]> | null = null;
 
 function detectIntent(message: string): UserIntent {
   const lowerMessage = message.toLowerCase();
@@ -100,6 +148,106 @@ function detectIntent(message: string): UserIntent {
   }
 
   return 'general';
+}
+
+async function generateMessageEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const response = await fetch('https://api.openai.com/v1/embeddings', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'text-embedding-3-small',
+      input: text,
+      dimensions: 512,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      `Embedding API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
+    );
+  }
+
+  const data = await response.json();
+  return data.data[0].embedding as number[];
+}
+
+function computeCosineSimilarity(a: number[], b: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  const length = Math.min(a.length, b.length);
+
+  for (let i = 0; i < length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+async function getIntentEmbeddings(apiKey: string): Promise<Map<string, number[][]>> {
+  if (intentEmbeddingsCache) {
+    return intentEmbeddingsCache;
+  }
+
+  const cache = new Map<string, number[][]>();
+
+  for (const [intent, examples] of Object.entries(INTENT_EXAMPLES)) {
+    const embeddings: number[][] = [];
+    for (const example of examples) {
+      const embedding = await generateMessageEmbedding(example, apiKey);
+      embeddings.push(embedding);
+    }
+    cache.set(intent, embeddings);
+  }
+
+  intentEmbeddingsCache = cache;
+  return cache;
+}
+
+async function detectIntentByEmbedding(
+  message: string,
+  apiKey: string
+): Promise<{ intent: UserIntent; confidence: number }> {
+  const SIMILARITY_THRESHOLD = 0.7;
+
+  try {
+    const messageEmbedding = await generateMessageEmbedding(message, apiKey);
+    const intentEmbeddings = await getIntentEmbeddings(apiKey);
+
+    let bestIntent: UserIntent = 'general';
+    let bestScore = 0;
+
+    for (const [intent, exampleEmbeddings] of intentEmbeddings.entries()) {
+      if (exampleEmbeddings.length === 0) {
+        continue;
+      }
+      const similarities = exampleEmbeddings.map(exampleEmbedding =>
+        computeCosineSimilarity(messageEmbedding, exampleEmbedding)
+      );
+      const avgSimilarity = similarities.reduce((a, b) => a + b, 0) / similarities.length;
+
+      if (avgSimilarity > bestScore) {
+        bestScore = avgSimilarity;
+        bestIntent = intent as UserIntent;
+      }
+    }
+
+    if (bestScore < SIMILARITY_THRESHOLD) {
+      return { intent: 'general', confidence: bestScore };
+    }
+
+    return { intent: bestIntent, confidence: bestScore };
+  } catch (error) {
+    console.error('Embedding intent detection failed:', error);
+    return { intent: detectIntent(message), confidence: 0.5 };
+  }
 }
 
 function normalizeSearchQuery(message: string): string {
@@ -915,7 +1063,8 @@ Deno.serve(async (req: Request) => {
     const inventoryItems = await fetchUserInventory(auth.userId, supabaseUrl, supabaseServiceKey);
     const inventorySummary = buildInventorySummary(inventoryItems);
     const inventorySampleItems = buildInventorySampleItems(inventoryItems);
-    const intent = detectIntent(body.message);
+    const { intent, confidence } = await detectIntentByEmbedding(body.message, openaiApiKey);
+    console.log(`Detected intent: ${intent} (confidence: ${confidence.toFixed(2)})`);
     const relevantItems = await fetchRelevantItems(
       intent,
       body.message,

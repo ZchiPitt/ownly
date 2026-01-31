@@ -1,25 +1,22 @@
-# US-SHOP-002: Smart Inventory Search by Intent
+# US-SHOP-003: Embedding-based Intent Detection
 
-**Description:** As a user asking specific questions about my inventory, I want the AI to find relevant items using semantic search and intent detection so I get precise answers.
+**Description:** As a user asking questions in natural language, I want the assistant to understand my intent even when I don't use exact keywords, so I get relevant responses.
 
 ## Acceptance Criteria
 
-1. Create `detectIntent()` function that classifies user message into: declutter, organize, find, compare, general
-2. Intent detection uses keyword matching: declutter=['drop','donate','sell','get rid of','throw away'], find=['where is','do I have','find my'], organize=['organize','sort','arrange']
-3. Create `fetchRelevantItems()` that queries differently based on intent
-4. Declutter intent: return oldest 10 items (by created_at), items with quantity>1, items with no location
-5. Find intent: extract search terms, use search_items_by_embedding RPC for semantic search
-6. Organize intent: return items with no location, categories with most items
-7. Compare intent: generate embedding for user description, search similar items
-8. Add relevantItems array to conversation context
-9. Format relevant items with reasoning: 'Items you might consider removing: [list with reasons]'
-10. Update system prompt with intent-specific guidance
-11. User asks 'what can I drop' → AI suggests oldest/duplicate items with reasons
-12. User asks 'where is my passport' → AI searches and returns location if found
-13. User asks 'do I have a blue shirt' → AI uses semantic search and responds
-14. No matching items → AI says 'I couldn't find anything matching that'
-15. npm run build passes
-16. Deploy to Supabase and test manually
+1. Create INTENT_EXAMPLES constant with 4-5 example phrases per intent (declutter, find, organize, compare, general)
+2. Create generateMessageEmbedding() function using OpenAI text-embedding-3-small (512 dimensions)
+3. Create computeCosineSimilarity() function for vector comparison
+4. Create detectIntentByEmbedding() that compares message to all intent examples
+5. Pre-compute intent example embeddings on first request (cache in memory using module-level variable)
+6. Return intent with highest average similarity score
+7. Set minimum similarity threshold (0.7) - below returns 'general'
+8. Fall back to keyword matching if embedding API fails
+9. User says 'help me clear out stuff' → detects 'declutter' intent
+10. User says 'can you locate my keys' → detects 'find' intent
+11. User says 'random question about weather' → returns 'general' (below threshold)
+12. npm run build passes
+13. Keep existing detectIntent() as fallback
 
 ## Technical Details
 
@@ -28,147 +25,53 @@
 supabase/functions/shopping-followup/index.ts
 ```
 
-**New Types:**
+**Intent Examples to Add:**
 ```typescript
-type UserIntent = 'declutter' | 'organize' | 'find' | 'compare' | 'general';
-
-interface RelevantItem {
-  id: string;
-  name: string;
-  category_name: string | null;
-  location_path: string | null;
-  reason: string;
-  similarity?: number;
-}
-```
-
-**Intent Keywords:**
-```typescript
-const INTENT_KEYWORDS = {
-  declutter: ['drop', 'donate', 'sell', 'get rid of', 'throw away', 'declutter', 'remove', 'toss', 'discard'],
-  find: ['where is', 'where are', 'do i have', 'find my', 'looking for', 'search for', 'got any', 'have any'],
-  organize: ['organize', 'sort', 'arrange', 'tidy', 'clean up', 'put away', 'need space'],
-  compare: ['similar', 'like this', 'compared to', 'already have something like']
+const INTENT_EXAMPLES: Record<UserIntent, string[]> = {
+  declutter: [
+    "what can I get rid of",
+    "what should I throw away",
+    "help me clear out some stuff",
+    "what can I donate or sell",
+    "I have too much stuff what should go"
+  ],
+  find: [
+    "where is my passport",
+    "do I have a blue shirt",
+    "can you find my charger",
+    "looking for my headphones",
+    "where did I put my keys"
+  ],
+  organize: [
+    "help me organize my closet",
+    "I need to tidy up my stuff",
+    "what needs to be put away",
+    "how should I arrange my items"
+  ],
+  compare: [
+    "do I have something similar to this",
+    "is this like what I already own",
+    "would this be a duplicate"
+  ],
+  general: [
+    "tell me about my inventory",
+    "what do I have",
+    "give me a summary"
+  ]
 };
 ```
 
-**New Functions:**
+**New Functions to Add:**
 
 ```typescript
-// Detect intent from user message
-function detectIntent(message: string): UserIntent {
-  const lowerMessage = message.toLowerCase();
-  
-  for (const [intent, keywords] of Object.entries(INTENT_KEYWORDS)) {
-    if (keywords.some(kw => lowerMessage.includes(kw))) {
-      return intent as UserIntent;
-    }
-  }
-  return 'general';
-}
+// Module-level cache for intent embeddings
+let intentEmbeddingsCache: Map<string, number[][]> | null = null;
 
-// Fetch relevant items based on intent
-async function fetchRelevantItems(
-  intent: UserIntent,
-  message: string,
-  userId: string,
-  inventoryItems: InventoryItem[],
-  supabaseUrl: string,
-  supabaseServiceKey: string,
-  openaiApiKey: string
-): Promise<RelevantItem[]> {
-  switch (intent) {
-    case 'declutter':
-      return fetchDeclutterCandidates(inventoryItems);
-    case 'find':
-      return await fetchSearchResults(message, userId, supabaseUrl, supabaseServiceKey, openaiApiKey);
-    case 'organize':
-      return fetchOrganizeCandidates(inventoryItems);
-    case 'compare':
-      return await fetchSimilarItems(message, userId, supabaseUrl, supabaseServiceKey, openaiApiKey);
-    default:
-      return [];
-  }
-}
-
-// Get declutter candidates: oldest, duplicates, no location
-function fetchDeclutterCandidates(items: InventoryItem[]): RelevantItem[] {
-  const candidates: RelevantItem[] = [];
-  
-  // Oldest 5 items
-  const sorted = [...items].sort((a, b) => 
-    new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-  );
-  sorted.slice(0, 5).forEach(item => {
-    candidates.push({
-      id: item.id,
-      name: item.name,
-      category_name: item.category_name,
-      location_path: item.location_path,
-      reason: 'Oldest item in your inventory'
-    });
-  });
-  
-  // Items with no location
-  items.filter(i => !i.location_path).slice(0, 3).forEach(item => {
-    if (!candidates.find(c => c.id === item.id)) {
-      candidates.push({
-        id: item.id,
-        name: item.name,
-        category_name: item.category_name,
-        location_path: item.location_path,
-        reason: 'No storage location set'
-      });
-    }
-  });
-  
-  return candidates.slice(0, 10);
-}
-
-// Search items using embedding
-async function fetchSearchResults(
-  message: string,
-  userId: string,
-  supabaseUrl: string,
-  supabaseServiceKey: string,
-  openaiApiKey: string
-): Promise<RelevantItem[]> {
-  // Extract search query (remove common phrases)
-  const searchQuery = message
-    .toLowerCase()
-    .replace(/where is|where are|do i have|find my|looking for|search for|got any|have any/g, '')
-    .trim();
-  
-  if (!searchQuery) return [];
-  
-  // Generate embedding
-  const embedding = await generateQueryEmbedding(searchQuery, openaiApiKey);
-  
-  // Search using existing RPC
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-  const embeddingStr = `[${embedding.join(',')}]`;
-  
-  const { data, error } = await supabase.rpc('search_items_by_embedding', {
-    query_embedding: embeddingStr,
-    match_threshold: 0.5,
-    match_count: 5,
-    search_user_id: userId,
-  });
-  
-  if (error || !data) return [];
-  
-  return data.map((item: any) => ({
-    id: item.id,
-    name: item.name || 'Unnamed',
-    category_name: null,
-    location_path: null, // Would need to join
-    reason: `${Math.round(item.similarity * 100)}% match`,
-    similarity: item.similarity
-  }));
-}
-
-// Generate embedding for search query
-async function generateQueryEmbedding(text: string, apiKey: string): Promise<number[]> {
+// Generate embedding for text (512 dimensions for speed)
+async function generateMessageEmbedding(
+  text: string,
+  apiKey: string
+): Promise<number[]> {
   const response = await fetch('https://api.openai.com/v1/embeddings', {
     method: 'POST',
     headers: {
@@ -178,50 +81,124 @@ async function generateQueryEmbedding(text: string, apiKey: string): Promise<num
     body: JSON.stringify({
       model: 'text-embedding-3-small',
       input: text,
-      dimensions: 1536,
+      dimensions: 512,
     }),
   });
+  
+  if (!response.ok) {
+    throw new Error(`Embedding API error: ${response.status}`);
+  }
   
   const data = await response.json();
   return data.data[0].embedding;
 }
+
+// Cosine similarity between two vectors
+function computeCosineSimilarity(a: number[], b: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+  
+  if (normA === 0 || normB === 0) return 0;
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+// Get or compute intent embeddings (cached)
+async function getIntentEmbeddings(
+  apiKey: string
+): Promise<Map<string, number[][]>> {
+  if (intentEmbeddingsCache) {
+    return intentEmbeddingsCache;
+  }
+  
+  const cache = new Map<string, number[][]>();
+  
+  for (const [intent, examples] of Object.entries(INTENT_EXAMPLES)) {
+    const embeddings: number[][] = [];
+    for (const example of examples) {
+      const embedding = await generateMessageEmbedding(example, apiKey);
+      embeddings.push(embedding);
+    }
+    cache.set(intent, embeddings);
+  }
+  
+  intentEmbeddingsCache = cache;
+  return cache;
+}
+
+// Detect intent using embedding similarity
+async function detectIntentByEmbedding(
+  message: string,
+  apiKey: string
+): Promise<{ intent: UserIntent; confidence: number }> {
+  const SIMILARITY_THRESHOLD = 0.7;
+  
+  try {
+    const messageEmbedding = await generateMessageEmbedding(message, apiKey);
+    const intentEmbeddings = await getIntentEmbeddings(apiKey);
+    
+    let bestIntent: UserIntent = 'general';
+    let bestScore = 0;
+    
+    for (const [intent, exampleEmbeddings] of intentEmbeddings.entries()) {
+      const similarities = exampleEmbeddings.map(ex => 
+        computeCosineSimilarity(messageEmbedding, ex)
+      );
+      const avgSimilarity = similarities.reduce((a, b) => a + b, 0) / similarities.length;
+      
+      if (avgSimilarity > bestScore) {
+        bestScore = avgSimilarity;
+        bestIntent = intent as UserIntent;
+      }
+    }
+    
+    if (bestScore < SIMILARITY_THRESHOLD) {
+      return { intent: 'general', confidence: bestScore };
+    }
+    
+    return { intent: bestIntent, confidence: bestScore };
+    
+  } catch (error) {
+    console.error('Embedding intent detection failed:', error);
+    return { intent: detectIntent(message), confidence: 0.5 };
+  }
+}
 ```
 
-**Update Context with Relevant Items:**
+**Update Main Handler:**
+Replace the call to `detectIntent()` with `detectIntentByEmbedding()`:
+
 ```typescript
-function formatRelevantItems(intent: UserIntent, items: RelevantItem[]): string {
-  if (items.length === 0) return '';
-  
-  const headers = {
-    declutter: 'Items you might consider removing:',
-    find: 'Found these items matching your search:',
-    organize: 'Items that need organization:',
-    compare: 'Similar items you already have:',
-    general: ''
-  };
-  
-  const header = headers[intent];
-  const itemList = items.map(i => 
-    `- ${i.name}${i.location_path ? ` (in ${i.location_path})` : ''}: ${i.reason}`
-  ).join('\n');
-  
-  return `\n${header}\n${itemList}`;
-}
+// Old:
+const intent = detectIntent(body.message);
+
+// New:
+const { intent, confidence } = await detectIntentByEmbedding(
+  body.message,
+  openaiApiKey
+);
+console.log(`Detected intent: ${intent} (confidence: ${confidence.toFixed(2)})`);
 ```
 
 ## Instructions
 
-1. Read `supabase/functions/shopping-followup/index.ts` (already modified with US-SHOP-001)
-2. Add the intent detection constants and types
-3. Add `detectIntent()` function
-4. Add `fetchRelevantItems()` and helper functions for each intent
-5. Add `generateQueryEmbedding()` for semantic search
-6. Add `formatRelevantItems()` to format results
-7. Update main handler to detect intent and fetch relevant items
-8. Include relevant items in context sent to AI
-9. Update system prompt with intent-specific guidance
+1. Read current `supabase/functions/shopping-followup/index.ts`
+2. Add `INTENT_EXAMPLES` constant near the top
+3. Add module-level `intentEmbeddingsCache` variable
+4. Add `generateMessageEmbedding()` function
+5. Add `computeCosineSimilarity()` function
+6. Add `getIntentEmbeddings()` function with caching
+7. Add `detectIntentByEmbedding()` function
+8. Update main handler to use `detectIntentByEmbedding()` instead of `detectIntent()`
+9. Keep `detectIntent()` as fallback (called inside detectIntentByEmbedding on error)
 10. Run `npm run build` to verify
-11. Commit with: `feat: [US-SHOP-002] Add smart inventory search by intent`
+11. Commit with: `feat: [US-SHOP-003] Embedding-based intent detection`
 12. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
