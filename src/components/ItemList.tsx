@@ -93,6 +93,11 @@ function ItemRow({ item, onClick }: ItemRowProps) {
 
       {/* Category badge and chevron - right */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        {item.has_active_listing && (
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-emerald-600 text-white">
+            Listed
+          </span>
+        )}
         {/* Category badge */}
         {item.category_name && (
           <span

@@ -59,12 +59,19 @@ function ItemCard({ item, onClick }: ItemCardProps) {
           loading="lazy"
         />
 
-        {/* Category badge overlay (top-left) */}
-        {item.category_name && (
-          <div className="absolute top-3 left-3">
-            <span className="inline-block px-2.5 py-1 bg-teal-500 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
-              {item.category_name}
-            </span>
+        {/* Category and listing badges (top-left) */}
+        {(item.category_name || item.has_active_listing) && (
+          <div className="absolute top-3 left-3 flex flex-col gap-1">
+            {item.has_active_listing && (
+              <span className="inline-block px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
+                Listed
+              </span>
+            )}
+            {item.category_name && (
+              <span className="inline-block px-2.5 py-1 bg-teal-500 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
+                {item.category_name}
+              </span>
+            )}
           </div>
         )}
 

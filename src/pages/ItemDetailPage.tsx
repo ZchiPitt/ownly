@@ -47,9 +47,12 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { TagChip } from '@/components/TagChip';
+import { ListingFormModal } from '@/components/ListingFormModal';
 import { useAuth } from '@/hooks/useAuth';
+import { useListings } from '@/hooks/useListings';
 import { getColorHex } from '@/lib/colorUtils';
 import type { Item, Category, Location } from '@/types';
+import type { Listing } from '@/types/database';
 
 /**
  * Full item data with category and location info
@@ -836,6 +839,7 @@ export function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { getListingByItemId } = useListings();
 
   const [item, setItem] = useState<ItemDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -843,6 +847,9 @@ export function ItemDetailPage() {
   const [isPhotoViewerOpen, setIsPhotoViewerOpen] = useState(false);
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [existingListing, setExistingListing] = useState<Listing | null>(null);
+  const [isListingLoading, setIsListingLoading] = useState(false);
   const overflowMenuRef = useRef<HTMLDivElement>(null);
   const [relatedItems, setRelatedItems] = useState<Array<{ id: string; name: string | null }>>([]);
   const [isLoadingRelated, setIsLoadingRelated] = useState(false);
@@ -956,6 +963,21 @@ export function ItemDetailPage() {
   useEffect(() => {
     fetchItem();
   }, [fetchItem]);
+
+  const fetchListing = useCallback(async () => {
+    if (!id || !user?.id) {
+      setExistingListing(null);
+      return;
+    }
+    setIsListingLoading(true);
+    const listing = await getListingByItemId(id);
+    setExistingListing(listing);
+    setIsListingLoading(false);
+  }, [getListingByItemId, id, user?.id]);
+
+  useEffect(() => {
+    fetchListing();
+  }, [fetchListing]);
 
   useEffect(() => {
     const sourceBatchId = item?.source_batch_id;
@@ -1465,9 +1487,16 @@ export function ItemDetailPage() {
       {/* Primary Info Section (US-053) */}
       <div className="p-4">
         {/* Item name - large */}
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
-          {item.name || 'Unnamed Item'}
-        </h2>
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {item.name || 'Unnamed Item'}
+          </h2>
+          {existingListing && (
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700">
+              Listed
+            </span>
+          )}
+        </div>
 
         {/* Category badge - tappable */}
         {item.category && (
@@ -1516,6 +1545,30 @@ export function ItemDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Listing actions */}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {existingListing ? (
+            <button
+              type="button"
+              disabled
+              className="px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 font-semibold text-sm flex flex-col items-center justify-center min-w-[140px]"
+              aria-disabled="true"
+            >
+              <span>Edit Listing</span>
+              <span className="text-[11px] font-normal">Already Listed</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowListingModal(true)}
+              disabled={isListingLoading}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sell / Share
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Details Section (US-054) */}
@@ -1598,6 +1651,21 @@ export function ItemDetailPage() {
           onClose={() => setIsPhotoViewerOpen(false)}
         />
       )}
+
+      {/* Listing Form Modal */}
+      <ListingFormModal
+        isOpen={showListingModal}
+        onClose={() => setShowListingModal(false)}
+        item={{
+          id: item.id,
+          name: item.name || 'Unnamed Item',
+          photo_url: item.thumbnail_url || item.photo_url,
+        }}
+        onSuccess={() => {
+          fetchItem();
+          fetchListing();
+        }}
+      />
 
       {/* Toast notification (US-056) */}
       {toast && (

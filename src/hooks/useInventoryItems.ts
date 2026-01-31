@@ -35,6 +35,7 @@ export interface InventoryItem {
   currency: string;
   expiration_date: string | null;
   is_favorite: boolean;
+  has_active_listing: boolean;
   created_at: string;
   updated_at: string;
   last_viewed_at: string | null;
@@ -133,7 +134,11 @@ interface RawInventoryItem {
 /**
  * Transform raw Supabase data to InventoryItem format
  */
-function transformRawItem(item: RawInventoryItem, sharedPhotoCount: number): InventoryItem {
+function transformRawItem(
+  item: RawInventoryItem,
+  sharedPhotoCount: number,
+  hasActiveListing: boolean
+): InventoryItem {
   return {
     id: item.id,
     name: item.name,
@@ -154,6 +159,7 @@ function transformRawItem(item: RawInventoryItem, sharedPhotoCount: number): Inv
     currency: item.currency,
     expiration_date: item.expiration_date,
     is_favorite: item.is_favorite,
+    has_active_listing: hasActiveListing,
     created_at: item.created_at,
     updated_at: item.updated_at,
     last_viewed_at: item.last_viewed_at,
@@ -187,6 +193,25 @@ async function fetchSharedPhotoCounts(
   });
 
   return counts;
+}
+
+async function fetchActiveListingIds(itemIds: string[]): Promise<Set<string>> {
+  const uniqueItemIds = Array.from(new Set(itemIds.filter(Boolean)));
+  if (uniqueItemIds.length === 0) return new Set();
+
+  const { data, error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+    .select('item_id')
+    .in('item_id', uniqueItemIds)
+    .eq('status', 'active');
+
+  const listingRows = data as { item_id: string }[] | null;
+
+  if (error || !listingRows) {
+    console.error('Error fetching active listings:', error);
+    return new Set();
+  }
+
+  return new Set(listingRows.map((row) => row.item_id));
 }
 
 /**
@@ -360,15 +385,19 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       }
 
       const rawItems = data || [];
-      const sharedCounts = await fetchSharedPhotoCounts(
-        rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
-        user.id
-      );
+      const [sharedCounts, activeListingIds] = await Promise.all([
+        fetchSharedPhotoCounts(
+          rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
+          user.id
+        ),
+        fetchActiveListingIds(rawItems.map((item) => item.id)),
+      ]);
       const inventoryItems = rawItems.map((item) => {
         const batchId = item.source_batch_id;
         const totalShared = batchId ? sharedCounts[batchId] ?? 1 : 1;
         const sharedPhotoCount = batchId ? Math.max(totalShared - 1, 0) : 0;
-        return transformRawItem(item, sharedPhotoCount);
+        const hasActiveListing = activeListingIds.has(item.id);
+        return transformRawItem(item, sharedPhotoCount, hasActiveListing);
       });
 
       setItems(inventoryItems);
@@ -407,15 +436,19 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       }
 
       const rawItems = data || [];
-      const sharedCounts = await fetchSharedPhotoCounts(
-        rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
-        user.id
-      );
+      const [sharedCounts, activeListingIds] = await Promise.all([
+        fetchSharedPhotoCounts(
+          rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
+          user.id
+        ),
+        fetchActiveListingIds(rawItems.map((item) => item.id)),
+      ]);
       const newItems = rawItems.map((item) => {
         const batchId = item.source_batch_id;
         const totalShared = batchId ? sharedCounts[batchId] ?? 1 : 1;
         const sharedPhotoCount = batchId ? Math.max(totalShared - 1, 0) : 0;
-        return transformRawItem(item, sharedPhotoCount);
+        const hasActiveListing = activeListingIds.has(item.id);
+        return transformRawItem(item, sharedPhotoCount, hasActiveListing);
       });
 
       setItems((prevItems) => [...prevItems, ...newItems]);

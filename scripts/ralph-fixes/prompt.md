@@ -1,88 +1,136 @@
-# US-MKT-002: Seller Profile Extension
+# US-MKT-003: List Item for Sale UI
 
-**Description:** As a user, I want to have a public profile so buyers can see my information and trustworthiness.
+**Description:** As a user, I want to list my inventory items for sale so others in the community can purchase them.
 
 ## Acceptance Criteria
 
-1. Add to profiles table: display_name (varchar 100), bio (text), avatar_url (text), location_city (varchar 100)
-2. Add to profiles table: seller_rating (decimal 3,2 default null), review_count (integer default 0), is_verified (boolean default false)
-3. Add to profiles table: total_sold (integer default 0), response_rate (decimal 3,2 default null)
-4. Create RLS policy: display_name, avatar_url, location_city, seller_rating, review_count, is_verified, total_sold are publicly readable by authenticated users
-5. Create RLS policy: users can only update their own profile fields
-6. Migration runs successfully
-7. Update TypeScript Profile interface in database.ts
-8. npm run build passes
+1. Add 'Sell / Share' button on ItemDetailPage (only visible for item owner)
+2. Button opens ListingFormModal with fields: price (number input), price_type (radio: Fixed/Negotiable/Free), condition (dropdown: New/Like New/Good/Fair/Poor), description (textarea max 500 chars)
+3. When price_type is 'Free', hide price input field
+4. Form validation: price required if not free, condition required, description optional
+5. Submit creates new listing in database with status='active'
+6. On success: show toast 'Item listed!', close modal, refresh page
+7. On error: show error toast, keep modal open
+8. Item card in Inventory/Gallery shows 'Listed' badge when item has active listing
+9. Cannot list item that is already listed (show 'Already Listed' disabled state)
+10. npm run build passes
 
 ## Technical Details
 
-**Migration File:** `supabase/migrations/YYYYMMDDHHMMSS_extend_profiles_for_marketplace.sql`
+**Files to Create/Modify:**
 
-```sql
--- Extend profiles table for marketplace seller features
-ALTER TABLE profiles
-ADD COLUMN IF NOT EXISTS display_name VARCHAR(100),
-ADD COLUMN IF NOT EXISTS bio TEXT,
-ADD COLUMN IF NOT EXISTS avatar_url TEXT,
-ADD COLUMN IF NOT EXISTS location_city VARCHAR(100),
-ADD COLUMN IF NOT EXISTS seller_rating DECIMAL(3, 2),
-ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS total_sold INTEGER DEFAULT 0,
-ADD COLUMN IF NOT EXISTS response_rate DECIMAL(3, 2),
-ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMP WITH TIME ZONE;
-
--- Update RLS policies for profiles (keep existing + add new)
--- Note: profiles table should already have RLS enabled
-
--- Policy for reading public seller info (anyone authenticated can read)
-DROP POLICY IF EXISTS "Public profiles are viewable by authenticated users" ON profiles;
-CREATE POLICY "Public profiles are viewable by authenticated users" ON profiles
-  FOR SELECT TO authenticated
-  USING (true);
-
--- Policy for users updating their own profile
-DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
-CREATE POLICY "Users can update own profile" ON profiles
-  FOR UPDATE TO authenticated
-  USING (id = auth.uid())
-  WITH CHECK (id = auth.uid());
-
--- Index for seller lookups
-CREATE INDEX IF NOT EXISTS idx_profiles_seller_rating ON profiles(seller_rating DESC NULLS LAST);
-CREATE INDEX IF NOT EXISTS idx_profiles_location ON profiles(location_city);
-```
-
-**TypeScript Types Update (src/types/database.ts):**
-
-Find the existing Profile interface and add/update these fields:
+### 1. Create ListingFormModal Component
+`src/components/ListingFormModal.tsx`
 
 ```typescript
-export interface Profile {
-  id: string;
-  user_id: string;
-  // ... existing fields ...
-  
-  // Marketplace seller fields
-  display_name: string | null;
-  bio: string | null;
-  avatar_url: string | null;
-  location_city: string | null;
-  seller_rating: number | null;
-  review_count: number;
-  is_verified: boolean;
-  total_sold: number;
-  response_rate: number | null;
-  last_active_at: string | null;
+interface ListingFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  item: {
+    id: string;
+    name: string;
+    photo_url: string;
+  };
+  onSuccess: () => void;
+}
+
+// Form fields
+interface ListingFormData {
+  price: number | null;
+  price_type: 'fixed' | 'negotiable' | 'free';
+  condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+  description: string;
 }
 ```
 
+Modal should include:
+- Item preview (thumbnail + name) at top
+- Price type radio buttons (Fixed / Negotiable / Free)
+- Price input (hidden when Free selected)
+- Condition dropdown
+- Description textarea (500 char limit with counter)
+- Cancel and Submit buttons
+
+### 2. Update ItemDetailPage
+`src/pages/ItemDetailPage.tsx`
+
+- Import ListingFormModal
+- Add state: `showListingModal`, `existingListing`
+- Fetch existing listing for this item on load
+- Add "Sell / Share" button in action area (only if owner and not already listed)
+- If already listed, show "Listed" badge and "Edit Listing" button instead
+
+### 3. Create Hook for Listings
+`src/hooks/useListings.ts`
+
+```typescript
+export function useListings() {
+  const { user } = useAuth();
+  
+  async function createListing(data: {
+    item_id: string;
+    price: number | null;
+    price_type: 'fixed' | 'negotiable' | 'free';
+    condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+    description: string;
+  }): Promise<{ data: Listing | null; error: Error | null }>;
+  
+  async function getListingByItemId(itemId: string): Promise<Listing | null>;
+  
+  return { createListing, getListingByItemId };
+}
+```
+
+### 4. Update GalleryGrid/ItemList
+Add "Listed" badge overlay on items that have active listings.
+
+Query to check: join with listings table where status='active'
+
+## Database Query
+
+```typescript
+// Create listing
+const { data, error } = await supabase
+  .from('listings')
+  .insert({
+    item_id: itemId,
+    seller_id: userProfileId,  // Need to get from profiles table
+    price: priceType === 'free' ? null : price,
+    price_type: priceType,
+    condition: condition,
+    description: description,
+    status: 'active'
+  })
+  .select()
+  .single();
+
+// Check if item already listed
+const { data: existing } = await supabase
+  .from('listings')
+  .select('id, status')
+  .eq('item_id', itemId)
+  .eq('status', 'active')
+  .single();
+```
+
+## UI Components
+
+Use existing Tailwind patterns:
+- Modal: similar to ConfirmDialog pattern
+- Radio buttons: styled radio group
+- Dropdown: existing select styling
+- Textarea: existing input styling with character counter
+- Buttons: existing Button component
+
 ## Instructions
 
-1. Create the migration file in `supabase/migrations/` with timestamp prefix
-2. Update the Profile interface in `src/types/database.ts` to include new fields
-3. Run `npm run build` to verify types compile
-4. Commit with: `feat: [US-MKT-002] Extend profiles for marketplace sellers`
-5. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Create `src/hooks/useListings.ts` with createListing and getListingByItemId
+2. Create `src/components/ListingFormModal.tsx` with the form UI
+3. Update `src/pages/ItemDetailPage.tsx` to add Sell button and modal
+4. Update `src/components/GalleryGrid.tsx` to show Listed badge (optional, can be next story)
+5. Run `npm run build` to verify
+6. Commit with: `feat: [US-MKT-003] Add list item for sale UI`
+7. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

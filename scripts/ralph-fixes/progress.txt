@@ -203,3 +203,9 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: supabase/migrations/20260131120000_extend_profiles_for_marketplace.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 05:34 PST - US-MKT-003
+- Added listings hook and listing form modal to create active marketplace listings.
+- Wired Item Detail listing actions and Listed badge; added active listing badges in gallery and list views.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useListings.ts, src/components/ListingFormModal.tsx, src/pages/ItemDetailPage.tsx, src/hooks/useInventoryItems.ts, src/components/GalleryGrid.tsx, src/components/ItemList.tsx, scripts/ralph-fixes/progress.txt
+---
