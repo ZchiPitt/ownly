@@ -8,9 +8,9 @@
 
 ## Summary
 
-Completed 5 user stories in one session:
+Completed 6 user stories in one session:
 - 3 FIXES stories (UI improvements)
-- 2 Shopping Agent stories (new feature)
+- 3 Shopping Agent stories (inventory context + smart search + embedding intent)
 
 ---
 
@@ -128,18 +128,43 @@ The AI had no data to work with and gave generic responses.
 - `generateQueryEmbedding()` - OpenAI embeddings
 - `formatRelevantItems()` - context formatting
 
-**Intent Keywords:**
+**Files Changed:**
+- `supabase/functions/shopping-followup/index.ts`
+
+**Commit:** `85c562a`
+
+---
+
+### US-SHOP-003: Embedding-based Intent Detection ✅
+
+**Problem:** Keyword matching too rigid - "help me clear out stuff" doesn't match any keywords.
+
+**Solution:**
+- Use embedding similarity instead of keyword matching
+- Pre-define 4-5 example phrases per intent
+- Generate embedding for user message
+- Compare via cosine similarity to intent examples
+- Return intent with highest similarity (threshold 0.7)
+- Fallback to keyword matching if API fails
+
+**New Functions:**
+- `INTENT_EXAMPLES` - example phrases per intent
+- `generateMessageEmbedding()` - OpenAI text-embedding-3-small (512 dims)
+- `computeCosineSimilarity()` - vector similarity
+- `getIntentEmbeddings()` - cached intent embeddings
+- `detectIntentByEmbedding()` - main detection logic
+
+**Example Phrases:**
 ```typescript
-declutter: ['drop', 'donate', 'sell', 'get rid of', 'throw away']
-find: ['where is', 'do I have', 'find my', 'looking for']
-organize: ['organize', 'sort', 'arrange', 'tidy', 'need space']
-compare: ['similar', 'like this', 'already have something like']
+declutter: ["what can I get rid of", "help me clear out stuff", ...]
+find: ["where is my passport", "can you locate my keys", ...]
+organize: ["help me organize my closet", "I need to tidy up", ...]
 ```
 
 **Files Changed:**
 - `supabase/functions/shopping-followup/index.ts`
 
-**Commit:** `85c562a`
+**Commit:** `89229d8`
 
 ---
 
@@ -164,6 +189,8 @@ compare: ['similar', 'like this', 'already have something like']
 ## Git Commits (Tonight)
 
 ```
+89229d8 feat: [US-SHOP-003] Embedding-based intent detection
+bf8c3e2 docs: Add changelog for 2026-01-31 session
 85c562a feat: [US-SHOP-002] Add smart inventory search by intent
 09d32a3 feat: [US-SHOP-001] Add inventory context to shopping assistant
 fefb7d5 docs: Add acceptance criteria to shopping agent stories
