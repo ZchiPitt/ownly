@@ -1,68 +1,79 @@
-# US-FIX-005: Visual Indicator for Shared Photo
+# US-FIX-008: Color Tag UI Highlight
 
-**Description:** As a user, I want to understand that multiple items share the same photo so I'm not confused.
+**Description:** As a user viewing tags, I want color tags to be visually distinct so I can quickly identify item colors.
 
 **Technical Context:**
-- Multiple items can have same `photo_url` and `thumbnail_url`
-- No current indicator that photo is shared
-- Users may be confused why items look "the same"
+- Tags currently display as gray chips
+- Color tags should stand out visually
+- Can show actual color swatch/dot
 
 ## Acceptance Criteria
 
-**Database Change:**
-- [ ] Add `source_batch_id` column to items table (nullable UUID)
-- [ ] Items from same multi-item capture share same batch ID
-- [ ] Single-item captures have NULL batch ID
+**Color Detection Utility:**
+- [ ] Create `src/lib/colorUtils.ts`:
+  ```typescript
+  // Returns hex color if tag is a color word, null otherwise
+  function getColorHex(tag: string): string | null;
+  
+  // Check if tag contains color word
+  function isColorTag(tag: string): boolean;
+  
+  // Color mapping
+  const COLOR_MAP: Record<string, string> = {
+    'red': '#EF4444',
+    'blue': '#3B82F6',
+    'green': '#22C55E',
+    // ... etc
+  };
+  ```
 
-**Inventory Display:**
-- [ ] In GalleryGrid, show small badge on shared-photo items
-- [ ] Badge: "📷 +2" meaning "2 other items share this photo"
-- [ ] Badge position: bottom-right of thumbnail
-- [ ] Badge style: semi-transparent black background, white text
+**Tag Display:**
+- [ ] Color tags show colored dot before text
+- [ ] Dot is 8x8px circle with the actual color
+- [ ] Color tags have subtle tinted background matching color
+- [ ] Color tags appear first in tag list (already from AI)
 
-**Item Detail Page:**
-- [ ] If item has source_batch_id, show info section:
-  - "This photo contains multiple items"
-  - List linked items as clickable chips
-  - Example: "Also in photo: Blue Mug, Red Plate"
-- [ ] Position: below main photo, before details
+**Component Updates:**
+- [ ] TagChip component: accept `isColor` prop, render dot
+- [ ] Apply in: ItemEditor, ItemDetailPage, GalleryGrid, SearchResult
+
+**Accessibility:**
+- [ ] Color dot has `aria-label="Color: blue"`
+- [ ] Don't rely on color alone (text still shows color name)
 
 ## Files to modify
 
 ```
-supabase/migrations/XXXXX_add_source_batch_id.sql (new)
-  - ALTER TABLE items ADD COLUMN source_batch_id UUID;
+src/lib/colorUtils.ts (new)
+  - COLOR_MAP constant
+  - getColorHex() function
+  - isColorTag() function
 
-src/types/database.ts
-  - Add source_batch_id to Item interface
-
-src/pages/AddItemPage.tsx
-  - Generate batch ID for multi-item saves
-  - Pass batch ID to each item creation
+src/components/TagsInput.tsx
+  - Import colorUtils
+  - Render color dot for color tags
 
 src/components/GalleryGrid.tsx
-  - Query for shared items count
-  - Render badge on thumbnails
+  - Show color tag with dot in item card
 
 src/pages/ItemDetailPage.tsx
-  - Query for items with same batch ID
-  - Render "Also in photo" section
+  - Render color-enhanced tags
 ```
 
 ## Test Cases
 
-- [ ] Add 3 items from one photo → all have same batch_id
-- [ ] Add 1 item → batch_id is NULL
-- [ ] View item in Gallery → shows "+2" badge if shared
-- [ ] View item detail → shows linked items if shared
+- [ ] Tag "blue" shows blue dot
+- [ ] Tag "cotton" shows no dot (not a color)
+- [ ] Tag "navy blue" shows navy blue dot
+- [ ] Multiple color tags all show appropriate dots
 
 ## Instructions
 
 1. Read this story carefully
 2. Implement all acceptance criteria
 3. Run `npm run build` to verify
-4. If build passes, commit with: `feat: [US-FIX-005] Visual indicator for shared photo`
-5. Update progress in `scripts/ralph-fixes/progress.txt`
+4. If build passes, commit with: `feat: [US-FIX-008] Color tag UI highlight`
+5. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

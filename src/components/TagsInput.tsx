@@ -13,6 +13,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTags } from '@/hooks/useTags';
+import { getColorHex, getColorTint, isLightColor } from '@/lib/colorUtils';
 
 /**
  * Props for the TagsInput component
@@ -230,41 +231,64 @@ function TagsInputContent({
         {/* Tags and input container */}
         <div className="flex flex-wrap gap-2 items-center">
           {/* Existing tags as chips */}
-          {value.map((tag) => (
-            <span
-              key={tag}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm ${
-                isAITag(tag)
-                  ? 'bg-blue-100 text-blue-700'
+          {value.map((tag) => {
+            const colorHex = getColorHex(tag);
+            const isColor = !!colorHex;
+            const isAI = isAITag(tag);
+            const chipStyle = isColor && colorHex ? { backgroundColor: getColorTint(colorHex) } : undefined;
+            const dotBorderClass = colorHex && isLightColor(colorHex)
+              ? 'border border-gray-300'
+              : 'border border-transparent';
+            const chipClassName = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm ${
+              isAI
+                ? isColor
+                  ? 'text-gray-800 ring-1 ring-blue-200'
+                  : 'bg-blue-100 text-blue-700'
+                : isColor
+                  ? 'text-gray-800'
                   : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              {isAITag(tag) && <SparkleIcon className="w-3 h-3 text-blue-500" />}
-              <span className="max-w-[150px] truncate">{tag}</span>
-              <button
-                type="button"
-                onClick={() => removeTag(tag)}
-                className={`ml-0.5 p-0.5 rounded-full hover:bg-opacity-20 transition-colors ${
-                  isAITag(tag) ? 'hover:bg-blue-700' : 'hover:bg-gray-700'
-                }`}
-                aria-label={`Remove tag ${tag}`}
+            }`;
+            const removeHoverClass = isAI && !isColor ? 'hover:bg-blue-700' : 'hover:bg-gray-700';
+
+            return (
+              <span
+                key={tag}
+                className={chipClassName}
+                style={chipStyle}
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+                {isColor && colorHex && (
+                  <span
+                    role="img"
+                    aria-label={`Color: ${tag}`}
+                    className={`inline-block w-2 h-2 rounded-full ${dotBorderClass}`}
+                    style={{ backgroundColor: colorHex }}
                   />
-                </svg>
-              </button>
-            </span>
-          ))}
+                )}
+                {isAI && <SparkleIcon className="w-3 h-3 text-blue-500" />}
+                <span className="max-w-[150px] truncate">{tag}</span>
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className={`ml-0.5 p-0.5 rounded-full hover:bg-opacity-20 transition-colors ${removeHoverClass}`}
+                  aria-label={`Remove tag ${tag}`}
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </span>
+            );
+          })}
 
           {/* Input field */}
           {value.length < MAX_TAGS && (

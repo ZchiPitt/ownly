@@ -46,7 +46,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { TagChip } from '@/components/TagChip';
 import { useAuth } from '@/hooks/useAuth';
+import { getColorHex } from '@/lib/colorUtils';
 import type { Item, Category, Location } from '@/types';
 
 /**
@@ -1498,14 +1500,19 @@ export function ItemDetailPage() {
         {item.tags && item.tags.length > 0 && (
           <div className="mb-4 -mx-4 px-4">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-              {item.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full whitespace-nowrap flex-shrink-0"
-                >
-                  #{tag}
-                </span>
-              ))}
+              {item.tags.map((tag, index) => {
+                const colorHex = getColorHex(tag);
+                return (
+                  <TagChip
+                    key={`${tag}-${index}`}
+                    label={tag}
+                    prefix="#"
+                    isColor={!!colorHex}
+                    colorHex={colorHex}
+                    className="text-sm px-3 py-1 flex-shrink-0"
+                  />
+                );
+              })}
             </div>
           </div>
         )}

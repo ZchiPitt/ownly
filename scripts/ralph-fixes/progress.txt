@@ -5,3 +5,8 @@
   - Use source_batch_id to group multi-item captures; shared-photo counts are derived by counting items with the same batch ID and subtracting 1 for the current item.
   - Item detail related items query should filter by user_id and deleted_at is null, excluding the current item.
 ---
+## 2026-01-31 09:45 PST - US-FIX-008
+- Added color tag utilities and TagChip component to render color dots/tinted chips across tags input, item detail, gallery, and search results.
+- Updated inventory item query/types to include tags for gallery tag previews.
+- Files changed: src/lib/colorUtils.ts, src/components/TagChip.tsx, src/components/TagsInput.tsx, src/components/GalleryGrid.tsx, src/components/SearchResult.tsx, src/pages/ItemDetailPage.tsx, src/hooks/useInventoryItems.ts
+---

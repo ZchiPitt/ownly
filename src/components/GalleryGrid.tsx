@@ -7,6 +7,8 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { InventoryItem } from '@/hooks/useInventoryItems';
+import { TagChip } from '@/components/TagChip';
+import { getColorHex } from '@/lib/colorUtils';
 
 /**
  * Format price with currency symbol
@@ -41,6 +43,7 @@ function ItemCard({ item, onClick }: ItemCardProps) {
   const formattedPrice = formatPrice(item.price, item.currency);
   const locationDisplay = item.location_name || item.location_path;
   const sharedPhotoCount = item.shared_photo_count ?? 0;
+  const displayTags = item.tags ? item.tags.slice(0, 3) : [];
 
   return (
     <button
@@ -130,6 +133,28 @@ function ItemCard({ item, onClick }: ItemCardProps) {
             </span>
           )}
         </div>
+
+        {displayTags.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1">
+            {displayTags.map((tag, index) => {
+              const colorHex = getColorHex(tag);
+              return (
+                <TagChip
+                  key={`${tag}-${index}`}
+                  label={tag}
+                  isColor={!!colorHex}
+                  colorHex={colorHex}
+                  className="text-[10px] px-2 py-0.5"
+                />
+              );
+            })}
+            {item.tags.length > displayTags.length && (
+              <span className="text-[10px] text-gray-400 px-1">
+                +{item.tags.length - displayTags.length}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </button>
   );

@@ -22,6 +22,7 @@ export interface InventoryItem {
   thumbnail_url: string | null;
   source_batch_id: string | null;
   shared_photo_count: number;
+  tags: string[];
   category_id: string | null;
   category_name: string | null;
   category_color: string | null;
@@ -107,6 +108,7 @@ interface RawInventoryItem {
   photo_url: string;
   thumbnail_url: string | null;
   source_batch_id: string | null;
+  tags: string[];
   category_id: string | null;
   location_id: string | null;
   quantity: number;
@@ -139,6 +141,7 @@ function transformRawItem(item: RawInventoryItem, sharedPhotoCount: number): Inv
     thumbnail_url: item.thumbnail_url,
     source_batch_id: item.source_batch_id,
     shared_photo_count: sharedPhotoCount,
+    tags: item.tags || [],
     category_id: item.category_id,
     category_name: item.categories?.name || null,
     category_color: item.categories?.color || null,
@@ -218,6 +221,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         photo_url,
         thumbnail_url,
         source_batch_id,
+        tags,
         category_id,
         location_id,
         quantity,

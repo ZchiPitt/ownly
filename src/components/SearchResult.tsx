@@ -10,7 +10,9 @@
  */
 
 import { useNavigate } from 'react-router-dom';
+import { TagChip } from '@/components/TagChip';
 import type { SearchResultItem } from '@/hooks/useSearch';
+import { getColorHex } from '@/lib/colorUtils';
 
 interface SearchResultProps {
   item: SearchResultItem;
@@ -112,6 +114,7 @@ export function SearchResult({ item, query }: SearchResultProps) {
 
   const displayName = item.name || 'Unnamed Item';
   const imageUrl = item.thumbnail_url || item.photo_url;
+  const displayTags = item.tags ? item.tags.slice(0, 3) : [];
 
   return (
     <button
@@ -163,6 +166,29 @@ export function SearchResult({ item, query }: SearchResultProps) {
               )}
               <HighlightText text={item.category_name} query={query} />
             </span>
+          </div>
+        )}
+
+        {displayTags.length > 0 && (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {displayTags.map((tag, index) => {
+              const colorHex = getColorHex(tag);
+              return (
+                <TagChip
+                  key={`${tag}-${index}`}
+                  label={tag}
+                  prefix="#"
+                  isColor={!!colorHex}
+                  colorHex={colorHex}
+                  className="text-[11px] px-2 py-0.5"
+                />
+              );
+            })}
+            {item.tags.length > displayTags.length && (
+              <span className="text-[10px] text-gray-400 px-1">
+                +{item.tags.length - displayTags.length}
+              </span>
+            )}
           </div>
         )}
       </div>
