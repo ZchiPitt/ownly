@@ -1,205 +1,200 @@
-# US-SHOP-003: Embedding-based Intent Detection
+# US-MKT-001: Marketplace Database Schema
 
-**Description:** As a user asking questions in natural language, I want the assistant to understand my intent even when I don't use exact keywords, so I get relevant responses.
+**Description:** As a developer, I need the database schema for marketplace functionality including listings, transactions, and messages tables.
 
 ## Acceptance Criteria
 
-1. Create INTENT_EXAMPLES constant with 4-5 example phrases per intent (declutter, find, organize, compare, general)
-2. Create generateMessageEmbedding() function using OpenAI text-embedding-3-small (512 dimensions)
-3. Create computeCosineSimilarity() function for vector comparison
-4. Create detectIntentByEmbedding() that compares message to all intent examples
-5. Pre-compute intent example embeddings on first request (cache in memory using module-level variable)
-6. Return intent with highest average similarity score
-7. Set minimum similarity threshold (0.7) - below returns 'general'
-8. Fall back to keyword matching if embedding API fails
-9. User says 'help me clear out stuff' → detects 'declutter' intent
-10. User says 'can you locate my keys' → detects 'find' intent
-11. User says 'random question about weather' → returns 'general' (below threshold)
-12. npm run build passes
-13. Keep existing detectIntent() as fallback
+1. Create listings table with: id (UUID PK), item_id (FK to items), seller_id (FK to profiles), status (active/sold/reserved/removed), price (decimal 10,2), price_type (fixed/negotiable/free), condition (new/like_new/good/fair/poor), description (text), created_at, updated_at
+2. Create transactions table with: id (UUID PK), listing_id (FK), buyer_id (FK to profiles), seller_id (FK to profiles), status (pending/accepted/completed/cancelled), agreed_price (decimal 10,2), message (text), created_at, updated_at
+3. Create messages table with: id (UUID PK), listing_id (FK), sender_id (FK to profiles), receiver_id (FK to profiles), content (text), read_at (timestamp nullable), created_at
+4. Add RLS policies: users can only see their own transactions (as buyer or seller)
+5. Add RLS policies: sellers can see all transactions for their listings
+6. Add RLS policies: messages visible only to sender or receiver
+7. Add RLS policies: listings readable by all authenticated users, writable only by seller
+8. Create indexes on: listings(seller_id, status), listings(item_id), transactions(buyer_id), transactions(seller_id), transactions(listing_id), messages(listing_id), messages(sender_id), messages(receiver_id)
+9. Migration runs successfully
+10. TypeScript types added to src/types/database.ts
+11. npm run build passes
 
 ## Technical Details
 
-**File to Modify:**
-```
-supabase/functions/shopping-followup/index.ts
-```
+**Migration File:** `supabase/migrations/YYYYMMDDHHMMSS_create_marketplace_tables.sql`
 
-**Intent Examples to Add:**
-```typescript
-const INTENT_EXAMPLES: Record<UserIntent, string[]> = {
-  declutter: [
-    "what can I get rid of",
-    "what should I throw away",
-    "help me clear out some stuff",
-    "what can I donate or sell",
-    "I have too much stuff what should go"
-  ],
-  find: [
-    "where is my passport",
-    "do I have a blue shirt",
-    "can you find my charger",
-    "looking for my headphones",
-    "where did I put my keys"
-  ],
-  organize: [
-    "help me organize my closet",
-    "I need to tidy up my stuff",
-    "what needs to be put away",
-    "how should I arrange my items"
-  ],
-  compare: [
-    "do I have something similar to this",
-    "is this like what I already own",
-    "would this be a duplicate"
-  ],
-  general: [
-    "tell me about my inventory",
-    "what do I have",
-    "give me a summary"
-  ]
-};
-```
+```sql
+-- Enable UUID extension if not already
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-**New Functions to Add:**
-
-```typescript
-// Module-level cache for intent embeddings
-let intentEmbeddingsCache: Map<string, number[][]> | null = null;
-
-// Generate embedding for text (512 dimensions for speed)
-async function generateMessageEmbedding(
-  text: string,
-  apiKey: string
-): Promise<number[]> {
-  const response = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'text-embedding-3-small',
-      input: text,
-      dimensions: 512,
-    }),
-  });
-  
-  if (!response.ok) {
-    throw new Error(`Embedding API error: ${response.status}`);
-  }
-  
-  const data = await response.json();
-  return data.data[0].embedding;
-}
-
-// Cosine similarity between two vectors
-function computeCosineSimilarity(a: number[], b: number[]): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  
-  for (let i = 0; i < a.length; i++) {
-    dotProduct += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  
-  if (normA === 0 || normB === 0) return 0;
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
-
-// Get or compute intent embeddings (cached)
-async function getIntentEmbeddings(
-  apiKey: string
-): Promise<Map<string, number[][]>> {
-  if (intentEmbeddingsCache) {
-    return intentEmbeddingsCache;
-  }
-  
-  const cache = new Map<string, number[][]>();
-  
-  for (const [intent, examples] of Object.entries(INTENT_EXAMPLES)) {
-    const embeddings: number[][] = [];
-    for (const example of examples) {
-      const embedding = await generateMessageEmbedding(example, apiKey);
-      embeddings.push(embedding);
-    }
-    cache.set(intent, embeddings);
-  }
-  
-  intentEmbeddingsCache = cache;
-  return cache;
-}
-
-// Detect intent using embedding similarity
-async function detectIntentByEmbedding(
-  message: string,
-  apiKey: string
-): Promise<{ intent: UserIntent; confidence: number }> {
-  const SIMILARITY_THRESHOLD = 0.7;
-  
-  try {
-    const messageEmbedding = await generateMessageEmbedding(message, apiKey);
-    const intentEmbeddings = await getIntentEmbeddings(apiKey);
-    
-    let bestIntent: UserIntent = 'general';
-    let bestScore = 0;
-    
-    for (const [intent, exampleEmbeddings] of intentEmbeddings.entries()) {
-      const similarities = exampleEmbeddings.map(ex => 
-        computeCosineSimilarity(messageEmbedding, ex)
-      );
-      const avgSimilarity = similarities.reduce((a, b) => a + b, 0) / similarities.length;
-      
-      if (avgSimilarity > bestScore) {
-        bestScore = avgSimilarity;
-        bestIntent = intent as UserIntent;
-      }
-    }
-    
-    if (bestScore < SIMILARITY_THRESHOLD) {
-      return { intent: 'general', confidence: bestScore };
-    }
-    
-    return { intent: bestIntent, confidence: bestScore };
-    
-  } catch (error) {
-    console.error('Embedding intent detection failed:', error);
-    return { intent: detectIntent(message), confidence: 0.5 };
-  }
-}
-```
-
-**Update Main Handler:**
-Replace the call to `detectIntent()` with `detectIntentByEmbedding()`:
-
-```typescript
-// Old:
-const intent = detectIntent(body.message);
-
-// New:
-const { intent, confidence } = await detectIntentByEmbedding(
-  body.message,
-  openaiApiKey
+-- Listings table
+CREATE TABLE listings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'sold', 'reserved', 'removed')),
+  price DECIMAL(10, 2),
+  price_type TEXT NOT NULL DEFAULT 'fixed' CHECK (price_type IN ('fixed', 'negotiable', 'free')),
+  condition TEXT NOT NULL CHECK (condition IN ('new', 'like_new', 'good', 'fair', 'poor')),
+  description TEXT,
+  view_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-console.log(`Detected intent: ${intent} (confidence: ${confidence.toFixed(2)})`);
+
+-- Transactions table
+CREATE TABLE transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+  buyer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  seller_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'completed', 'cancelled')),
+  agreed_price DECIMAL(10, 2),
+  message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Messages table
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  listing_id UUID REFERENCES listings(id) ON DELETE SET NULL,
+  sender_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  receiver_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  read_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_listings_seller_status ON listings(seller_id, status);
+CREATE INDEX idx_listings_item ON listings(item_id);
+CREATE INDEX idx_listings_status ON listings(status) WHERE status = 'active';
+CREATE INDEX idx_transactions_buyer ON transactions(buyer_id);
+CREATE INDEX idx_transactions_seller ON transactions(seller_id);
+CREATE INDEX idx_transactions_listing ON transactions(listing_id);
+CREATE INDEX idx_messages_listing ON messages(listing_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_messages_receiver ON messages(receiver_id);
+CREATE INDEX idx_messages_conversation ON messages(sender_id, receiver_id, listing_id);
+
+-- Enable RLS
+ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Listings policies
+CREATE POLICY "Listings are viewable by authenticated users" ON listings
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Users can create listings for their items" ON listings
+  FOR INSERT TO authenticated
+  WITH CHECK (seller_id = auth.uid());
+
+CREATE POLICY "Sellers can update their own listings" ON listings
+  FOR UPDATE TO authenticated
+  USING (seller_id = auth.uid())
+  WITH CHECK (seller_id = auth.uid());
+
+CREATE POLICY "Sellers can delete their own listings" ON listings
+  FOR DELETE TO authenticated
+  USING (seller_id = auth.uid());
+
+-- Transactions policies
+CREATE POLICY "Users can view their own transactions" ON transactions
+  FOR SELECT TO authenticated
+  USING (buyer_id = auth.uid() OR seller_id = auth.uid());
+
+CREATE POLICY "Buyers can create transactions" ON transactions
+  FOR INSERT TO authenticated
+  WITH CHECK (buyer_id = auth.uid());
+
+CREATE POLICY "Participants can update transactions" ON transactions
+  FOR UPDATE TO authenticated
+  USING (buyer_id = auth.uid() OR seller_id = auth.uid());
+
+-- Messages policies
+CREATE POLICY "Users can view their own messages" ON messages
+  FOR SELECT TO authenticated
+  USING (sender_id = auth.uid() OR receiver_id = auth.uid());
+
+CREATE POLICY "Users can send messages" ON messages
+  FOR INSERT TO authenticated
+  WITH CHECK (sender_id = auth.uid());
+
+CREATE POLICY "Users can update their sent messages" ON messages
+  FOR UPDATE TO authenticated
+  USING (sender_id = auth.uid() OR receiver_id = auth.uid());
+
+-- Updated_at trigger function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Apply triggers
+CREATE TRIGGER update_listings_updated_at
+  BEFORE UPDATE ON listings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_transactions_updated_at
+  BEFORE UPDATE ON transactions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+```
+
+**TypeScript Types to Add (src/types/database.ts):**
+
+```typescript
+// Marketplace types
+export type ListingStatus = 'active' | 'sold' | 'reserved' | 'removed';
+export type PriceType = 'fixed' | 'negotiable' | 'free';
+export type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+export type TransactionStatus = 'pending' | 'accepted' | 'completed' | 'cancelled';
+
+export interface Listing {
+  id: string;
+  item_id: string;
+  seller_id: string;
+  status: ListingStatus;
+  price: number | null;
+  price_type: PriceType;
+  condition: ItemCondition;
+  description: string | null;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Transaction {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  status: TransactionStatus;
+  agreed_price: number | null;
+  message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Message {
+  id: string;
+  listing_id: string | null;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read_at: string | null;
+  created_at: string;
+}
 ```
 
 ## Instructions
 
-1. Read current `supabase/functions/shopping-followup/index.ts`
-2. Add `INTENT_EXAMPLES` constant near the top
-3. Add module-level `intentEmbeddingsCache` variable
-4. Add `generateMessageEmbedding()` function
-5. Add `computeCosineSimilarity()` function
-6. Add `getIntentEmbeddings()` function with caching
-7. Add `detectIntentByEmbedding()` function
-8. Update main handler to use `detectIntentByEmbedding()` instead of `detectIntent()`
-9. Keep `detectIntent()` as fallback (called inside detectIntentByEmbedding on error)
-10. Run `npm run build` to verify
-11. Commit with: `feat: [US-SHOP-003] Embedding-based intent detection`
-12. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Create the migration file in `supabase/migrations/` with timestamp prefix
+2. Add the TypeScript types to `src/types/database.ts`
+3. Run `npm run build` to verify types compile
+4. Commit with: `feat: [US-MKT-001] Add marketplace database schema`
+5. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

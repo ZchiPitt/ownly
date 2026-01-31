@@ -145,3 +145,55 @@
 - Verified production build (npm run build) with existing CSS warnings.
 - Files changed: supabase/functions/shopping-followup/index.ts, scripts/ralph-fixes/progress.txt
 ---
+## 2026-01-31 03:14 PST - US-MKT-001
+- Added marketplace listings, transactions, and messages tables with RLS policies and indexes.
+- Added marketplace TypeScript types for listings, transactions, and messages.
+- Ran npm run build (see build output for details).
+- Files changed: supabase/migrations/20260131000002_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:17 PST - US-MKT-001
+- Added marketplace listings, transactions, and messages migration with RLS policies and indexes.
+- Confirmed marketplace TypeScript types already present in database types.
+- Ran npm run build (warnings about CSS import order, CSS token, and chunk size).
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 14:30 PST - US-MKT-001
+- Confirmed marketplace migration and TypeScript types for listings, transactions, and messages.
+- Ran npm run build to verify production build.
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:24 PST - US-MKT-001
+- Confirmed marketplace migration and TypeScript types for listings, transactions, and messages.
+- Ran npm run build (warnings about CSS @import order, CSS token, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:26 PST - US-MKT-001
+- Confirmed marketplace listings/transactions/messages migration and TypeScript types are present.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:28 PST - US-MKT-001
+- Verified marketplace migration and TypeScript types already present.
+- Ran npm run build (same CSS warnings about @import order and WebKit token). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:32 PST - US-MKT-001
+- Confirmed marketplace listings/transactions/messages migration and TypeScript types are present.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---
+## 2026-01-31 03:35 PST - US-MKT-001
+- Confirmed marketplace migration and TypeScript types for listings, transactions, and messages.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: scripts/ralph-fixes/progress.txt
+---
+---
+## 2026-01-31 03:38 PST - US-MKT-001
+- Confirmed marketplace listings/transactions/messages migration and TypeScript types.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+## 2026-01-31 03:42 PST - US-MKT-001
+- Verified marketplace listings/transactions/messages migration and TypeScript types are present.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260131031617_create_marketplace_tables.sql, src/types/database.ts, scripts/ralph-fixes/progress.txt
+---

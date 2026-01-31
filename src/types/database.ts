@@ -159,6 +159,74 @@ export interface PushSubscription {
   last_used_at: string | null;
 }
 
+/**
+ * Marketplace listing status enum
+ */
+export type ListingStatus = 'active' | 'sold' | 'reserved' | 'removed';
+
+/**
+ * Marketplace listing price type enum
+ */
+export type PriceType = 'fixed' | 'negotiable' | 'free';
+
+/**
+ * Marketplace item condition enum
+ */
+export type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+
+/**
+ * Marketplace transaction status enum
+ */
+export type TransactionStatus = 'pending' | 'accepted' | 'completed' | 'cancelled';
+
+/**
+ * Marketplace listing
+ * Table: listings
+ */
+export interface Listing {
+  id: string;
+  item_id: string;
+  seller_id: string;
+  status: ListingStatus;
+  price: number | null;
+  price_type: PriceType;
+  condition: ItemCondition;
+  description: string | null;
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Marketplace transaction
+ * Table: transactions
+ */
+export interface Transaction {
+  id: string;
+  listing_id: string;
+  buyer_id: string;
+  seller_id: string;
+  status: TransactionStatus;
+  agreed_price: number | null;
+  message: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Marketplace message
+ * Table: messages
+ */
+export interface Message {
+  id: string;
+  listing_id: string | null;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read_at: string | null;
+  created_at: string;
+}
+
 // ============================================
 // Supabase Database Type Definition
 // For use with createClient<Database>()
@@ -295,6 +363,54 @@ export type Database = {
           updated_at?: string;
           last_used_at?: string | null;
         };
+        Relationships: [];
+      };
+      listings: {
+        Row: Listing;
+        Insert: {
+          item_id: string;
+          seller_id: string;
+          status?: ListingStatus;
+          price?: number | null;
+          price_type?: PriceType;
+          condition: ItemCondition;
+          description?: string | null;
+          view_count?: number;
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Listing, 'id' | 'item_id' | 'seller_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      transactions: {
+        Row: Transaction;
+        Insert: {
+          listing_id: string;
+          buyer_id: string;
+          seller_id: string;
+          status?: TransactionStatus;
+          agreed_price?: number | null;
+          message?: string | null;
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Omit<Transaction, 'id' | 'listing_id' | 'buyer_id' | 'seller_id' | 'created_at'>>;
+        Relationships: [];
+      };
+      messages: {
+        Row: Message;
+        Insert: {
+          listing_id?: string | null;
+          sender_id: string;
+          receiver_id: string;
+          content: string;
+          read_at?: string | null;
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Omit<Message, 'id' | 'listing_id' | 'sender_id' | 'receiver_id' | 'created_at'>>;
         Relationships: [];
       };
     };
