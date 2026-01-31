@@ -44,6 +44,7 @@ interface ItemEditorState {
   itemQueue: DetectedItem[];
   totalItems: number;
   currentItemIndex: number;
+  sourceBatchId?: string | null;
 }
 
 /**
@@ -143,6 +144,7 @@ export function ItemEditorPage() {
         user_id: user.id,
         photo_url: state.imageUrl,
         thumbnail_url: state.thumbnailUrl || null,
+        source_batch_id: state.sourceBatchId ?? null,
         name: values.name || null,
         description: values.description || null,
         category_id: values.categoryId || null,
@@ -201,6 +203,7 @@ export function ItemEditorPage() {
               itemQueue: remainingQueue,
               totalItems: state.totalItems,
               currentItemIndex: state.currentItemIndex + 1,
+              sourceBatchId: state.sourceBatchId ?? null,
             },
           });
         }, 1500);

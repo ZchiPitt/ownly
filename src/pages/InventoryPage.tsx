@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import type { InventorySortOption } from '@/hooks/useInventoryItems';
 import {
@@ -90,6 +90,27 @@ function ListIcon({ filled }: { filled: boolean }) {
 }
 
 /**
+ * Search icon for header
+ */
+function SearchIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      />
+    </svg>
+  );
+}
+
+/**
  * View toggle component for switching between gallery and list views
  * Ownly-style boxed toggle buttons
  */
@@ -139,6 +160,7 @@ function ViewToggle({
 }
 
 export function InventoryPage() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
 
@@ -373,12 +395,23 @@ export function InventoryPage() {
             </p>
           </div>
 
-          {/* Right side: View toggle */}
-          <ViewToggle
-            viewMode={viewMode}
-            onViewChange={handleViewChange}
-            isLoading={settingsLoading || isUpdatingView}
-          />
+          {/* Right side: Search button and View toggle */}
+          <div className="flex items-center gap-2">
+            {/* Search button */}
+            <button
+              onClick={() => navigate('/search')}
+              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+              aria-label="Search items"
+            >
+              <SearchIcon />
+            </button>
+            
+            <ViewToggle
+              viewMode={viewMode}
+              onViewChange={handleViewChange}
+              isLoading={settingsLoading || isUpdatingView}
+            />
+          </div>
         </div>
 
         {/* Filter bar with chips */}

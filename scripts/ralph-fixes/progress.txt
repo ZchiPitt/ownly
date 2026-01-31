@@ -1,0 +1,7 @@
+## 2026-01-30 22:32 PST - US-FIX-005
+- Implemented source_batch_id tracking for multi-item captures and shared-photo UI in gallery + item detail views.
+- Files changed: supabase/migrations/20260131000001_add_source_batch_id.sql, src/types/database.ts, src/pages/AddItemPage.tsx, src/pages/ItemEditorPage.tsx, src/hooks/useInventoryItems.ts, src/components/GalleryGrid.tsx, src/pages/ItemDetailPage.tsx
+- **Learnings for future iterations:**
+  - Use source_batch_id to group multi-item captures; shared-photo counts are derived by counting items with the same batch ID and subtracting 1 for the current item.
+  - Item detail related items query should filter by user_id and deleted_at is null, excluding the current item.
+---

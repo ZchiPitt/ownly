@@ -14,8 +14,12 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'icons/*.png'],
       manifest: false, // Use existing manifest.json in public folder
       workbox: {
+        // Avoid terser in workbox build (fixes renderChunk early-exit error).
+        mode: 'development',
         // Include version in cache name for updates
         cacheId: 'ownly-v1',
+        // Allow larger files to be precached (default is 2MB)
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB
         // Cache app shell (HTML, CSS, JS) on install, serve cache-first
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         // Runtime caching strategies

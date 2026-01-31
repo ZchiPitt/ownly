@@ -18,6 +18,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Toast } from '@/components/Toast';
 import { MultiItemSelection } from '@/components/MultiItemSelection';
 import type { ImageInfo } from '@/components/MultiItemSelection';
@@ -46,8 +47,70 @@ interface AnalysisResult {
   thumbnailPath: string;
 }
 
+interface HeicErrorModalProps {
+  isOpen: boolean;
+  onTakePhoto: () => void;
+  onChooseDifferent: () => void;
+  onClose: () => void;
+}
+
+function HeicErrorModal({
+  isOpen,
+  onTakePhoto,
+  onChooseDifferent,
+  onClose,
+}: HeicErrorModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-xl mx-4 w-full max-w-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+          Image Processing Failed
+        </h2>
+        <p className="text-sm text-gray-600 mb-6">
+          This image format couldn't be processed. Some HEIC formats from iOS
+          aren't fully supported. Please try one of these options:
+        </p>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={onTakePhoto}
+            className="w-full px-4 py-3 bg-teal-600 rounded-lg text-white font-medium hover:bg-teal-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Take New Photo
+          </button>
+          <button
+            onClick={onChooseDifferent}
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Choose Different Image
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 text-gray-500 text-sm hover:text-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AddItemPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   // References to hidden file inputs
@@ -61,6 +124,7 @@ export function AddItemPage() {
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [viewState, setViewState] = useState<ViewState>('capture');
+  const [showHeicErrorModal, setShowHeicErrorModal] = useState(false);
 
   // AI Analysis state
   const [analysisPhase, setAnalysisPhase] = useState<AnalysisPhase>('uploading');
@@ -69,6 +133,11 @@ export function AddItemPage() {
   const [analysisSecondsElapsed, setAnalysisSecondsElapsed] = useState(0);
   const analysisAbortRef = useRef<AbortController | null>(null);
   const analysisTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [isBatchSaving, setIsBatchSaving] = useState(false);
+  const [batchSaveProgress, setBatchSaveProgress] = useState({ current: 0, total: 0 });
+  const [showSingleItemChoice, setShowSingleItemChoice] = useState(false);
+  const [singleDetectedItem, setSingleDetectedItem] = useState<DetectedItem | null>(null);
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
 
   // Pinch-to-zoom state
   const [scale, setScale] = useState(1);
@@ -80,6 +149,24 @@ export function AddItemPage() {
 
   // Track whether image was from camera (for "Retake" vs "Reselect" label)
   const [isFromCamera, setIsFromCamera] = useState(false);
+
+  const handleHeicError = () => {
+    setShowHeicErrorModal(true);
+  };
+
+  const handleHeicTakePhoto = () => {
+    setShowHeicErrorModal(false);
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleHeicChooseDifferent = () => {
+    setShowHeicErrorModal(false);
+    if (galleryInputRef.current) {
+      galleryInputRef.current.click();
+    }
+  };
 
   // Cleanup preview URL on unmount or when image changes
   useEffect(() => {
@@ -250,10 +337,15 @@ export function AddItemPage() {
       const validation = await validateImage(file);
 
       if (!validation.valid) {
-        setToast({
-          message: validation.error || 'Invalid image',
-          type: 'error',
-        });
+        const validationMessage = validation.error || 'Invalid image';
+        if (validationMessage.includes('HEIC') || validationMessage.includes('heic')) {
+          handleHeicError();
+        } else {
+          setToast({
+            message: validationMessage,
+            type: 'error',
+          });
+        }
         return;
       }
 
@@ -273,10 +365,16 @@ export function AddItemPage() {
       setViewState('preview');
     } catch (error) {
       console.error('Error processing image:', error);
-      setToast({
-        message: 'Failed to process image. Please try again.',
-        type: 'error',
-      });
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to process image. Please try again.';
+      if (errorMessage.includes('HEIC') || errorMessage.includes('heic')) {
+        handleHeicError();
+      } else {
+        setToast({
+          message: errorMessage,
+          type: 'error',
+        });
+      }
     } finally {
       setIsProcessing(false);
       // Reset input value to allow selecting the same file again
@@ -371,6 +469,9 @@ export function AddItemPage() {
     setAnalysisError(null);
     setViewState('preview');
     setAnalysisPhase('uploading');
+    setShowSingleItemChoice(false);
+    setSingleDetectedItem(null);
+    setIsQuickAdding(false);
   }, [analysisResult, clearAnalysisTimers]);
 
   /**
@@ -417,6 +518,9 @@ export function AddItemPage() {
     setAnalysisPhase('uploading');
     setAnalysisResult(null);
     setAnalysisError(null);
+    setShowSingleItemChoice(false);
+    setSingleDetectedItem(null);
+    setIsQuickAdding(false);
     setViewState('analyzing');
 
     // Create abort controller
@@ -481,21 +585,10 @@ export function AddItemPage() {
         setAnalysisError("Couldn't identify any items in this photo.");
         setViewState('error');
       } else if (analysisResponse.detected_items.length === 1) {
-        // Single item - navigate to Item Editor with pre-filled data
-        // US-029 will create the Item Editor, for now navigate with state
-        navigate('/add/edit', {
-          state: {
-            detectedItem: analysisResponse.detected_items[0],
-            imageUrl: uploadResult.imageUrl,
-            thumbnailUrl: uploadResult.thumbnailUrl,
-            imagePath: uploadResult.imagePath,
-            thumbnailPath: uploadResult.thumbnailPath,
-            // No queue for single item
-            itemQueue: [],
-            totalItems: 1,
-            currentItemIndex: 1,
-          },
-        });
+        // Single item - show quick add choice screen
+        setSingleDetectedItem(analysisResponse.detected_items[0]);
+        setShowSingleItemChoice(true);
+        setViewState('preview');
       } else {
         // Multiple items - show selection UI (US-028)
         setViewState('results');
@@ -508,8 +601,13 @@ export function AddItemPage() {
       console.error('Analysis error:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Analysis failed. Please try again.';
-      setAnalysisError(errorMessage);
-      setViewState('error');
+      if (errorMessage.includes('HEIC') || errorMessage.includes('heic')) {
+        handleHeicError();
+        setViewState('preview');
+      } else {
+        setAnalysisError(errorMessage);
+        setViewState('error');
+      }
     }
   };
 
@@ -878,6 +976,8 @@ export function AddItemPage() {
     (selectedItems: DetectedItem[], imageInfo: ImageInfo) => {
       if (selectedItems.length === 0) return;
 
+      const sourceBatchId = selectedItems.length > 1 ? crypto.randomUUID() : null;
+
       // Navigate to Item Editor with the first selected item
       // Pass remaining items as queue for sequential editing
       navigate('/add/edit', {
@@ -891,11 +991,96 @@ export function AddItemPage() {
           itemQueue: selectedItems.slice(1),
           totalItems: selectedItems.length,
           currentItemIndex: 1,
+          sourceBatchId,
         },
       });
     },
     [navigate]
   );
+
+  const handleBatchSave = async (items: DetectedItem[]) => {
+    if (!user || !analysisResult) return;
+
+    setIsBatchSaving(true);
+    setBatchSaveProgress({ current: 0, total: items.length });
+
+    const sourceBatchId = items.length > 1 ? crypto.randomUUID() : null;
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      setBatchSaveProgress({ current: i + 1, total: items.length });
+
+      try {
+        // Look up category ID from suggestion
+        let categoryId: string | null = null;
+        if (item.category_suggestion) {
+          const { data } = await (supabase
+            .from('categories') as ReturnType<typeof supabase.from>)
+            .select('id')
+            .or(`name.eq.${item.category_suggestion},and(user_id.eq.${user.id},name.eq.${item.category_suggestion})`)
+            .limit(1);
+          const categories = data as { id: string }[] | null;
+          if (categories && categories.length > 0) {
+            categoryId = categories[0].id;
+          }
+        }
+
+        // Create the item
+        const { error } = await (supabase
+          .from('items') as ReturnType<typeof supabase.from>)
+          .insert({
+            user_id: user.id,
+            photo_url: analysisResult.imageUrl,
+            thumbnail_url: analysisResult.thumbnailUrl,
+            source_batch_id: sourceBatchId,
+            name: item.name || 'Unnamed Item',
+            category_id: categoryId,
+            tags: item.tags || [],
+            brand: item.brand,
+            quantity: 1,
+            ai_metadata: {
+              detected_name: item.name,
+              detected_category: item.category_suggestion,
+              detected_tags: item.tags,
+              detected_brand: item.brand,
+              confidence_score: item.confidence,
+              analysis_provider: 'gemini',
+              analyzed_at: new Date().toISOString(),
+            },
+          });
+
+        if (error) {
+          console.error('Failed to save item:', item.name, error);
+          errors.push(item.name || 'Unknown');
+        } else {
+          successCount++;
+        }
+      } catch (error) {
+        console.error('Error saving item:', error);
+        errors.push(item.name || 'Unknown');
+      }
+    }
+
+    setIsBatchSaving(false);
+
+    // Show result
+    if (errors.length === 0) {
+      setToast({
+        message: `✓ ${successCount} items added!`,
+        type: 'success',
+      });
+      // Navigate to inventory after short delay
+      setTimeout(() => navigate('/inventory'), 1500);
+    } else {
+      setToast({
+        message: `${successCount} of ${items.length} items added. ${errors.length} failed.`,
+        type: errors.length === items.length ? 'error' : 'warning',
+      });
+    }
+  };
 
   // Render results view - multiple items detected using MultiItemSelection component
   const renderResultsView = () => {
@@ -910,7 +1095,186 @@ export function AddItemPage() {
         detectedItems={analysisResult.items}
         onBack={handleCancelAnalysis}
         onProceed={handleMultiItemProceed}
+        onBatchSave={handleBatchSave}
+        isBatchSaving={isBatchSaving}
+        batchSaveProgress={batchSaveProgress}
       />
+    );
+  };
+
+  const handleQuickAdd = async () => {
+    if (!user || !analysisResult || !singleDetectedItem) return;
+
+    setIsQuickAdding(true);
+
+    try {
+      // Look up category ID from suggestion
+      let categoryId: string | null = null;
+      if (singleDetectedItem.category_suggestion) {
+        const { data } = await (supabase
+          .from('categories') as ReturnType<typeof supabase.from>)
+          .select('id')
+          .or(`name.eq.${singleDetectedItem.category_suggestion},and(user_id.eq.${user.id},name.eq.${singleDetectedItem.category_suggestion})`)
+          .limit(1);
+        const categories = data as { id: string }[] | null;
+        if (categories && categories.length > 0) {
+          categoryId = categories[0].id;
+        }
+      }
+
+      // Create the item
+      const { error } = await (supabase
+        .from('items') as ReturnType<typeof supabase.from>)
+        .insert({
+          user_id: user.id,
+          photo_url: analysisResult.imageUrl,
+          thumbnail_url: analysisResult.thumbnailUrl,
+          name: singleDetectedItem.name || 'Unnamed Item',
+          category_id: categoryId,
+          tags: singleDetectedItem.tags || [],
+          brand: singleDetectedItem.brand,
+          quantity: 1,
+          ai_metadata: {
+            detected_name: singleDetectedItem.name,
+            detected_category: singleDetectedItem.category_suggestion,
+            detected_tags: singleDetectedItem.tags,
+            detected_brand: singleDetectedItem.brand,
+            confidence_score: singleDetectedItem.confidence,
+            analysis_provider: 'gemini',
+            analyzed_at: new Date().toISOString(),
+          },
+        });
+
+      if (error) {
+        console.error('Failed to save item:', error);
+        setToast({
+          message: 'Failed to add item. Please try again.',
+          type: 'error',
+        });
+        setIsQuickAdding(false);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+
+      setToast({
+        message: '✓ Item added!',
+        type: 'success',
+      });
+
+      setTimeout(() => navigate('/inventory'), 1000);
+    } catch (error) {
+      console.error('Error in quick add:', error);
+      setToast({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
+      setIsQuickAdding(false);
+    }
+  };
+
+  const handleEditDetails = () => {
+    if (!analysisResult || !singleDetectedItem) return;
+
+    navigate('/add/edit', {
+      state: {
+        detectedItem: singleDetectedItem,
+        imageUrl: analysisResult.imageUrl,
+        thumbnailUrl: analysisResult.thumbnailUrl,
+        imagePath: analysisResult.imagePath,
+        thumbnailPath: analysisResult.thumbnailPath,
+        itemQueue: [],
+        totalItems: 1,
+        currentItemIndex: 1,
+        fromQuickAdd: true,
+      },
+    });
+  };
+
+  const SingleItemChoiceView = () => {
+    if (!analysisResult || !singleDetectedItem) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+          <button onClick={handleCancelAnalysis} className="p-2 -ml-2">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <h1 className="text-lg font-semibold">Item Detected</h1>
+          <div className="w-10" />
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto p-4">
+          {/* Image Preview */}
+          <div className="aspect-square w-full max-w-sm mx-auto rounded-xl overflow-hidden bg-gray-100 mb-6">
+            <img
+              src={analysisResult.thumbnailUrl || analysisResult.imageUrl}
+              alt="Detected item"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Item Info */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <h2 className="text-xl font-semibold">{singleDetectedItem.name}</h2>
+              <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z" />
+              </svg>
+            </div>
+            {singleDetectedItem.category_suggestion && (
+              <p className="text-gray-500">{singleDetectedItem.category_suggestion}</p>
+            )}
+            {singleDetectedItem.tags && singleDetectedItem.tags.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mt-3">
+                {singleDetectedItem.tags.slice(0, 5).map((tag, i) => (
+                  <span key={i} className="px-2 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex-shrink-0 p-4 border-t border-gray-200 space-y-3 safe-area-pb">
+          <button
+            onClick={handleQuickAdd}
+            disabled={isQuickAdding}
+            className="w-full px-4 py-3 bg-teal-600 rounded-xl text-white font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isQuickAdding ? (
+              <>
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Adding...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Quick Add</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleEditDetails}
+            disabled={isQuickAdding}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            Edit Details
+          </button>
+        </div>
+      </div>
     );
   };
 
@@ -1006,6 +1370,10 @@ export function AddItemPage() {
 
   // Render view based on current state
   const renderCurrentView = () => {
+    if (showSingleItemChoice && singleDetectedItem) {
+      return <SingleItemChoiceView />;
+    }
+
     switch (viewState) {
       case 'capture':
         return renderCaptureView();
@@ -1057,6 +1425,13 @@ export function AddItemPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      <HeicErrorModal
+        isOpen={showHeicErrorModal}
+        onTakePhoto={handleHeicTakePhoto}
+        onChooseDifferent={handleHeicChooseDifferent}
+        onClose={() => setShowHeicErrorModal(false)}
+      />
     </>
   );
 }

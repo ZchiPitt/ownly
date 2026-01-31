@@ -118,26 +118,113 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
 /**
  * Converts a HEIC/HEIF file to JPEG format.
  * @param file - The HEIC/HEIF file to convert
+ * @param accessToken - Optional access token for server-side fallback
  * @returns Promise with the converted JPEG Blob
  */
-export async function convertHeicToJpeg(file: File): Promise<Blob> {
-  try {
-    const result = await heic2any({
-      blob: file,
-      toType: 'image/jpeg',
-      quality: 0.9,
-    });
+export async function convertHeicToJpeg(file: File, accessToken?: string): Promise<Blob> {
+  const qualityLevels = [0.9, 0.8, 0.6];
+  let lastError: Error | null = null;
 
-    // heic2any can return an array for multi-frame images, take the first one
-    if (Array.isArray(result)) {
-      return result[0];
+  for (const quality of qualityLevels) {
+    try {
+      console.log(`[imageUtils] Attempting HEIC conversion with quality ${quality}`);
+      const result = await heic2any({
+        blob: file,
+        toType: 'image/jpeg',
+        quality,
+      });
+
+      // heic2any can return an array for multi-frame images
+      if (Array.isArray(result)) {
+        return result[0];
+      }
+      return result;
+    } catch (error) {
+      console.error(`[imageUtils] HEIC conversion failed at quality ${quality}:`, error);
+      lastError = error instanceof Error ? error : new Error(String(error));
     }
-
-    return result;
-  } catch (error) {
-    console.error('HEIC conversion error:', error);
-    throw new Error('Failed to convert HEIC image');
   }
+
+  // try server-side conversion as last resort
+  if (accessToken) {
+    console.log('[imageUtils] Attempting server-side HEIC conversion...');
+    try {
+      const base64 = await fileToBase64(file);
+      const serverResult = await serverConvertHeic(base64, 'image/heic', accessToken);
+      return base64ToBlob(serverResult.base64, serverResult.mimeType);
+    } catch (serverError) {
+      console.error('[imageUtils] Server conversion also failed:', serverError);
+    }
+  }
+
+  // All retries failed
+  throw new Error(
+    `Failed to convert HEIC image after ${qualityLevels.length} attempts. ` +
+    `Please try taking a new photo or use a JPEG/PNG image. ` +
+    `(${lastError?.message || 'Unknown error'})`
+  );
+}
+
+/**
+ * Attempt to convert HEIC image on server when client-side fails
+ */
+async function serverConvertHeic(
+  base64: string,
+  mimeType: string,
+  accessToken: string
+): Promise<{ base64: string; mimeType: string }> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+
+  const response = await fetch(`${supabaseUrl}/functions/v1/convert-image`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image_base64: base64,
+      mime_type: mimeType,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Server conversion failed');
+  }
+
+  const result = await response.json();
+
+  if (!result.success) {
+    throw new Error(result.error || 'Server conversion failed');
+  }
+
+  return {
+    base64: result.converted_base64,
+    mimeType: result.mime_type,
+  };
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+
+  for (let i = 0; i < bytes.length; i += 8192) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+  }
+
+  return btoa(binary);
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mimeType });
 }
 
 /**

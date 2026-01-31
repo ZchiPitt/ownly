@@ -81,6 +81,7 @@ interface RawItemDetails {
   is_favorite: boolean;
   keep_forever: boolean;
   ai_metadata: unknown | null;
+  source_batch_id: string | null;
   last_viewed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -123,6 +124,7 @@ function transformRawItem(raw: RawItemDetails): ItemDetails {
     is_favorite: raw.is_favorite,
     keep_forever: raw.keep_forever,
     ai_metadata: raw.ai_metadata as ItemDetails['ai_metadata'],
+    source_batch_id: raw.source_batch_id,
     last_viewed_at: raw.last_viewed_at,
     created_at: raw.created_at,
     updated_at: raw.updated_at,
@@ -840,6 +842,8 @@ export function ItemDetailPage() {
   const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const overflowMenuRef = useRef<HTMLDivElement>(null);
+  const [relatedItems, setRelatedItems] = useState<Array<{ id: string; name: string | null }>>([]);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
 
   // Toast state for overflow menu actions (US-056)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -890,6 +894,7 @@ export function ItemDetailPage() {
           is_favorite,
           keep_forever,
           ai_metadata,
+          source_batch_id,
           last_viewed_at,
           created_at,
           updated_at,
@@ -949,6 +954,47 @@ export function ItemDetailPage() {
   useEffect(() => {
     fetchItem();
   }, [fetchItem]);
+
+  useEffect(() => {
+    const sourceBatchId = item?.source_batch_id;
+    if (!sourceBatchId || !user?.id) {
+      setRelatedItems([]);
+      return;
+    }
+
+    let isActive = true;
+    const fetchRelatedItems = async () => {
+      setIsLoadingRelated(true);
+      try {
+        const { data, error } = await supabase
+          .from('items')
+          .select('id, name')
+          .eq('source_batch_id', sourceBatchId)
+          .eq('user_id', user.id)
+          .neq('id', item.id)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: true });
+
+        if (!isActive) return;
+
+        if (error) {
+          console.error('Error fetching related items:', error);
+          setRelatedItems([]);
+          return;
+        }
+
+        setRelatedItems((data as Array<{ id: string; name: string | null }>) || []);
+      } finally {
+        if (isActive) setIsLoadingRelated(false);
+      }
+    };
+
+    fetchRelatedItems();
+
+    return () => {
+      isActive = false;
+    };
+  }, [item?.id, item?.source_batch_id, user?.id]);
 
   // Close overflow menu when clicking outside
   useEffect(() => {
@@ -1381,6 +1427,37 @@ export function ItemDetailPage() {
       {/* Expiration Banner (US-053) */}
       {item.expiration_date && (
         <ExpirationBanner expirationDate={item.expiration_date} />
+      )}
+
+      {/* Shared Photo Indicator (US-FIX-005) */}
+      {item.source_batch_id && (
+        <div className="px-4 pt-4">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+            <p className="text-sm font-semibold text-gray-900">
+              This photo contains multiple items
+            </p>
+            <div className="mt-2">
+              <p className="text-xs text-gray-500 mb-2">Also in photo:</p>
+              {isLoadingRelated ? (
+                <p className="text-xs text-gray-400">Loading related items...</p>
+              ) : relatedItems.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {relatedItems.map((related) => (
+                    <button
+                      key={related.id}
+                      onClick={() => navigate(`/item/${related.id}`)}
+                      className="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-sm text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-100 transition-colors"
+                    >
+                      {related.name || 'Unnamed Item'}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">No other items found.</p>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Primary Info Section (US-053) */}

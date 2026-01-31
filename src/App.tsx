@@ -84,9 +84,14 @@ function ServiceWorkerUpdateDetector() {
   const { info } = useToast()
 
   useEffect(() => {
+    type PwaUpdateDetail = {
+      needRefresh?: boolean
+      updateServiceWorker?: () => void
+    }
+
     // Listen for the custom event dispatched by vite-plugin-pwa
     const handler = (event: Event) => {
-      const customEvent = event as CustomEvent
+      const customEvent = event as CustomEvent<PwaUpdateDetail>
       if (customEvent.detail?.needRefresh) {
         info('App update available', {
           action: {
@@ -111,8 +116,8 @@ function ServiceWorkerUpdateDetector() {
     // Also check on page focus (when user returns to the app)
     const onFocus = () => {
       // If there's a waiting service worker, trigger the update event
-      if ((window as any).workbox) {
-        (window as any).workbox.addEventListener('waiting', () => {
+      if ((window as unknown as { workbox?: { addEventListener: (event: string, callback: () => void) => void } }).workbox) {
+        (window as unknown as { workbox: { addEventListener: (event: string, callback: () => void) => void } }).workbox.addEventListener('waiting', () => {
           const event = new CustomEvent('pwa-update-available', {
             detail: { needRefresh: true }
           })

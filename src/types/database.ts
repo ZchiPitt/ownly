@@ -112,6 +112,7 @@ export interface Item {
   keep_forever: boolean;
   ai_metadata: ItemAIMetadata | null;
   embedding?: number[] | null; // vector(1536) - pgvector
+  source_batch_id: string | null;
   last_viewed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -241,6 +242,7 @@ export type Database = {
           is_favorite?: boolean;
           keep_forever?: boolean;
           ai_metadata?: ItemAIMetadata | null;
+          source_batch_id?: string | null;
           last_viewed_at?: string | null;
           id?: string;
           created_at?: string;

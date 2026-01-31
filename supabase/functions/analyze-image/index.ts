@@ -68,7 +68,11 @@ const VISION_PROMPT = `You are an expert inventory assistant analyzing photos of
 Analyze this image and identify all distinct items you can see. For each item, provide:
 1. A clear, descriptive name (be specific, e.g., "Blue Cotton T-Shirt" not just "Shirt")
 2. A category suggestion from this list: ${SYSTEM_CATEGORIES.join(', ')}
-3. Relevant tags (descriptive keywords like color, material, condition, size, style)
+3. Relevant tags - IMPORTANT: The FIRST tag MUST be the dominant color of the item (e.g., "blue", "red", "black", "white", "silver", "brown", "beige", "navy", "gray").
+   If multiple colors, use the most prominent one.
+   If color is unclear, use "multicolor" or "neutral".
+   Remaining tags: material, condition, size, style, etc.
+   Example: "tags": ["navy blue", "cotton", "casual", "medium"]
 4. Brand name if visible on the item
 5. Confidence score from 0.0 to 1.0 (how certain you are about the identification)
 
@@ -93,6 +97,21 @@ Important rules:
 - Set confidence lower if the item is partially obscured or unclear
 - Return an empty items array if no items can be identified
 - Always return valid JSON`;
+
+const COLOR_WORDS = [
+  'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink',
+  'black', 'white', 'gray', 'grey', 'brown', 'beige', 'tan',
+  'navy', 'teal', 'cyan', 'magenta', 'gold', 'silver', 'bronze',
+  'cream', 'ivory', 'coral', 'maroon', 'olive', 'turquoise',
+  'multicolor', 'neutral', 'clear', 'transparent',
+];
+
+// Check if first tag contains a color
+function hasColorTag(tags: string[]): boolean {
+  if (!tags || tags.length === 0) return false;
+  const firstTag = tags[0].toLowerCase();
+  return COLOR_WORDS.some((color) => firstTag.includes(color));
+}
 
 /**
  * Fetch image from URL and convert to base64
@@ -219,22 +238,30 @@ async function analyzeWithGemini(
     const items = parsed.items || [];
 
     // Validate and sanitize response
-    return items.map((item: Record<string, unknown>) => ({
-      name: String(item.name || 'Unknown Item'),
-      category_suggestion:
-        item.category_suggestion && SYSTEM_CATEGORIES.includes(String(item.category_suggestion))
-          ? String(item.category_suggestion)
-          : null,
-      tags: Array.isArray(item.tags)
+    return items.map((item: Record<string, unknown>) => {
+      const tags = Array.isArray(item.tags)
         ? item.tags.slice(0, 20).map((t) => String(t).slice(0, 50)) // Max 20 tags, 50 chars each
-        : [],
-      brand: item.brand ? String(item.brand).slice(0, 100) : null, // Max 100 chars
-      confidence:
-        typeof item.confidence === 'number'
-          ? Math.min(Math.max(item.confidence, 0), 1) // Clamp to 0-1
-          : 0.5,
-    })) as DetectedItem[];
-  } catch (error) {
+        : [];
+
+      if (!hasColorTag(tags)) {
+        console.warn('[analyze-image] Missing color tag on first tag:', tags);
+      }
+
+      return {
+        name: String(item.name || 'Unknown Item'),
+        category_suggestion:
+          item.category_suggestion && SYSTEM_CATEGORIES.includes(String(item.category_suggestion))
+            ? String(item.category_suggestion)
+            : null,
+        tags,
+        brand: item.brand ? String(item.brand).slice(0, 100) : null, // Max 100 chars
+        confidence:
+          typeof item.confidence === 'number'
+            ? Math.min(Math.max(item.confidence, 0), 1) // Clamp to 0-1
+            : 0.5,
+      };
+    }) as DetectedItem[];
+  } catch {
     console.error('Failed to parse Gemini response:', text);
     throw new Error('Failed to parse AI analysis result');
   }

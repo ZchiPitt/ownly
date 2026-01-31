@@ -40,6 +40,7 @@ function ItemCard({ item, onClick }: ItemCardProps) {
   const displayName = item.name || 'Untitled Item';
   const formattedPrice = formatPrice(item.price, item.currency);
   const locationDisplay = item.location_name || item.location_path;
+  const sharedPhotoCount = item.shared_photo_count ?? 0;
 
   return (
     <button
@@ -77,10 +78,18 @@ function ItemCard({ item, onClick }: ItemCardProps) {
           </div>
         )}
 
-        {/* Quantity badge (if > 1) */}
-        {item.quantity > 1 && (
-          <div className="absolute bottom-3 right-3 px-2 py-0.5 bg-black/70 rounded text-xs font-medium text-white">
-            x{item.quantity}
+        {(sharedPhotoCount > 0 || item.quantity > 1) && (
+          <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1">
+            {sharedPhotoCount > 0 && (
+              <div className="px-2 py-0.5 bg-black/70 rounded text-[10px] font-semibold text-white">
+                📷 +{sharedPhotoCount}
+              </div>
+            )}
+            {item.quantity > 1 && (
+              <div className="px-2 py-0.5 bg-black/70 rounded text-xs font-medium text-white">
+                x{item.quantity}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -20,6 +20,8 @@ export interface InventoryItem {
   name: string | null;
   photo_url: string;
   thumbnail_url: string | null;
+  source_batch_id: string | null;
+  shared_photo_count: number;
   category_id: string | null;
   category_name: string | null;
   category_color: string | null;
@@ -104,6 +106,7 @@ interface RawInventoryItem {
   name: string | null;
   photo_url: string;
   thumbnail_url: string | null;
+  source_batch_id: string | null;
   category_id: string | null;
   location_id: string | null;
   quantity: number;
@@ -128,12 +131,14 @@ interface RawInventoryItem {
 /**
  * Transform raw Supabase data to InventoryItem format
  */
-function transformRawItem(item: RawInventoryItem): InventoryItem {
+function transformRawItem(item: RawInventoryItem, sharedPhotoCount: number): InventoryItem {
   return {
     id: item.id,
     name: item.name,
     photo_url: item.photo_url,
     thumbnail_url: item.thumbnail_url,
+    source_batch_id: item.source_batch_id,
+    shared_photo_count: sharedPhotoCount,
     category_id: item.category_id,
     category_name: item.categories?.name || null,
     category_color: item.categories?.color || null,
@@ -150,6 +155,35 @@ function transformRawItem(item: RawInventoryItem): InventoryItem {
     updated_at: item.updated_at,
     last_viewed_at: item.last_viewed_at,
   };
+}
+
+async function fetchSharedPhotoCounts(
+  batchIds: string[],
+  userId: string
+): Promise<Record<string, number>> {
+  const uniqueBatchIds = Array.from(new Set(batchIds.filter(Boolean)));
+  if (uniqueBatchIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from('items')
+    .select('id, source_batch_id')
+    .in('source_batch_id', uniqueBatchIds)
+    .eq('user_id', userId)
+    .is('deleted_at', null)
+    .returns<{ id: string; source_batch_id: string | null }[]>();
+
+  if (error || !data) {
+    console.error('Error fetching shared photo counts:', error);
+    return {};
+  }
+
+  const counts: Record<string, number> = {};
+  data.forEach((row) => {
+    if (!row.source_batch_id) return;
+    counts[row.source_batch_id] = (counts[row.source_batch_id] ?? 0) + 1;
+  });
+
+  return counts;
 }
 
 /**
@@ -183,6 +217,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         name,
         photo_url,
         thumbnail_url,
+        source_batch_id,
         category_id,
         location_id,
         quantity,
@@ -320,7 +355,17 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         throw fetchError;
       }
 
-      const inventoryItems = (data || []).map(transformRawItem);
+      const rawItems = data || [];
+      const sharedCounts = await fetchSharedPhotoCounts(
+        rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
+        user.id
+      );
+      const inventoryItems = rawItems.map((item) => {
+        const batchId = item.source_batch_id;
+        const totalShared = batchId ? sharedCounts[batchId] ?? 1 : 1;
+        const sharedPhotoCount = batchId ? Math.max(totalShared - 1, 0) : 0;
+        return transformRawItem(item, sharedPhotoCount);
+      });
 
       setItems(inventoryItems);
       setTotalCount(count);
@@ -357,7 +402,17 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
         throw fetchError;
       }
 
-      const newItems = (data || []).map(transformRawItem);
+      const rawItems = data || [];
+      const sharedCounts = await fetchSharedPhotoCounts(
+        rawItems.map((item) => item.source_batch_id || '').filter(Boolean),
+        user.id
+      );
+      const newItems = rawItems.map((item) => {
+        const batchId = item.source_batch_id;
+        const totalShared = batchId ? sharedCounts[batchId] ?? 1 : 1;
+        const sharedPhotoCount = batchId ? Math.max(totalShared - 1, 0) : 0;
+        return transformRawItem(item, sharedPhotoCount);
+      });
 
       setItems((prevItems) => [...prevItems, ...newItems]);
       setHasMore(newItems.length >= PAGE_SIZE && (items.length + newItems.length) < totalCount);
