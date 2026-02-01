@@ -109,7 +109,13 @@ export function SettingsPage() {
 
   // Handle settings updates with optimistic UI
   const handleSettingChange = async (
-    key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled' | 'default_view',
+    key: 'reminder_enabled' | 'reminder_threshold_days' | 'expiration_reminder_days' | 'push_notifications_enabled' | 'default_view'
+      | 'marketplace_new_inquiry_enabled'
+      | 'marketplace_purchase_request_enabled'
+      | 'marketplace_request_accepted_enabled'
+      | 'marketplace_request_declined_enabled'
+      | 'marketplace_new_message_enabled'
+      | 'marketplace_transaction_complete_enabled',
     value: boolean | number | string
   ) => {
     if (isUpdating || isRequestingPush) return;
@@ -516,6 +522,176 @@ export function SettingsPage() {
                 )}
               </>
             )}
+          </div>
+        </section>
+
+        {/* Marketplace Notifications Section - US-MKT-009 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Marketplace Notifications
+          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  New inquiries
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Get notified when someone asks about your listing
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_new_inquiry_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_new_inquiry_enabled',
+                  !settings?.marketplace_new_inquiry_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_inquiry_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_inquiry_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Purchase requests
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Alerts when someone wants to buy your item
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_purchase_request_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_purchase_request_enabled',
+                  !settings?.marketplace_purchase_request_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_purchase_request_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_purchase_request_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Request accepted
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Updates when a seller accepts your request
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_request_accepted_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_request_accepted_enabled',
+                  !settings?.marketplace_request_accepted_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_accepted_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_accepted_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Request declined
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Updates when a seller declines your request
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_request_declined_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_request_declined_enabled',
+                  !settings?.marketplace_request_declined_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_declined_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_declined_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  New messages
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Alerts when you receive a marketplace message
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_new_message_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_new_message_enabled',
+                  !settings?.marketplace_new_message_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_message_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_message_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            <div className="px-4 py-4 flex items-center justify-between">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Transaction complete
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Confirmation when a transaction is completed
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.marketplace_transaction_complete_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'marketplace_transaction_complete_enabled',
+                  !settings?.marketplace_transaction_complete_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_transaction_complete_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_transaction_complete_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
           </div>
         </section>
 

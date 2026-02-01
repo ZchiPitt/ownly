@@ -5,7 +5,39 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/hooks/useNotifications';
-import type { Notification, NotificationType } from '@/types';
+import type { MarketplaceNotificationType } from '@/lib/notifications';
+import type { Notification, NotificationData, NotificationType } from '@/types';
+
+const MARKETPLACE_TYPES: MarketplaceNotificationType[] = [
+  'new_inquiry',
+  'purchase_request',
+  'request_accepted',
+  'request_declined',
+  'new_message',
+  'transaction_complete',
+];
+
+const MARKETPLACE_ICONS: Record<MarketplaceNotificationType, string> = {
+  new_inquiry: '💬',
+  purchase_request: '🛒',
+  request_accepted: '✅',
+  request_declined: '❌',
+  new_message: '💬',
+  transaction_complete: '🎉',
+};
+
+const MARKETPLACE_ICON_COLORS: Record<MarketplaceNotificationType, string> = {
+  new_inquiry: 'text-sky-600 bg-sky-100',
+  purchase_request: 'text-indigo-600 bg-indigo-100',
+  request_accepted: 'text-emerald-600 bg-emerald-100',
+  request_declined: 'text-rose-600 bg-rose-100',
+  new_message: 'text-sky-600 bg-sky-100',
+  transaction_complete: 'text-amber-600 bg-amber-100',
+};
+
+function isMarketplaceType(type: NotificationType): type is MarketplaceNotificationType {
+  return MARKETPLACE_TYPES.includes(type as MarketplaceNotificationType);
+}
 
 /**
  * Get relative time string from date
@@ -41,6 +73,14 @@ function getRelativeTime(dateString: string): string {
  * Get icon component based on notification type
  */
 function NotificationIcon({ type }: { type: NotificationType }) {
+  if (isMarketplaceType(type)) {
+    return (
+      <span className="text-lg leading-none" aria-hidden="true">
+        {MARKETPLACE_ICONS[type]}
+      </span>
+    );
+  }
+
   switch (type) {
     case 'unused_item':
       return (
@@ -98,6 +138,10 @@ function NotificationIcon({ type }: { type: NotificationType }) {
  * Get icon color classes based on notification type
  */
 function getIconColorClasses(type: NotificationType): string {
+  if (isMarketplaceType(type)) {
+    return MARKETPLACE_ICON_COLORS[type];
+  }
+
   switch (type) {
     case 'unused_item':
       return 'text-blue-600 bg-blue-100';
@@ -231,15 +275,39 @@ export function NotificationsPage() {
     markAllAsRead,
   } = useNotifications();
 
+  const getNotificationTarget = (notification: Notification): string | null => {
+    const data = notification.data as NotificationData | null;
+    const listingId = data?.listing_id;
+
+    if (notification.type === 'new_message' || notification.type === 'request_accepted') {
+      return listingId ? `/messages/${listingId}` : null;
+    }
+
+    if (
+      notification.type === 'new_inquiry' ||
+      notification.type === 'purchase_request' ||
+      notification.type === 'request_declined' ||
+      notification.type === 'transaction_complete'
+    ) {
+      return listingId ? `/marketplace/${listingId}` : null;
+    }
+
+    if (notification.item_id) {
+      return `/item/${notification.item_id}`;
+    }
+
+    return null;
+  };
+
   const handleNotificationClick = async (notification: Notification) => {
     // Mark as read
     if (!notification.is_read) {
       await markAsRead(notification.id);
     }
 
-    // Navigate to item if linked
-    if (notification.item_id) {
-      navigate(`/item/${notification.item_id}`);
+    const target = getNotificationTarget(notification);
+    if (target) {
+      navigate(target);
     }
   };
 

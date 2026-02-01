@@ -4,7 +4,7 @@
 
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { createNotification } from '@/lib/notifications';
+import { createMarketplaceNotification } from '@/lib/notifications';
 import { useAuth } from '@/hooks/useAuth';
 import type { PriceType, Transaction, ListingStatus } from '@/types/database';
 
@@ -82,6 +82,38 @@ export function useTransactions() {
     return profile.user_id;
   }, []);
 
+  const getProfileDisplayName = useCallback(async (profileId: string): Promise<string | null> => {
+    const { data, error } = await (supabase.from('profiles') as ReturnType<typeof supabase.from>)
+      .select('display_name')
+      .eq('id', profileId)
+      .single();
+
+    const profile = data as { display_name: string | null } | null;
+
+    if (error) {
+      console.warn('Unable to resolve profile display name:', error.message);
+      return null;
+    }
+
+    return profile?.display_name ?? null;
+  }, []);
+
+  const getListingItemName = useCallback(async (listingId: string): Promise<string | null> => {
+    const { data, error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+      .select('item:items(name)')
+      .eq('id', listingId)
+      .single();
+
+    const listing = data as { item: { name: string | null } | null } | null;
+
+    if (error) {
+      console.warn('Unable to resolve listing item name:', error.message);
+      return null;
+    }
+
+    return listing?.item?.name ?? null;
+  }, []);
+
   const createTransaction = useCallback(async (data: CreateTransactionInput) => {
     if (!user) {
       return { data: null, error: new Error('User not authenticated') };
@@ -114,10 +146,18 @@ export function useTransactions() {
         const sellerUserId = await getUserIdByProfileId(data.seller_id);
         if (sellerUserId) {
           try {
-            await createNotification(sellerUserId, 'purchase_request', {
+            const buyerName =
+              (await getProfileDisplayName(buyerId)) ??
+              user?.user_metadata?.display_name ??
+              'Someone';
+            const itemName = await getListingItemName(data.listing_id);
+
+            await createMarketplaceNotification(sellerUserId, 'purchase_request', {
               listing_id: data.listing_id,
               transaction_id: resolvedTransaction.id,
-              message: data.message.trim() || undefined,
+              sender_id: buyerId,
+              sender_name: buyerName,
+              item_name: itemName ?? undefined,
             });
           } catch (notificationError) {
             console.warn('Failed to create purchase request notification:', notificationError);
@@ -132,7 +172,7 @@ export function useTransactions() {
         error: err instanceof Error ? err : new Error('Failed to create transaction'),
       };
     }
-  }, [getProfileId, getUserIdByProfileId, user]);
+  }, [getListingItemName, getProfileDisplayName, getProfileId, getUserIdByProfileId, user]);
 
   const getTransactionsForListing = useCallback(async (listingId: string): Promise<TransactionWithBuyer[]> => {
     if (!listingId) return [];
@@ -185,7 +225,7 @@ export function useTransactions() {
 
     const { data: transaction, error: fetchError } = await (supabase
       .from('transactions') as ReturnType<typeof supabase.from>)
-      .select('id, listing_id, buyer_id, message')
+      .select('id, listing_id, buyer_id, seller_id')
       .eq('id', id)
       .single();
 
@@ -215,10 +255,16 @@ export function useTransactions() {
     const buyerUserId = await getUserIdByProfileId(transaction.buyer_id as string);
     if (buyerUserId) {
       try {
-        await createNotification(buyerUserId, 'request_accepted', {
+        const sellerName =
+          (await getProfileDisplayName(transaction.seller_id as string)) ?? 'Seller';
+        const itemName = await getListingItemName(transaction.listing_id as string);
+
+        await createMarketplaceNotification(buyerUserId, 'request_accepted', {
           listing_id: transaction.listing_id as string,
           transaction_id: transaction.id as string,
-          message: transaction.message ?? undefined,
+          sender_id: transaction.seller_id as string,
+          sender_name: sellerName,
+          item_name: itemName ?? undefined,
         });
       } catch (notificationError) {
         console.warn('Failed to create acceptance notification:', notificationError);
@@ -226,14 +272,14 @@ export function useTransactions() {
     }
 
     return true;
-  }, [getUserIdByProfileId, user]);
+  }, [getListingItemName, getProfileDisplayName, getUserIdByProfileId, user]);
 
   const declineTransaction = useCallback(async (id: string): Promise<boolean> => {
     if (!user) return false;
 
     const { data: transaction, error: fetchError } = await (supabase
       .from('transactions') as ReturnType<typeof supabase.from>)
-      .select('id, listing_id, buyer_id, message')
+      .select('id, listing_id, buyer_id, seller_id')
       .eq('id', id)
       .single();
 
@@ -254,10 +300,16 @@ export function useTransactions() {
     const buyerUserId = await getUserIdByProfileId(transaction.buyer_id as string);
     if (buyerUserId) {
       try {
-        await createNotification(buyerUserId, 'request_declined', {
+        const sellerName =
+          (await getProfileDisplayName(transaction.seller_id as string)) ?? 'Seller';
+        const itemName = await getListingItemName(transaction.listing_id as string);
+
+        await createMarketplaceNotification(buyerUserId, 'request_declined', {
           listing_id: transaction.listing_id as string,
           transaction_id: transaction.id as string,
-          message: transaction.message ?? undefined,
+          sender_id: transaction.seller_id as string,
+          sender_name: sellerName,
+          item_name: itemName ?? undefined,
         });
       } catch (notificationError) {
         console.warn('Failed to create decline notification:', notificationError);
@@ -265,14 +317,14 @@ export function useTransactions() {
     }
 
     return true;
-  }, [getUserIdByProfileId, user]);
+  }, [getListingItemName, getProfileDisplayName, getUserIdByProfileId, user]);
 
   const completeTransaction = useCallback(async (id: string): Promise<boolean> => {
     if (!user) return false;
 
     const { data: transaction, error: fetchError } = await (supabase
       .from('transactions') as ReturnType<typeof supabase.from>)
-      .select('listing_id')
+      .select('listing_id, buyer_id, seller_id')
       .eq('id', id)
       .single();
 
@@ -299,8 +351,27 @@ export function useTransactions() {
       return false;
     }
 
+    const buyerUserId = await getUserIdByProfileId(transaction.buyer_id as string);
+    if (buyerUserId) {
+      try {
+        const sellerName =
+          (await getProfileDisplayName(transaction.seller_id as string)) ?? 'Seller';
+        const itemName = await getListingItemName(transaction.listing_id as string);
+
+        await createMarketplaceNotification(buyerUserId, 'transaction_complete', {
+          listing_id: transaction.listing_id as string,
+          transaction_id: id,
+          sender_id: transaction.seller_id as string,
+          sender_name: sellerName,
+          item_name: itemName ?? undefined,
+        });
+      } catch (notificationError) {
+        console.warn('Failed to create completion notification:', notificationError);
+      }
+    }
+
     return true;
-  }, [user]);
+  }, [getListingItemName, getProfileDisplayName, getUserIdByProfileId, user]);
 
   const getPendingCountsForListings = useCallback(async (listingIds: string[]): Promise<Record<string, number>> => {
     if (listingIds.length === 0) return {};

@@ -5,6 +5,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { createMarketplaceNotification } from '@/lib/notifications';
 
 export interface Conversation {
   id: string;
@@ -63,6 +64,54 @@ export function useMessages() {
 
     return profile.id;
   }, [user]);
+
+  const getUserIdByProfileId = useCallback(async (profileId: string): Promise<string | null> => {
+    const { data, error } = await (supabase.from('profiles') as ReturnType<typeof supabase.from>)
+      .select('user_id')
+      .eq('id', profileId)
+      .single();
+
+    const profile = data as { user_id: string } | null;
+
+    if (error || !profile?.user_id) {
+      console.warn('Unable to resolve profile user_id:', error?.message);
+      return null;
+    }
+
+    return profile.user_id;
+  }, []);
+
+  const getProfileDisplayName = useCallback(async (profileId: string): Promise<string | null> => {
+    const { data, error } = await (supabase.from('profiles') as ReturnType<typeof supabase.from>)
+      .select('display_name')
+      .eq('id', profileId)
+      .single();
+
+    const profile = data as { display_name: string | null } | null;
+
+    if (error) {
+      console.warn('Unable to resolve profile display name:', error.message);
+      return null;
+    }
+
+    return profile?.display_name ?? null;
+  }, []);
+
+  const getListingItemName = useCallback(async (listingId: string): Promise<string | null> => {
+    const { data, error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+      .select('item:items(name)')
+      .eq('id', listingId)
+      .single();
+
+    const listing = data as { item: { name: string | null } | null } | null;
+
+    if (error) {
+      console.warn('Unable to resolve listing item name:', error.message);
+      return null;
+    }
+
+    return listing?.item?.name ?? null;
+  }, []);
 
   const getConversations = useCallback(async (): Promise<Conversation[]> => {
     if (!user) {
@@ -209,12 +258,32 @@ export function useMessages() {
         throw error;
       }
 
+      const receiverUserId = await getUserIdByProfileId(receiverId);
+      if (receiverUserId) {
+        try {
+          const senderName =
+            (await getProfileDisplayName(profileId)) ??
+            user?.user_metadata?.display_name ??
+            'Someone';
+          const itemName = await getListingItemName(listingId);
+
+          await createMarketplaceNotification(receiverUserId, 'new_message', {
+            listing_id: listingId,
+            sender_id: profileId,
+            sender_name: senderName,
+            item_name: itemName ?? undefined,
+          });
+        } catch (notificationError) {
+          console.warn('Failed to create new message notification:', notificationError);
+        }
+      }
+
       return true;
     } catch (err) {
       console.error('Error sending message:', err);
       return false;
     }
-  }, [getProfileId, user]);
+  }, [getListingItemName, getProfileDisplayName, getProfileId, getUserIdByProfileId, user]);
 
   const markAsRead = useCallback(async (listingId: string): Promise<void> => {
     if (!user || !listingId) {

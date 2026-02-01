@@ -1,163 +1,158 @@
-# US-MKT-008: In-App Messaging
+# US-MKT-009: Marketplace Notifications
 
-**Description:** As a buyer/seller, I want to message the other party so we can discuss details and arrange pickup.
+**Description:** As a user, I want to receive notifications about my marketplace activity so I don't miss important updates.
 
 ## Acceptance Criteria
 
-1. Create new page `/messages` listing all conversations
-2. Conversation list shows: other party avatar/name, last message preview, unread count, timestamp
-3. Tap conversation opens `/messages/:conversationId` chat view
-4. Chat view: message bubbles (sent right blue, received left gray), timestamps, listing reference at top
-5. Message input at bottom with send button
-6. Real-time updates using Supabase Realtime subscription
-7. Mark messages as read when conversation opened
-8. Unread badge count on Messages link in Settings
-9. 'Message Seller' button on listing detail creates/opens conversation
-10. Empty state: 'No messages yet'
-11. npm run build passes
+1. New notification types: 'new_inquiry', 'purchase_request', 'request_accepted', 'request_declined', 'new_message', 'transaction_complete'
+2. In-app notifications appear in existing notification center (/notifications page)
+3. Notification content includes: event type icon, other party name, item name, timestamp
+4. Tap notification navigates to relevant page (listing, messages, transaction)
+5. Notification preferences in Settings: toggle for each marketplace notification type
+6. Unread notification badge on notification bell
+7. Mark notification as read when tapped
+8. npm run build passes
 
 ## Technical Details
 
-**Files to Create:**
+**Files to Create/Modify:**
 
-### 1. MessagesPage.tsx
-`src/pages/MessagesPage.tsx`
+### 1. Update notifications table (if needed)
+Add marketplace notification types to existing notifications system.
 
-List of conversations:
+### 2. Update src/lib/notifications.ts
+Expand the notifications helper:
+
 ```typescript
-interface Conversation {
-  id: string;  // listing_id used as conversation id
-  listing: { id: string; item_name: string; photo_url: string };
-  other_user: { id: string; display_name: string; avatar_url: string | null };
-  last_message: { content: string; created_at: string; is_mine: boolean };
-  unread_count: number;
-}
-```
+export type MarketplaceNotificationType = 
+  | 'new_inquiry'
+  | 'purchase_request' 
+  | 'request_accepted'
+  | 'request_declined'
+  | 'new_message'
+  | 'transaction_complete';
 
-### 2. ChatPage.tsx
-`src/pages/ChatPage.tsx`
-
-Chat view for single conversation:
-```typescript
-// URL: /messages/:listingId
-// Uses listing_id to identify conversation between buyer and seller
-
-interface ChatMessage {
+export interface MarketplaceNotification {
   id: string;
-  content: string;
-  sender_id: string;
+  user_id: string;
+  type: MarketplaceNotificationType;
+  title: string;
+  body: string;
+  data: {
+    listing_id?: string;
+    transaction_id?: string;
+    sender_id?: string;
+    item_name?: string;
+  };
+  read_at: string | null;
   created_at: string;
-  is_mine: boolean;
 }
+
+// Create notification
+export async function createMarketplaceNotification(
+  recipientUserId: string,
+  type: MarketplaceNotificationType,
+  data: {
+    listing_id?: string;
+    transaction_id?: string;
+    sender_name?: string;
+    item_name?: string;
+  }
+): Promise<void>;
+
+// Get notification title/body based on type
+function getNotificationContent(type: MarketplaceNotificationType, data: any): { title: string; body: string };
 ```
 
-Layout:
-- Header: listing photo + name, other user name
-- Messages list (scrollable, newest at bottom)
-- Input bar at bottom (textarea + send button)
-
-### 3. useMessages.ts Hook
-`src/hooks/useMessages.ts`
+### 3. Create useMarketplaceNotifications.ts Hook
+`src/hooks/useMarketplaceNotifications.ts`
 
 ```typescript
-export function useMessages() {
-  // Get all conversations for current user
-  async function getConversations(): Promise<Conversation[]>;
-  
-  // Get messages for a conversation (listing)
-  async function getMessages(listingId: string): Promise<ChatMessage[]>;
-  
-  // Send a message
-  async function sendMessage(listingId: string, receiverId: string, content: string): Promise<boolean>;
-  
-  // Mark messages as read
-  async function markAsRead(listingId: string): Promise<void>;
+export function useMarketplaceNotifications() {
+  // Get all marketplace notifications for current user
+  async function getNotifications(): Promise<MarketplaceNotification[]>;
   
   // Get unread count
   async function getUnreadCount(): Promise<number>;
   
-  // Subscribe to new messages (Supabase Realtime)
-  function subscribeToMessages(listingId: string, callback: (msg: ChatMessage) => void): () => void;
+  // Mark as read
+  async function markAsRead(id: string): Promise<void>;
   
-  return { getConversations, getMessages, sendMessage, markAsRead, getUnreadCount, subscribeToMessages };
+  // Mark all as read
+  async function markAllAsRead(): Promise<void>;
+  
+  return { getNotifications, getUnreadCount, markAsRead, markAllAsRead };
 }
 ```
 
-### 4. Update App.tsx
-Add routes:
-```tsx
-<Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
-<Route path="/messages/:listingId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+### 4. Update NotificationsPage or Create MarketplaceNotificationsSection
+Add marketplace notifications to the existing notifications page, or create a new section.
+
+Each notification card:
+```
+┌─────────────────────────────────────┐
+│ 🛒 Purchase Request                 │
+│ John wants to buy "Blue Jacket"     │
+│ 2 hours ago                    [→]  │
+└─────────────────────────────────────┘
 ```
 
-### 5. Update ListingDetailPage.tsx
-- 'Message Seller' button navigates to `/messages/:listingId`
-- Creates initial conversation if needed
+Icons by type:
+- new_inquiry: 💬
+- purchase_request: 🛒
+- request_accepted: ✅
+- request_declined: ❌
+- new_message: 💬
+- transaction_complete: 🎉
 
-### 6. Update SettingsPage.tsx
-Add Messages link with unread badge:
+### 5. Update SettingsPage.tsx
+Add notification preferences section:
 ```tsx
-<Link to="/messages">
-  <ChatBubbleIcon />
-  <span>Messages</span>
-  {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
-</Link>
+<section>
+  <h3>Marketplace Notifications</h3>
+  <Toggle label="Purchase requests" />
+  <Toggle label="Request updates" />
+  <Toggle label="New messages" />
+  <Toggle label="Transaction complete" />
+</section>
 ```
 
-### 7. Update src/pages/index.ts
-Export MessagesPage, ChatPage
+### 6. Trigger Notifications in Transaction Flow
+Update these files to create notifications:
+- `src/hooks/useTransactions.ts` - on create/accept/decline/complete
+- `src/hooks/useMessages.ts` - on new message
 
-## Database Queries
-
+Example:
 ```typescript
-// Get conversations (group messages by listing)
-const { data } = await supabase
-  .from('messages')
-  .select(`
-    listing_id,
-    listings!inner(id, item:items(name, photo_url)),
-    sender:profiles!sender_id(id, display_name, avatar_url),
-    receiver:profiles!receiver_id(id, display_name, avatar_url),
-    content, created_at, read_at
-  `)
-  .or(`sender_id.eq.${myProfileId},receiver_id.eq.${myProfileId}`)
-  .order('created_at', { ascending: false });
-
-// Subscribe to new messages
-supabase
-  .channel('messages')
-  .on('postgres_changes', { 
-    event: 'INSERT', 
-    schema: 'public', 
-    table: 'messages',
-    filter: `listing_id=eq.${listingId}`
-  }, callback)
-  .subscribe();
+// In acceptTransaction
+await createMarketplaceNotification(buyerId, 'request_accepted', {
+  listing_id: listingId,
+  transaction_id: transactionId,
+  item_name: itemName
+});
 ```
 
-## Message Bubble Design
+## Notification Content Templates
 
-```
-┌─────────────────────────────────┐
-│ Received message on left        │  ← gray bg
-└─────────────────────────────────┘
-                    ┌─────────────────────────────────┐
-                    │        Sent message on right    │  ← blue bg
-                    └─────────────────────────────────┘
-```
+| Type | Title | Body |
+|------|-------|------|
+| purchase_request | "New purchase request" | "{name} wants to buy {item}" |
+| request_accepted | "Request accepted!" | "{name} accepted your request for {item}" |
+| request_declined | "Request declined" | "{name} declined your request for {item}" |
+| new_message | "New message" | "{name} sent you a message about {item}" |
+| transaction_complete | "Transaction complete!" | "Your transaction for {item} is complete" |
 
 ## Instructions
 
-1. Create `src/hooks/useMessages.ts` with all messaging functions
-2. Create `src/pages/MessagesPage.tsx` for conversation list
-3. Create `src/pages/ChatPage.tsx` for chat view
-4. Update `src/pages/index.ts` to export new pages
-5. Add routes in `src/App.tsx`
-6. Update `src/pages/ListingDetailPage.tsx` for Message Seller button
-7. Update `src/pages/SettingsPage.tsx` with Messages link + badge
-8. Run `npm run build` to verify
-9. Commit with: `feat: [US-MKT-008] Add in-app messaging`
-10. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Update `src/lib/notifications.ts` with marketplace notification functions
+2. Create `src/hooks/useMarketplaceNotifications.ts`
+3. Update notifications page to show marketplace notifications
+4. Update `src/hooks/useTransactions.ts` to trigger notifications
+5. Update `src/hooks/useMessages.ts` to trigger notifications
+6. Update `src/pages/SettingsPage.tsx` with notification preferences
+7. Run `npm run build` to verify
+8. Commit with: `feat: [US-MKT-009] Add marketplace notifications`
+9. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

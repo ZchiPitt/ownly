@@ -18,6 +18,7 @@ export type {
   PushSubscription,
   ItemAIMetadata,
   NotificationType,
+  NotificationData,
   // Supabase Database type definition
   Database,
   // Utility types

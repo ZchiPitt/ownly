@@ -18,6 +18,12 @@ interface UseUserSettingsReturn {
     | 'reminder_threshold_days'
     | 'expiration_reminder_days'
     | 'push_notifications_enabled'
+    | 'marketplace_new_inquiry_enabled'
+    | 'marketplace_purchase_request_enabled'
+    | 'marketplace_request_accepted_enabled'
+    | 'marketplace_request_declined_enabled'
+    | 'marketplace_new_message_enabled'
+    | 'marketplace_transaction_complete_enabled'
   >>) => Promise<boolean>;
   refetch: () => void;
 }
@@ -68,6 +74,12 @@ export function useUserSettings(): UseUserSettingsReturn {
       | 'reminder_threshold_days'
       | 'expiration_reminder_days'
       | 'push_notifications_enabled'
+      | 'marketplace_new_inquiry_enabled'
+      | 'marketplace_purchase_request_enabled'
+      | 'marketplace_request_accepted_enabled'
+      | 'marketplace_request_declined_enabled'
+      | 'marketplace_new_message_enabled'
+      | 'marketplace_transaction_complete_enabled'
     >>
   ): Promise<boolean> => {
     if (!user || !settings) {

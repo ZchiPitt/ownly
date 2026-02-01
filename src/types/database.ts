@@ -39,6 +39,12 @@ export interface UserSettings {
   reminder_threshold_days: number;
   expiration_reminder_days: number;
   push_notifications_enabled: boolean;
+  marketplace_new_inquiry_enabled: boolean;
+  marketplace_purchase_request_enabled: boolean;
+  marketplace_request_accepted_enabled: boolean;
+  marketplace_request_declined_enabled: boolean;
+  marketplace_new_message_enabled: boolean;
+  marketplace_transaction_complete_enabled: boolean;
   default_view: 'gallery' | 'list';
   created_at: string;
   updated_at: string;
@@ -130,7 +136,24 @@ export interface Item {
 /**
  * Notification type enum
  */
-export type NotificationType = 'unused_item' | 'expiring_item' | 'system';
+export type NotificationType =
+  | 'unused_item'
+  | 'expiring_item'
+  | 'system'
+  | 'new_inquiry'
+  | 'purchase_request'
+  | 'request_accepted'
+  | 'request_declined'
+  | 'new_message'
+  | 'transaction_complete';
+
+export interface NotificationData {
+  listing_id?: string;
+  transaction_id?: string;
+  sender_id?: string;
+  sender_name?: string;
+  item_name?: string;
+}
 
 /**
  * User notification
@@ -143,6 +166,7 @@ export interface Notification {
   title: string;
   body: string | null;
   item_id: string | null;
+  data: NotificationData | null;
   is_read: boolean;
   is_pushed: boolean;
   pushed_at: string | null;
@@ -261,6 +285,12 @@ export type Database = {
           reminder_threshold_days?: number;
           expiration_reminder_days?: number;
           push_notifications_enabled?: boolean;
+          marketplace_new_inquiry_enabled?: boolean;
+          marketplace_purchase_request_enabled?: boolean;
+          marketplace_request_accepted_enabled?: boolean;
+          marketplace_request_declined_enabled?: boolean;
+          marketplace_new_message_enabled?: boolean;
+          marketplace_transaction_complete_enabled?: boolean;
           default_view?: 'gallery' | 'list';
           created_at?: string;
           updated_at?: string;
@@ -340,6 +370,7 @@ export type Database = {
           title?: string;
           body?: string | null;
           item_id?: string | null;
+          data?: NotificationData | null;
           is_read?: boolean;
           is_pushed?: boolean;
           pushed_at?: string | null;
