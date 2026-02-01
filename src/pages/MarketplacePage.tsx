@@ -21,6 +21,53 @@ const defaultFilters: MarketplaceFilters = {
   search: '',
 };
 
+const RECENT_SEARCHES_KEY = 'marketplace_recent_searches';
+const MAX_RECENT_SEARCHES = 5;
+
+function loadRecentSearches(): string[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item): item is string => typeof item === 'string').slice(0, MAX_RECENT_SEARCHES);
+    }
+  } catch (error) {
+    console.warn('Failed to load marketplace recent searches:', error);
+  }
+
+  return [];
+}
+
+function persistRecentSearches(searches: string[]) {
+  if (typeof window === 'undefined') return;
+
+  try {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(searches));
+  } catch (error) {
+    console.warn('Failed to save marketplace recent searches:', error);
+  }
+}
+
+function saveRecentSearch(query: string): string[] {
+  const trimmed = query.trim();
+  if (!trimmed) return loadRecentSearches();
+
+  const recent = loadRecentSearches();
+  const updated = [
+    trimmed,
+    ...recent.filter((search) => search.toLowerCase() !== trimmed.toLowerCase()),
+  ].slice(0, MAX_RECENT_SEARCHES);
+
+  persistRecentSearches(updated);
+  return updated;
+}
+
+function clearRecentSearches(): void {
+  persistRecentSearches([]);
+}
+
 function SearchIcon() {
   return (
     <svg
@@ -140,7 +187,10 @@ export function MarketplacePage() {
   const { getListings } = useMarketplace();
 
   const [filters, setFilters] = useState<MarketplaceFilters>(defaultFilters);
-  const [searchInput, setSearchInput] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() => loadRecentSearches());
   const [sort, setSort] = useState<SortOption>('newest');
   const [showFilters, setShowFilters] = useState(false);
   const [listings, setListings] = useState<MarketplaceListing[]>([]);
@@ -155,17 +205,24 @@ export function MarketplacePage() {
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleSearch = () => {
-      setFilters((prev) => {
-        const nextSearch = searchInput.trim();
-        if (prev.search === nextSearch) return prev;
-        return { ...prev, search: nextSearch };
-      });
-    };
-
-    const timeoutId = window.setTimeout(handleSearch, 300);
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
     return () => window.clearTimeout(timeoutId);
-  }, [searchInput]);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setFilters((prev) => {
+      if (prev.search === debouncedSearch) return prev;
+      return { ...prev, search: debouncedSearch };
+    });
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    if (!debouncedSearch) return;
+    const updated = saveRecentSearch(debouncedSearch);
+    setRecentSearches(updated);
+  }, [debouncedSearch]);
 
   useEffect(() => {
     let isMounted = true;
@@ -304,9 +361,12 @@ export function MarketplacePage() {
   }, []);
 
   const handleClearAllFilters = useCallback(() => {
-    setSearchInput('');
+    setSearchQuery('');
     setFilters(defaultFilters);
   }, []);
+
+  const hasSearchQuery = debouncedSearch.trim().length > 0;
+  const showRecentSearches = isSearchFocused && searchQuery.trim().length === 0 && recentSearches.length > 0;
 
   return (
     <div className="min-h-full bg-gray-50 pb-20">
@@ -317,20 +377,60 @@ export function MarketplacePage() {
           </div>
           <input
             type="text"
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder="Search listings"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            placeholder="Search marketplace..."
             className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-          {searchInput.length > 0 && (
+          {searchQuery.length > 0 && (
             <button
               type="button"
-              onClick={() => setSearchInput('')}
+              onClick={() => setSearchQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               aria-label="Clear search"
             >
               <ClearIcon />
             </button>
+          )}
+          {showRecentSearches && (
+            <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
+                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                  Recent searches
+                </span>
+                <button
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    clearRecentSearches();
+                    setRecentSearches([]);
+                  }}
+                  className="text-xs font-medium text-teal-600 hover:text-teal-700"
+                >
+                  Clear all
+                </button>
+              </div>
+              <ul className="max-h-56 overflow-y-auto">
+                {recentSearches.map((search) => (
+                  <li key={search}>
+                    <button
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        setSearchQuery(search);
+                        setIsSearchFocused(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <span className="text-gray-400">🕘</span>
+                      <span className="truncate">{search}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
@@ -411,7 +511,28 @@ export function MarketplacePage() {
             </button>
           </div>
         ) : listings.length === 0 ? (
-          <EmptyState onClearFilters={handleClearAllFilters} />
+          hasSearchQuery ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <SearchIcon />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                No items found for '{debouncedSearch}'
+              </h2>
+              <p className="text-sm text-gray-500 text-center mt-1">
+                Try a different search term or clear your filters.
+              </p>
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Clear search
+              </button>
+            </div>
+          ) : (
+            <EmptyState onClearFilters={handleClearAllFilters} />
+          )
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-w-5xl mx-auto">

@@ -285,3 +285,8 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size).
 - Files changed: supabase/migrations/20260201_create_saved_listings_table.sql, src/hooks/useSavedListings.ts, src/components/SaveButton.tsx, src/components/MarketplaceCard.tsx, src/pages/SavedListingsPage.tsx, src/pages/ListingDetailPage.tsx, src/pages/index.ts, src/App.tsx, src/pages/SettingsPage.tsx, scripts/ralph-fixes/progress.txt
 ---
+## 2026-02-01 21:52 PST - US-MKT-012
+- Added debounced marketplace search with recent searches dropdown, clear button, and empty-results message.
+- Expanded marketplace query to search name, description, and category name.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useMarketplace.ts, src/pages/MarketplacePage.tsx, scripts/ralph-fixes/progress.txt

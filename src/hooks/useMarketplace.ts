@@ -12,7 +12,7 @@ export interface MarketplaceFilters {
   priceType: 'all' | 'free';
   minPrice: number | null;
   maxPrice: number | null;
-  search: string;
+  search?: string;
 }
 
 export type SortOption = 'newest' | 'price_asc' | 'price_desc';
@@ -56,6 +56,9 @@ export interface MarketplaceQueryOptions {
 interface RawMarketplaceListing extends Omit<MarketplaceListing, 'item' | 'seller'> {
   item: MarketplaceListing['item'] & {
     category_id: string | null;
+    categories?: {
+      name: string;
+    } | null;
   };
   seller: MarketplaceListing['seller'];
 }
@@ -107,7 +110,7 @@ export function useMarketplace() {
         description,
         view_count,
         created_at,
-        item:items!inner(id, name, photo_url, thumbnail_url, category_id),
+        item:items!inner(id, name, photo_url, thumbnail_url, category_id, categories(name)),
         seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
       `)
       .eq('status', 'active');
@@ -137,9 +140,12 @@ export function useMarketplace() {
         query = query.lte('price', filters.maxPrice);
       }
 
-      if (filters.search.trim().length > 0) {
-        const searchTerm = filters.search.trim();
-        query = query.or(`item.name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      const searchTerm = filters.search?.trim();
+      if (searchTerm && searchTerm.length > 0) {
+        const safeSearchTerm = searchTerm.replace(/,/g, ' ');
+        query = query.or(
+          `item.name.ilike.%${safeSearchTerm}%,description.ilike.%${safeSearchTerm}%,item.categories.name.ilike.%${safeSearchTerm}%`
+        );
       }
     }
 
@@ -184,7 +190,7 @@ export function useMarketplace() {
         description,
         view_count,
         created_at,
-        item:items!inner(id, name, photo_url, thumbnail_url, category_id),
+        item:items!inner(id, name, photo_url, thumbnail_url, category_id, categories(name)),
         seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
       `)
       .eq('id', id)
