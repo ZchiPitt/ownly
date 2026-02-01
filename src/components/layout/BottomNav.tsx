@@ -1,9 +1,12 @@
+import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useMessages } from '@/hooks/useMessages'
 
 interface NavItem {
   path: string
   label: string
-  icon: React.ReactNode
+  icon: ReactNode
+  badgeCount?: number
   isCenter?: boolean
 }
 
@@ -21,25 +24,6 @@ function HomeIcon({ active }: { active: boolean }) {
         strokeLinejoin="round"
         strokeWidth={active ? 0 : 2}
         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
-    </svg>
-  )
-}
-
-function AddIcon() {
-  return (
-    <svg
-      className="w-7 h-7 text-white"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2.5}
-        d="M12 4v16m8-8H4"
       />
     </svg>
   )
@@ -64,7 +48,7 @@ function InventoryIcon({ active }: { active: boolean }) {
   )
 }
 
-function ShopIcon({ active }: { active: boolean }) {
+function MarketplaceIcon({ active }: { active: boolean }) {
   return (
     <svg
       className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
@@ -77,7 +61,32 @@ function ShopIcon({ active }: { active: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={active ? 0 : 2}
-        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+        d="M3.75 7.5h16.5l-1.5 12a2.25 2.25 0 01-2.25 2h-9a2.25 2.25 0 01-2.25-2l-1.5-12z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={active ? 0 : 2}
+        d="M9 7.5V6a3 3 0 116 0v1.5"
+      />
+    </svg>
+  )
+}
+
+function MessagesIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
+      fill={active ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={active ? 0 : 2}
+        d="M6 9h8m-8 4h5m-8 7.5V7.875C3 6.563 4.063 5.5 5.375 5.5h11.25C17.938 5.5 19 6.563 19 7.875v5.625c0 1.312-1.062 2.375-2.375 2.375H9.25L5.25 19.5a.75.75 0 01-1.25-.56z"
       />
     </svg>
   )
@@ -110,6 +119,8 @@ function SettingsIcon({ active }: { active: boolean }) {
 
 export function BottomNav() {
   const location = useLocation()
+  const { getUnreadCount } = useMessages()
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const isActive = (path: string) => {
     if (path === '/dashboard') {
@@ -118,6 +129,20 @@ export function BottomNav() {
     return location.pathname.startsWith(path)
   }
 
+  useEffect(() => {
+    let isMounted = true
+    const loadUnreadCount = async () => {
+      const count = await getUnreadCount()
+      if (isMounted) {
+        setUnreadCount(count)
+      }
+    }
+    loadUnreadCount()
+    return () => {
+      isMounted = false
+    }
+  }, [getUnreadCount, location.pathname])
+
   const navItems: NavItem[] = [
     {
       path: '/dashboard',
@@ -125,20 +150,20 @@ export function BottomNav() {
       icon: <HomeIcon active={isActive('/dashboard')} />,
     },
     {
-      path: '/add',
-      label: 'Add',
-      icon: <AddIcon />,
-      isCenter: true,
-    },
-    {
       path: '/inventory',
       label: 'Inventory',
       icon: <InventoryIcon active={isActive('/inventory')} />,
     },
     {
-      path: '/shopping',
-      label: 'Shop',
-      icon: <ShopIcon active={isActive('/shopping')} />,
+      path: '/marketplace',
+      label: 'Marketplace',
+      icon: <MarketplaceIcon active={isActive('/marketplace')} />,
+    },
+    {
+      path: '/messages',
+      label: 'Messages',
+      icon: <MessagesIcon active={isActive('/messages')} />,
+      badgeCount: unreadCount,
     },
     {
       path: '/settings',
@@ -151,31 +176,25 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 h-14 z-50">
       <div className="flex items-center justify-around h-full max-w-lg mx-auto px-4">
         {navItems.map((item) => {
-          if (item.isCenter) {
-            // Center Add button - FAB style
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className="flex items-center justify-center w-14 h-14 -mt-5 bg-teal-600 rounded-full shadow-lg active:bg-teal-700 transition-colors"
-                aria-label={item.label}
-              >
-                {item.icon}
-              </NavLink>
-            )
-          }
-
           const active = isActive(item.path)
+          const badgeCount = item.badgeCount ?? 0
           return (
             <NavLink
               key={item.path}
               to={item.path}
               className="flex flex-col items-center justify-center flex-1 h-full"
+              aria-label={item.label}
             >
-              {item.icon}
+              <div className="relative">
+                {item.icon}
+                {badgeCount > 0 ? (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center">
+                    {badgeCount > 9 ? '9+' : badgeCount}
+                  </span>
+                ) : null}
+              </div>
               <span
-                className={`text-xs mt-1 ${active ? 'text-teal-600 font-medium' : 'text-gray-500'
-                  }`}
+                className={`hidden md:block text-xs mt-1 ${active ? 'text-teal-600 font-medium' : 'text-gray-500'}`}
               >
                 {item.label}
               </span>

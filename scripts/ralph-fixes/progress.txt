@@ -290,3 +290,14 @@
 - Expanded marketplace query to search name, description, and category name.
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: src/hooks/useMarketplace.ts, src/pages/MarketplacePage.tsx, scripts/ralph-fixes/progress.txt
+## 2026-01-31 22:39 PST - US-MKT-014
+- Updated bottom nav order and added Marketplace + Messages icons with unread badge.
+- Hid labels on mobile; labels shown on tablet+.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size).
+- Files changed: src/components/layout/BottomNav.tsx, scripts/ralph-fixes/progress.txt
+---
+## 2026-02-01 00:42 PST - US-MKT-014
+- Updated bottom navigation to include Marketplace and Messages in the main order, with active state styling and unread badge for messages.
+- Verified responsive labels (icons only on mobile, labels on tablet+).
+- Ran npm run build (warnings about CSS @import order, CSS token, and chunk size). Build succeeded.
+- Files changed: src/components/layout/BottomNav.tsx
