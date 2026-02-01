@@ -267,3 +267,15 @@
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: supabase/migrations/20260201000001_add_marketplace_notifications.sql, src/lib/notifications.ts, src/hooks/useMarketplaceNotifications.ts, src/hooks/useTransactions.ts, src/hooks/useMessages.ts, src/hooks/useUserSettings.ts, src/pages/NotificationsPage.tsx, src/pages/SettingsPage.tsx, src/types/database.ts, src/types/index.ts, scripts/ralph-fixes/progress.txt
 ---
+---
+## 2026-02-01 20:39 PST - US-MKT-010
+- Added reviews migration, review hook, star rating component, and review modal for user ratings.
+- Updated seller profile and listing detail views to display ratings and recent reviews.
+- Added pending review prompts in My Listings and Notifications with review modal access.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260201_create_reviews_table.sql, src/components/StarRating.tsx, src/components/ReviewModal.tsx, src/hooks/useReviews.ts, src/pages/SellerProfilePage.tsx, src/pages/ListingDetailPage.tsx, src/pages/MyListingsPage.tsx, src/pages/NotificationsPage.tsx, src/types/database.ts, scripts/ralph-fixes/progress.txt
+## 2026-01-31 20:41 PST - US-MKT-010
+- Verified reviews migration, hooks, UI, and rating displays for seller and listing detail.
+- Confirmed pending review prompts and review modal flow for completed transactions.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: supabase/migrations/20260201_create_reviews_table.sql, src/components/StarRating.tsx, src/components/ReviewModal.tsx, src/hooks/useReviews.ts, src/pages/SellerProfilePage.tsx, src/pages/ListingDetailPage.tsx, src/pages/MyListingsPage.tsx, src/pages/NotificationsPage.tsx, src/types/database.ts, scripts/ralph-fixes/progress.txt

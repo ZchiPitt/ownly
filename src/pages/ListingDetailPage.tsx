@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMarketplace, type MarketplaceListing } from '@/hooks/useMarketplace';
 import { useToast } from '@/hooks/useToast';
 import { PurchaseRequestModal } from '@/components/PurchaseRequestModal';
+import { StarRating } from '@/components/StarRating';
 import type { ItemCondition, PriceType } from '@/types/database';
 
 const conditionLabels: Record<ItemCondition, string> = {
@@ -76,14 +77,6 @@ function ShareIcon({ className = 'w-5 h-5' }: { className?: string }) {
         strokeWidth={2}
         d="M4 12v7a1 1 0 001 1h14a1 1 0 001-1v-7M12 16V4m0 0l-4 4m4-4l4 4"
       />
-    </svg>
-  );
-}
-
-function StarIcon({ className = 'w-4 h-4 text-amber-400' }: { className?: string }) {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.172c.969 0 1.371 1.24.588 1.81l-3.376 2.455a1 1 0 00-.364 1.118l1.286 3.966c.3.922-.755 1.688-1.54 1.118l-3.376-2.455a1 1 0 00-1.175 0l-3.376 2.455c-.784.57-1.838-.196-1.539-1.118l1.285-3.966a1 1 0 00-.363-1.118L2.05 9.394c-.783-.57-.38-1.81.588-1.81h4.173a1 1 0 00.95-.69l1.286-3.967z" />
     </svg>
   );
 }
@@ -302,6 +295,7 @@ export function ListingDetailPage() {
   const isUnavailable = listing.status !== 'active';
   const rating = listing.seller.seller_rating ?? 0;
   const reviewCount = listing.seller.review_count ?? 0;
+  const ratingLabel = reviewCount > 0 ? rating.toFixed(1) : '0.0';
 
   const primaryActionLabel = useMemo(() => {
     return listing.price_type === 'free' || listing.price === null ? 'Request Item' : 'Buy Now';
@@ -417,9 +411,9 @@ export function ListingDetailPage() {
                     {listing.seller.display_name || 'Seller'}
                   </p>
                   <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <StarIcon />
-                    <span>{rating.toFixed(1)}</span>
-                    <span>({reviewCount})</span>
+                    <StarRating rating={rating} size="sm" />
+                    <span>{ratingLabel}</span>
+                    <span>({reviewCount} review{reviewCount === 1 ? '' : 's'})</span>
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">

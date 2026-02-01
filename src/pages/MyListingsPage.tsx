@@ -9,7 +9,9 @@ import { useToast } from '@/hooks/useToast';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { EditListingModal } from '@/components/EditListingModal';
+import { ReviewModal } from '@/components/ReviewModal';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useReviews, type PendingReviewTransaction } from '@/hooks/useReviews';
 import type { ListingStatus, PriceType } from '@/types/database';
 
 type TabFilter = 'all' | 'active' | 'sold' | 'removed';
@@ -131,6 +133,7 @@ function ListingSkeleton() {
 export function MyListingsPage() {
   const { getMyListings } = useListings();
   const { getPendingCountsForListings } = useTransactions();
+  const { getPendingReviews } = useReviews();
   const { error: showError } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
@@ -140,6 +143,10 @@ export function MyListingsPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
+  const [pendingReviews, setPendingReviews] = useState<PendingReviewTransaction[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [selectedReview, setSelectedReview] = useState<PendingReviewTransaction | null>(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   const statusFilter = useMemo<ListingStatus | undefined>(() => (
     activeTab === 'all' ? undefined : activeTab
@@ -185,6 +192,22 @@ export function MyListingsPage() {
     }
   }, [fetchPendingCounts, isLoading, listings]);
 
+  const fetchPendingReviews = useCallback(async () => {
+    setIsLoadingReviews(true);
+    try {
+      const data = await getPendingReviews();
+      setPendingReviews(data);
+    } catch (err) {
+      console.error('Failed to load pending reviews:', err);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  }, [getPendingReviews]);
+
+  useEffect(() => {
+    fetchPendingReviews();
+  }, [fetchPendingReviews]);
+
   const handleRefresh = useCallback(async () => {
     await fetchListings();
   }, [fetchListings]);
@@ -211,7 +234,17 @@ export function MyListingsPage() {
 
   const handleListingUpdated = useCallback(() => {
     fetchListings();
-  }, [fetchListings]);
+    fetchPendingReviews();
+  }, [fetchListings, fetchPendingReviews]);
+
+  const handleOpenReview = (review: PendingReviewTransaction) => {
+    setSelectedReview(review);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSuccess = () => {
+    fetchPendingReviews();
+  };
 
   return (
     <div
@@ -256,6 +289,41 @@ export function MyListingsPage() {
 
         {/* Content */}
         <div className="p-4 space-y-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-900">Pending Reviews</h2>
+              {isLoadingReviews && <span className="text-xs text-gray-500">Loading...</span>}
+            </div>
+            {pendingReviews.length === 0 ? (
+              <p className="text-sm text-gray-500">You're all caught up.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingReviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        How was your experience with {review.other_user.display_name ?? 'this member'}?
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {review.listing.item_name ?? 'Transaction'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenReview(review)}
+                      className="px-3 py-2 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                    >
+                      Leave Review
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {isLoading ? (
             <>
               <ListingSkeleton />
@@ -338,6 +406,22 @@ export function MyListingsPage() {
         listing={selectedListing}
         onSuccess={handleListingUpdated}
       />
+
+      {selectedReview && (
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          transaction={{
+            id: selectedReview.id,
+            listing: { item_name: selectedReview.listing.item_name },
+            other_user: {
+              id: selectedReview.other_user.id,
+              display_name: selectedReview.other_user.display_name,
+            },
+          }}
+          onSuccess={handleReviewSuccess}
+        />
+      )}
     </div>
   );
 }

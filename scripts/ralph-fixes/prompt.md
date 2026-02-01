@@ -1,158 +1,162 @@
-# US-MKT-009: Marketplace Notifications
+# US-MKT-010: User Ratings and Reviews
 
-**Description:** As a user, I want to receive notifications about my marketplace activity so I don't miss important updates.
+**Description:** As a user, I want to rate and review other users after transactions so the community can identify trustworthy members.
 
 ## Acceptance Criteria
 
-1. New notification types: 'new_inquiry', 'purchase_request', 'request_accepted', 'request_declined', 'new_message', 'transaction_complete'
-2. In-app notifications appear in existing notification center (/notifications page)
-3. Notification content includes: event type icon, other party name, item name, timestamp
-4. Tap notification navigates to relevant page (listing, messages, transaction)
-5. Notification preferences in Settings: toggle for each marketplace notification type
-6. Unread notification badge on notification bell
-7. Mark notification as read when tapped
-8. npm run build passes
+1. Create reviews table: id, transaction_id (FK), reviewer_id (FK), reviewee_id (FK), rating (1-5), comment (text 500), created_at
+2. After transaction complete, both parties can leave review (prompt appears)
+3. Review modal: star rating (required), comment (optional 500 chars)
+4. One review per user per transaction (cannot edit after submit)
+5. User profile shows: average rating, review count, recent reviews
+6. Seller profile on listing detail shows rating prominently
+7. Reviews visible on seller profile page
+8. Calculate and update seller_rating in profiles table after review
+9. npm run build passes
 
 ## Technical Details
 
 **Files to Create/Modify:**
 
-### 1. Update notifications table (if needed)
-Add marketplace notification types to existing notifications system.
+### 1. Database Migration
+`supabase/migrations/YYYYMMDD_create_reviews_table.sql`
 
-### 2. Update src/lib/notifications.ts
-Expand the notifications helper:
+```sql
+CREATE TABLE reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+  reviewer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  reviewee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  comment TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(transaction_id, reviewer_id)
+);
+
+-- RLS
+ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Reviews are viewable by everyone" ON reviews
+  FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Users can create reviews for their transactions" ON reviews
+  FOR INSERT TO authenticated
+  WITH CHECK (reviewer_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
+
+-- Function to update seller rating
+CREATE OR REPLACE FUNCTION update_seller_rating()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE profiles
+  SET 
+    seller_rating = (SELECT AVG(rating)::DECIMAL(3,2) FROM reviews WHERE reviewee_id = NEW.reviewee_id),
+    review_count = (SELECT COUNT(*) FROM reviews WHERE reviewee_id = NEW.reviewee_id)
+  WHERE id = NEW.reviewee_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_rating_after_review
+  AFTER INSERT ON reviews
+  FOR EACH ROW EXECUTE FUNCTION update_seller_rating();
+```
+
+### 2. ReviewModal.tsx
+`src/components/ReviewModal.tsx`
 
 ```typescript
-export type MarketplaceNotificationType = 
-  | 'new_inquiry'
-  | 'purchase_request' 
-  | 'request_accepted'
-  | 'request_declined'
-  | 'new_message'
-  | 'transaction_complete';
-
-export interface MarketplaceNotification {
-  id: string;
-  user_id: string;
-  type: MarketplaceNotificationType;
-  title: string;
-  body: string;
-  data: {
-    listing_id?: string;
-    transaction_id?: string;
-    sender_id?: string;
-    item_name?: string;
+interface ReviewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transaction: {
+    id: string;
+    listing: { item_name: string };
+    other_user: { id: string; display_name: string };
   };
-  read_at: string | null;
-  created_at: string;
+  onSuccess: () => void;
 }
-
-// Create notification
-export async function createMarketplaceNotification(
-  recipientUserId: string,
-  type: MarketplaceNotificationType,
-  data: {
-    listing_id?: string;
-    transaction_id?: string;
-    sender_name?: string;
-    item_name?: string;
-  }
-): Promise<void>;
-
-// Get notification title/body based on type
-function getNotificationContent(type: MarketplaceNotificationType, data: any): { title: string; body: string };
 ```
 
-### 3. Create useMarketplaceNotifications.ts Hook
-`src/hooks/useMarketplaceNotifications.ts`
+Modal content:
+- Header: "Rate your experience with {name}"
+- Star rating: 5 clickable stars
+- Comment textarea (optional, 500 chars)
+- Submit button
+
+### 3. useReviews.ts Hook
+`src/hooks/useReviews.ts`
 
 ```typescript
-export function useMarketplaceNotifications() {
-  // Get all marketplace notifications for current user
-  async function getNotifications(): Promise<MarketplaceNotification[]>;
+export function useReviews() {
+  // Create a review
+  async function createReview(data: {
+    transaction_id: string;
+    reviewee_id: string;
+    rating: number;
+    comment?: string;
+  }): Promise<boolean>;
   
-  // Get unread count
-  async function getUnreadCount(): Promise<number>;
+  // Get reviews for a user
+  async function getReviewsForUser(userId: string): Promise<Review[]>;
   
-  // Mark as read
-  async function markAsRead(id: string): Promise<void>;
+  // Check if user can review a transaction
+  async function canReviewTransaction(transactionId: string): Promise<boolean>;
   
-  // Mark all as read
-  async function markAllAsRead(): Promise<void>;
+  // Get pending reviews (transactions without my review)
+  async function getPendingReviews(): Promise<Transaction[]>;
   
-  return { getNotifications, getUnreadCount, markAsRead, markAllAsRead };
+  return { createReview, getReviewsForUser, canReviewTransaction, getPendingReviews };
 }
 ```
 
-### 4. Update NotificationsPage or Create MarketplaceNotificationsSection
-Add marketplace notifications to the existing notifications page, or create a new section.
-
-Each notification card:
+### 4. Update SellerProfilePage.tsx
+Add reviews section:
 ```
+Reviews (12)
 ┌─────────────────────────────────────┐
-│ 🛒 Purchase Request                 │
-│ John wants to buy "Blue Jacket"     │
-│ 2 hours ago                    [→]  │
+│ ⭐⭐⭐⭐⭐  Jane D.                  │
+│ "Great seller, fast response!"      │
+│ 2 weeks ago                         │
 └─────────────────────────────────────┘
 ```
 
-Icons by type:
-- new_inquiry: 💬
-- purchase_request: 🛒
-- request_accepted: ✅
-- request_declined: ❌
-- new_message: 💬
-- transaction_complete: 🎉
+### 5. Update Transaction Complete Flow
+After transaction marked complete, show prompt to leave review:
+- In MyListingsPage or a dedicated page
+- "How was your experience with {name}?"
+- Link to ReviewModal
 
-### 5. Update SettingsPage.tsx
-Add notification preferences section:
-```tsx
-<section>
-  <h3>Marketplace Notifications</h3>
-  <Toggle label="Purchase requests" />
-  <Toggle label="Request updates" />
-  <Toggle label="New messages" />
-  <Toggle label="Transaction complete" />
-</section>
+### 6. StarRating Component
+`src/components/StarRating.tsx`
+
+Reusable star rating component:
+- Display mode: shows filled/empty stars based on rating
+- Input mode: clickable stars for selecting rating
+
+### 7. Update types/database.ts
+Add Review type.
+
+## Star Rating Display
+
+```
+⭐⭐⭐⭐☆ 4.2 (12 reviews)
 ```
 
-### 6. Trigger Notifications in Transaction Flow
-Update these files to create notifications:
-- `src/hooks/useTransactions.ts` - on create/accept/decline/complete
-- `src/hooks/useMessages.ts` - on new message
-
-Example:
-```typescript
-// In acceptTransaction
-await createMarketplaceNotification(buyerId, 'request_accepted', {
-  listing_id: listingId,
-  transaction_id: transactionId,
-  item_name: itemName
-});
-```
-
-## Notification Content Templates
-
-| Type | Title | Body |
-|------|-------|------|
-| purchase_request | "New purchase request" | "{name} wants to buy {item}" |
-| request_accepted | "Request accepted!" | "{name} accepted your request for {item}" |
-| request_declined | "Request declined" | "{name} declined your request for {item}" |
-| new_message | "New message" | "{name} sent you a message about {item}" |
-| transaction_complete | "Transaction complete!" | "Your transaction for {item} is complete" |
+- Filled star: ⭐ (gold)
+- Empty star: ☆ (gray)
 
 ## Instructions
 
-1. Update `src/lib/notifications.ts` with marketplace notification functions
-2. Create `src/hooks/useMarketplaceNotifications.ts`
-3. Update notifications page to show marketplace notifications
-4. Update `src/hooks/useTransactions.ts` to trigger notifications
-5. Update `src/hooks/useMessages.ts` to trigger notifications
-6. Update `src/pages/SettingsPage.tsx` with notification preferences
-7. Run `npm run build` to verify
-8. Commit with: `feat: [US-MKT-009] Add marketplace notifications`
-9. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Create migration `supabase/migrations/20260201_create_reviews_table.sql`
+2. Create `src/components/StarRating.tsx`
+3. Create `src/components/ReviewModal.tsx`
+4. Create `src/hooks/useReviews.ts`
+5. Update `src/pages/SellerProfilePage.tsx` with reviews section
+6. Update `src/types/database.ts` with Review type
+7. Add review prompt in transaction complete flow
+8. Run `npm run build` to verify
+9. Commit with: `feat: [US-MKT-010] Add user ratings and reviews`
+10. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

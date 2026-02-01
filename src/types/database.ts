@@ -246,6 +246,20 @@ export interface Transaction {
 }
 
 /**
+ * Marketplace review
+ * Table: reviews
+ */
+export interface Review {
+  id: string;
+  transaction_id: string;
+  reviewer_id: string;
+  reviewee_id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
+/**
  * Marketplace message
  * Table: messages
  */
