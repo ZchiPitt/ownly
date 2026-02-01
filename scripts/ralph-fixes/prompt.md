@@ -1,124 +1,156 @@
-# US-MKT-006: Listing Detail Page
+# US-MKT-007: Purchase Request Flow
 
-**Description:** As a buyer, I want to see full details of a listing so I can decide whether to purchase.
+**Description:** As a buyer, I want to request to purchase an item so the seller can accept and we can complete the transaction.
 
 ## Acceptance Criteria
 
-1. Create new page `/marketplace/:listingId` with route in App.tsx
-2. Hero section: large item photo (tap to fullscreen)
-3. Info section: item name, price, condition, description
-4. Seller section: avatar, display_name, rating stars, review count, location city, member since
-5. Tap seller name navigates to seller profile page (can be placeholder for now)
-6. Action buttons (sticky bottom): 'Message Seller' (outline), 'Buy Now' or 'Request Item' for free items (primary)
-7. If item is user's own listing: show 'This is your listing' with Edit button
-8. If listing is sold/removed: show 'This item is no longer available'
-9. Back button in header
-10. Share button to copy link
+1. Tap 'Buy Now' on ListingDetailPage opens PurchaseRequestModal
+2. Modal shows: item summary (photo, name, price), optional message to seller (textarea)
+3. For negotiable items: show 'Your Offer' input field to enter offer price
+4. Submit creates transaction with status='pending'
+5. Seller receives notification (in-app, can add push later)
+6. Seller sees pending requests in My Listings page with Accept/Decline buttons
+7. Accept: transaction status='accepted', listing status='reserved', buyer notified
+8. Decline: transaction status='cancelled', buyer notified
+9. After accept: show 'Transaction Accepted' state with next steps
+10. Complete Transaction button for seller after handoff (status='completed', listing status='sold')
 11. npm run build passes
 
 ## Technical Details
 
 **Files to Create/Modify:**
 
-### 1. ListingDetailPage.tsx
-`src/pages/ListingDetailPage.tsx`
+### 1. PurchaseRequestModal.tsx
+`src/components/PurchaseRequestModal.tsx`
 
 ```typescript
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { AppShell } from '@/components/layout';
-import { useAuth } from '@/hooks/useAuth';
-import { useMarketplace, MarketplaceListing } from '@/hooks/useMarketplace';
-import { useToast } from '@/hooks/useToast';
+interface PurchaseRequestModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  listing: {
+    id: string;
+    price: number | null;
+    price_type: 'fixed' | 'negotiable' | 'free';
+    item: { name: string; photo_url: string };
+    seller_id: string;
+  };
+  onSuccess: () => void;
+}
 
-export function ListingDetailPage() {
-  const { listingId } = useParams<{ listingId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { getListingById } = useMarketplace();
-  const { success } = useToast();
-  
-  const [listing, setListing] = useState<MarketplaceListing | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  // ...
+// Form data
+interface PurchaseRequestForm {
+  offer_price: number | null;  // Only for negotiable
+  message: string;
 }
 ```
 
-### 2. Update useMarketplace.ts
-Add getListingById function:
+Modal layout:
+- Item preview (small photo + name + price)
+- If negotiable: "Your Offer" price input
+- Message textarea (optional, 200 chars)
+- Cancel / Send Request buttons
+
+### 2. useTransactions.ts Hook
+`src/hooks/useTransactions.ts`
+
 ```typescript
-async function getListingById(id: string): Promise<MarketplaceListing | null> {
-  const { data, error } = await supabase
-    .from('listings')
-    .select(`
-      id, price, price_type, condition, description, status, view_count, created_at,
-      item:items!inner(id, name, photo_url, thumbnail_url, category_id),
-      seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
-    `)
-    .eq('id', id)
-    .single();
+export function useTransactions() {
+  // Create a purchase request
+  async function createTransaction(data: {
+    listing_id: string;
+    seller_id: string;
+    agreed_price: number | null;
+    message: string;
+  }): Promise<{ data: Transaction | null; error: Error | null }>;
   
-  return data;
+  // Get transactions for a listing (seller view)
+  async function getTransactionsForListing(listingId: string): Promise<Transaction[]>;
+  
+  // Get my transactions (buyer view)
+  async function getMyTransactions(): Promise<TransactionWithListing[]>;
+  
+  // Accept transaction (seller)
+  async function acceptTransaction(id: string): Promise<boolean>;
+  
+  // Decline transaction (seller)
+  async function declineTransaction(id: string): Promise<boolean>;
+  
+  // Complete transaction (seller)
+  async function completeTransaction(id: string): Promise<boolean>;
+  
+  return { createTransaction, getTransactionsForListing, ... };
 }
 ```
 
-### 3. Update App.tsx
-Add route:
-```tsx
-<Route path="/marketplace/:listingId" element={<ProtectedRoute><ListingDetailPage /></ProtectedRoute>} />
+### 3. Update ListingDetailPage.tsx
+- Import PurchaseRequestModal
+- Add state for modal visibility
+- Wire up 'Buy Now' button to open modal
+- Handle success callback
+
+### 4. Update MyListingsPage.tsx
+- Show pending transaction count on listing cards
+- When listing tapped, show pending requests section
+- Accept/Decline buttons for each pending request
+
+### 5. Update EditListingModal.tsx
+Add section showing pending requests:
 ```
-
-### 4. Update src/pages/index.ts
-Export ListingDetailPage
-
-## Page Layout
-
-```
+Pending Requests (2)
 ┌─────────────────────────────────┐
-│ ←  Listing Details      [Share]│  Header
-├─────────────────────────────────┤
-│                                 │
-│        [Large Photo]            │  Hero (300px max)
-│                                 │
-├─────────────────────────────────┤
-│ Blue Winter Jacket              │  Item Name
-│ $45.00 · Negotiable             │  Price
-│ ● Like New                      │  Condition badge
-├─────────────────────────────────┤
-│ This is a warm winter jacket... │  Description
-│ Perfect for cold weather.       │
-├─────────────────────────────────┤
-│ Seller                          │
-│ [Avatar] John D.  ⭐ 4.8 (12)   │
-│ 📍 San Francisco                │
-│ Member since Jan 2025           │
-├─────────────────────────────────┤
-│                                 │
-│ [Message Seller] [Buy Now]      │  Sticky bottom actions
-│                                 │
+│ John D. offered $40             │
+│ "Is this still available?"      │
+│ [Accept] [Decline]              │
 └─────────────────────────────────┘
 ```
 
-## Condition Badge Colors
-- new: green
-- like_new: teal
-- good: blue
-- fair: yellow
-- poor: gray
+### 6. Create notifications helper
+`src/lib/notifications.ts`
+
+```typescript
+export async function createNotification(
+  userId: string,
+  type: 'purchase_request' | 'request_accepted' | 'request_declined',
+  data: { listing_id: string; transaction_id: string; message?: string }
+): Promise<void>;
+```
+
+## Database Operations
+
+```typescript
+// Create transaction
+const { data, error } = await supabase
+  .from('transactions')
+  .insert({
+    listing_id: listingId,
+    buyer_id: buyerProfileId,
+    seller_id: sellerProfileId,
+    status: 'pending',
+    agreed_price: offerPrice,
+    message: message
+  })
+  .select()
+  .single();
+
+// Accept transaction
+await supabase.from('transactions').update({ status: 'accepted' }).eq('id', id);
+await supabase.from('listings').update({ status: 'reserved' }).eq('id', listingId);
+
+// Complete transaction
+await supabase.from('transactions').update({ status: 'completed' }).eq('id', id);
+await supabase.from('listings').update({ status: 'sold' }).eq('id', listingId);
+```
 
 ## Instructions
 
-1. Add `getListingById` to `src/hooks/useMarketplace.ts`
-2. Create `src/pages/ListingDetailPage.tsx` with full layout
-3. Update `src/pages/index.ts` to export ListingDetailPage
-4. Add route in `src/App.tsx`
-5. Implement share button (copy URL to clipboard with toast)
-6. Handle own listing case (show edit button)
-7. Handle sold/removed case (show unavailable message)
-8. Run `npm run build` to verify
-9. Commit with: `feat: [US-MKT-006] Add listing detail page`
-10. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Create `src/hooks/useTransactions.ts` with all transaction functions
+2. Create `src/components/PurchaseRequestModal.tsx`
+3. Update `src/pages/ListingDetailPage.tsx` to use the modal
+4. Update `src/pages/MyListingsPage.tsx` to show pending requests
+5. Update `src/components/EditListingModal.tsx` to handle requests
+6. Run `npm run build` to verify
+7. Commit with: `feat: [US-MKT-007] Add purchase request flow`
+8. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

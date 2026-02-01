@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { EditListingModal } from '@/components/EditListingModal';
+import { useTransactions } from '@/hooks/useTransactions';
 import type { ListingStatus, PriceType } from '@/types/database';
 
 type TabFilter = 'all' | 'active' | 'sold' | 'removed';
@@ -129,6 +130,7 @@ function ListingSkeleton() {
 
 export function MyListingsPage() {
   const { getMyListings } = useListings();
+  const { getPendingCountsForListings } = useTransactions();
   const { error: showError } = useToast();
 
   const [activeTab, setActiveTab] = useState<TabFilter>('all');
@@ -137,6 +139,7 @@ export function MyListingsPage() {
   const [selectedListing, setSelectedListing] = useState<ListingWithItem | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
 
   const statusFilter = useMemo<ListingStatus | undefined>(() => (
     activeTab === 'all' ? undefined : activeTab
@@ -161,6 +164,26 @@ export function MyListingsPage() {
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
+
+  const fetchPendingCounts = useCallback(async (currentListings: ListingWithItem[]) => {
+    if (currentListings.length === 0) {
+      setPendingCounts({});
+      return;
+    }
+
+    try {
+      const counts = await getPendingCountsForListings(currentListings.map((listing) => listing.id));
+      setPendingCounts(counts);
+    } catch (err) {
+      console.error('Failed to load pending request counts:', err);
+    }
+  }, [getPendingCountsForListings]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      fetchPendingCounts(listings);
+    }
+  }, [fetchPendingCounts, isLoading, listings]);
 
   const handleRefresh = useCallback(async () => {
     await fetchListings();
@@ -277,7 +300,14 @@ export function MyListingsPage() {
                             {getPriceTypeLabel(listing.price_type)}
                           </p>
                         </div>
-                        <StatusBadge status={listing.status} />
+                        <div className="flex flex-col items-end gap-2">
+                          <StatusBadge status={listing.status} />
+                          {(pendingCounts[listing.id] ?? 0) > 0 && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                              {pendingCounts[listing.id]} pending
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
                         <div className="flex items-center gap-1">

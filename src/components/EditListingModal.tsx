@@ -4,9 +4,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useListings, type ListingWithItem } from '@/hooks/useListings';
+import { useTransactions, type TransactionWithBuyer } from '@/hooks/useTransactions';
 import { useToast } from '@/hooks/useToast';
 import { useConfirm } from '@/hooks/useConfirm';
-import type { ItemCondition, PriceType } from '@/types/database';
+import type { ItemCondition, ListingStatus, PriceType } from '@/types/database';
 
 export interface EditListingModalProps {
   isOpen: boolean;
@@ -38,8 +39,19 @@ const conditionOptions: Array<{ label: string; value: ItemCondition }> = [
   { label: 'Poor', value: 'poor' },
 ];
 
+function formatOfferPrice(price: number | null): string {
+  if (price === null) {
+    return 'Free';
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(price);
+}
+
 export function EditListingModal({ isOpen, onClose, listing, onSuccess }: EditListingModalProps) {
   const { updateListing, markAsSold, removeListing } = useListings();
+  const { getTransactionsForListing, acceptTransaction, declineTransaction, completeTransaction } = useTransactions();
   const { success, error } = useToast();
   const confirmDialog = useConfirm();
   const [formData, setFormData] = useState<ListingFormData>({
@@ -51,6 +63,23 @@ export function EditListingModal({ isOpen, onClose, listing, onSuccess }: EditLi
   const [formErrors, setFormErrors] = useState<{ price?: string; condition?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isActioning, setIsActioning] = useState(false);
+  const [transactions, setTransactions] = useState<TransactionWithBuyer[]>([]);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<ListingStatus | null>(null);
+
+  const fetchTransactions = useCallback(async () => {
+    if (!listing) return;
+    setIsLoadingTransactions(true);
+
+    try {
+      const data = await getTransactionsForListing(listing.id);
+      setTransactions(data);
+    } catch (err) {
+      console.error('Failed to load transactions:', err);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  }, [getTransactionsForListing, listing]);
 
   useEffect(() => {
     if (isOpen && listing) {
@@ -63,12 +92,21 @@ export function EditListingModal({ isOpen, onClose, listing, onSuccess }: EditLi
       setFormErrors({});
       setIsSubmitting(false);
       setIsActioning(false);
+      setCurrentStatus(listing.status);
+      fetchTransactions();
     }
-  }, [isOpen, listing]);
+  }, [fetchTransactions, isOpen, listing]);
 
   const isFree = formData.price_type === 'free';
   const descriptionCount = formData.description.length;
-  const isActive = listing?.status === 'active';
+  const listingStatus = currentStatus ?? listing?.status ?? 'active';
+  const isActive = listingStatus === 'active';
+  const pendingRequests = useMemo(() => (
+    transactions.filter((transaction) => transaction.status === 'pending')
+  ), [transactions]);
+  const acceptedRequest = useMemo(() => (
+    transactions.find((transaction) => transaction.status === 'accepted')
+  ), [transactions]);
 
   const canSubmit = useMemo(() => {
     if (isSubmitting || isActioning) return false;
@@ -178,6 +216,68 @@ export function EditListingModal({ isOpen, onClose, listing, onSuccess }: EditLi
     onSuccess();
     onClose();
   }, [confirmDialog, error, isActioning, listing, onClose, onSuccess, removeListing, success]);
+
+  const handleAcceptRequest = useCallback(async (transactionId: string) => {
+    if (isActioning) return;
+
+    setIsActioning(true);
+    const updated = await acceptTransaction(transactionId);
+    setIsActioning(false);
+
+    if (!updated) {
+      error('Failed to accept request');
+      return;
+    }
+
+    success('Request accepted');
+    setCurrentStatus('reserved');
+    await fetchTransactions();
+    onSuccess();
+  }, [acceptTransaction, error, fetchTransactions, isActioning, onSuccess, success]);
+
+  const handleDeclineRequest = useCallback(async (transactionId: string) => {
+    if (isActioning) return;
+
+    setIsActioning(true);
+    const updated = await declineTransaction(transactionId);
+    setIsActioning(false);
+
+    if (!updated) {
+      error('Failed to decline request');
+      return;
+    }
+
+    success('Request declined');
+    await fetchTransactions();
+    onSuccess();
+  }, [declineTransaction, error, fetchTransactions, isActioning, onSuccess, success]);
+
+  const handleCompleteTransaction = useCallback(async (transactionId: string) => {
+    if (isActioning) return;
+
+    const confirmed = await confirmDialog.confirm({
+      title: 'Complete transaction?',
+      message: 'This will mark the transaction as completed and the listing as sold.',
+      confirmText: 'Complete',
+      variant: 'default',
+    });
+
+    if (!confirmed) return;
+
+    setIsActioning(true);
+    const updated = await completeTransaction(transactionId);
+    setIsActioning(false);
+
+    if (!updated) {
+      error('Failed to complete transaction');
+      return;
+    }
+
+    success('Transaction completed');
+    setCurrentStatus('sold');
+    await fetchTransactions();
+    onSuccess();
+  }, [completeTransaction, confirmDialog, error, fetchTransactions, isActioning, onSuccess, success]);
 
   if (!isOpen || !listing) {
     return null;
@@ -325,6 +425,80 @@ export function EditListingModal({ isOpen, onClose, listing, onSuccess }: EditLi
               {descriptionCount}/{DESCRIPTION_LIMIT}
             </div>
           </div>
+
+          {/* Pending Requests */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">
+                Pending Requests ({pendingRequests.length})
+              </h3>
+              {isLoadingTransactions && (
+                <span className="text-xs text-gray-500">Loading...</span>
+              )}
+            </div>
+            {pendingRequests.length === 0 ? (
+              <div className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-xl p-4">
+                No pending requests right now.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {pendingRequests.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="border border-gray-200 rounded-xl p-4 bg-white"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {(transaction.buyer?.display_name ?? 'Buyer')} offered {formatOfferPrice(transaction.agreed_price)}
+                        </p>
+                        {transaction.message && (
+                          <p className="text-sm text-gray-600 mt-1">
+                            &quot;{transaction.message}&quot;
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleAcceptRequest(transaction.id)}
+                          disabled={isActioning}
+                          className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeclineRequest(transaction.id)}
+                          disabled={isActioning}
+                          className="px-3 py-1.5 border border-red-500 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {acceptedRequest && listingStatus === 'reserved' && (
+            <div className="border border-emerald-200 bg-emerald-50 rounded-xl p-4">
+              <h3 className="text-sm font-semibold text-emerald-800">Transaction Accepted</h3>
+              <p className="text-sm text-emerald-700 mt-1">
+                Coordinate pickup and payment with the buyer. Mark the transaction complete after handoff.
+              </p>
+              <button
+                type="button"
+                onClick={() => handleCompleteTransaction(acceptedRequest.id)}
+                disabled={isActioning}
+                className="mt-3 w-full px-4 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Complete Transaction
+              </button>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col gap-3 pt-2 border-t border-gray-200">

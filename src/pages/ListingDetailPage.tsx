@@ -10,6 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarketplace, type MarketplaceListing } from '@/hooks/useMarketplace';
 import { useToast } from '@/hooks/useToast';
+import { PurchaseRequestModal } from '@/components/PurchaseRequestModal';
 import type { ItemCondition, PriceType } from '@/types/database';
 
 const conditionLabels: Record<ItemCondition, string> = {
@@ -202,6 +203,7 @@ export function ListingDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPhotoOpen, setIsPhotoOpen] = useState(false);
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
 
   const fetchListing = useCallback(async () => {
     if (!listingId) {
@@ -261,8 +263,12 @@ export function ListingDetailPage() {
   }, [success]);
 
   const handlePrimaryAction = useCallback(() => {
-    success('Purchase flow coming soon.');
-  }, [success]);
+    if (!user) {
+      showError('Please sign in to send a purchase request.');
+      return;
+    }
+    setIsRequestOpen(true);
+  }, [showError, user]);
 
   if (isLoading) {
     return <ListingDetailSkeleton />;
@@ -443,6 +449,26 @@ export function ListingDetailPage() {
 
       {isPhotoOpen && imageUrl && (
         <PhotoViewer imageUrl={imageUrl} onClose={() => setIsPhotoOpen(false)} />
+      )}
+
+      {listing && (
+        <PurchaseRequestModal
+          isOpen={isRequestOpen}
+          onClose={() => setIsRequestOpen(false)}
+          listing={{
+            id: listing.id,
+            price: listing.price,
+            price_type: listing.price_type,
+            item: {
+              name: displayName,
+              photo_url: imageUrl,
+            },
+            seller_id: listing.seller.id,
+          }}
+          onSuccess={() => {
+            success('Purchase request sent.');
+          }}
+        />
       )}
     </div>
   );
