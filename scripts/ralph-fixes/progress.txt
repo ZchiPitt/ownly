@@ -253,3 +253,10 @@
 - Updated My Listings + Edit Listing modal to show pending requests, accept/decline, and completion flow.
 - Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
 - Files changed: src/hooks/useTransactions.ts, src/lib/notifications.ts, src/components/PurchaseRequestModal.tsx, src/pages/ListingDetailPage.tsx, src/pages/MyListingsPage.tsx, src/components/EditListingModal.tsx, scripts/ralph-fixes/progress.txt
+---
+## 2026-02-01 10:15 PST - US-MKT-008
+- Added messaging hook with conversation list, message fetch/send, unread counts, and realtime subscription handling.
+- Created messages list and chat pages with listing header, message bubbles, and input UI.
+- Wired message routes, settings badge, and listing detail message action.
+- Ran npm run build (warnings about CSS token, @import order, and chunk size). Build succeeded.
+- Files changed: src/hooks/useMessages.ts, src/pages/MessagesPage.tsx, src/pages/ChatPage.tsx, src/pages/ListingDetailPage.tsx, src/pages/SettingsPage.tsx, src/pages/index.ts, src/App.tsx, scripts/ralph-fixes/progress.txt

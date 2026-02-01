@@ -19,6 +19,8 @@ export { NotificationsPage } from './NotificationsPage';
 export { ShoppingPage } from './ShoppingPage';
 export { MarketplacePage } from './MarketplacePage';
 export { ListingDetailPage } from './ListingDetailPage';
+export { MessagesPage } from './MessagesPage';
+export { ChatPage } from './ChatPage';
 export { NotFoundPage } from './NotFoundPage';
 export { LandingPage } from './LandingPage';
 export { MyListingsPage } from './MyListingsPage';

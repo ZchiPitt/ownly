@@ -1,156 +1,163 @@
-# US-MKT-007: Purchase Request Flow
+# US-MKT-008: In-App Messaging
 
-**Description:** As a buyer, I want to request to purchase an item so the seller can accept and we can complete the transaction.
+**Description:** As a buyer/seller, I want to message the other party so we can discuss details and arrange pickup.
 
 ## Acceptance Criteria
 
-1. Tap 'Buy Now' on ListingDetailPage opens PurchaseRequestModal
-2. Modal shows: item summary (photo, name, price), optional message to seller (textarea)
-3. For negotiable items: show 'Your Offer' input field to enter offer price
-4. Submit creates transaction with status='pending'
-5. Seller receives notification (in-app, can add push later)
-6. Seller sees pending requests in My Listings page with Accept/Decline buttons
-7. Accept: transaction status='accepted', listing status='reserved', buyer notified
-8. Decline: transaction status='cancelled', buyer notified
-9. After accept: show 'Transaction Accepted' state with next steps
-10. Complete Transaction button for seller after handoff (status='completed', listing status='sold')
+1. Create new page `/messages` listing all conversations
+2. Conversation list shows: other party avatar/name, last message preview, unread count, timestamp
+3. Tap conversation opens `/messages/:conversationId` chat view
+4. Chat view: message bubbles (sent right blue, received left gray), timestamps, listing reference at top
+5. Message input at bottom with send button
+6. Real-time updates using Supabase Realtime subscription
+7. Mark messages as read when conversation opened
+8. Unread badge count on Messages link in Settings
+9. 'Message Seller' button on listing detail creates/opens conversation
+10. Empty state: 'No messages yet'
 11. npm run build passes
 
 ## Technical Details
 
-**Files to Create/Modify:**
+**Files to Create:**
 
-### 1. PurchaseRequestModal.tsx
-`src/components/PurchaseRequestModal.tsx`
+### 1. MessagesPage.tsx
+`src/pages/MessagesPage.tsx`
+
+List of conversations:
+```typescript
+interface Conversation {
+  id: string;  // listing_id used as conversation id
+  listing: { id: string; item_name: string; photo_url: string };
+  other_user: { id: string; display_name: string; avatar_url: string | null };
+  last_message: { content: string; created_at: string; is_mine: boolean };
+  unread_count: number;
+}
+```
+
+### 2. ChatPage.tsx
+`src/pages/ChatPage.tsx`
+
+Chat view for single conversation:
+```typescript
+// URL: /messages/:listingId
+// Uses listing_id to identify conversation between buyer and seller
+
+interface ChatMessage {
+  id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+  is_mine: boolean;
+}
+```
+
+Layout:
+- Header: listing photo + name, other user name
+- Messages list (scrollable, newest at bottom)
+- Input bar at bottom (textarea + send button)
+
+### 3. useMessages.ts Hook
+`src/hooks/useMessages.ts`
 
 ```typescript
-interface PurchaseRequestModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  listing: {
-    id: string;
-    price: number | null;
-    price_type: 'fixed' | 'negotiable' | 'free';
-    item: { name: string; photo_url: string };
-    seller_id: string;
-  };
-  onSuccess: () => void;
-}
-
-// Form data
-interface PurchaseRequestForm {
-  offer_price: number | null;  // Only for negotiable
-  message: string;
+export function useMessages() {
+  // Get all conversations for current user
+  async function getConversations(): Promise<Conversation[]>;
+  
+  // Get messages for a conversation (listing)
+  async function getMessages(listingId: string): Promise<ChatMessage[]>;
+  
+  // Send a message
+  async function sendMessage(listingId: string, receiverId: string, content: string): Promise<boolean>;
+  
+  // Mark messages as read
+  async function markAsRead(listingId: string): Promise<void>;
+  
+  // Get unread count
+  async function getUnreadCount(): Promise<number>;
+  
+  // Subscribe to new messages (Supabase Realtime)
+  function subscribeToMessages(listingId: string, callback: (msg: ChatMessage) => void): () => void;
+  
+  return { getConversations, getMessages, sendMessage, markAsRead, getUnreadCount, subscribeToMessages };
 }
 ```
 
-Modal layout:
-- Item preview (small photo + name + price)
-- If negotiable: "Your Offer" price input
-- Message textarea (optional, 200 chars)
-- Cancel / Send Request buttons
+### 4. Update App.tsx
+Add routes:
+```tsx
+<Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+<Route path="/messages/:listingId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+```
 
-### 2. useTransactions.ts Hook
-`src/hooks/useTransactions.ts`
+### 5. Update ListingDetailPage.tsx
+- 'Message Seller' button navigates to `/messages/:listingId`
+- Creates initial conversation if needed
+
+### 6. Update SettingsPage.tsx
+Add Messages link with unread badge:
+```tsx
+<Link to="/messages">
+  <ChatBubbleIcon />
+  <span>Messages</span>
+  {unreadCount > 0 && <span className="badge">{unreadCount}</span>}
+</Link>
+```
+
+### 7. Update src/pages/index.ts
+Export MessagesPage, ChatPage
+
+## Database Queries
 
 ```typescript
-export function useTransactions() {
-  // Create a purchase request
-  async function createTransaction(data: {
-    listing_id: string;
-    seller_id: string;
-    agreed_price: number | null;
-    message: string;
-  }): Promise<{ data: Transaction | null; error: Error | null }>;
-  
-  // Get transactions for a listing (seller view)
-  async function getTransactionsForListing(listingId: string): Promise<Transaction[]>;
-  
-  // Get my transactions (buyer view)
-  async function getMyTransactions(): Promise<TransactionWithListing[]>;
-  
-  // Accept transaction (seller)
-  async function acceptTransaction(id: string): Promise<boolean>;
-  
-  // Decline transaction (seller)
-  async function declineTransaction(id: string): Promise<boolean>;
-  
-  // Complete transaction (seller)
-  async function completeTransaction(id: string): Promise<boolean>;
-  
-  return { createTransaction, getTransactionsForListing, ... };
-}
+// Get conversations (group messages by listing)
+const { data } = await supabase
+  .from('messages')
+  .select(`
+    listing_id,
+    listings!inner(id, item:items(name, photo_url)),
+    sender:profiles!sender_id(id, display_name, avatar_url),
+    receiver:profiles!receiver_id(id, display_name, avatar_url),
+    content, created_at, read_at
+  `)
+  .or(`sender_id.eq.${myProfileId},receiver_id.eq.${myProfileId}`)
+  .order('created_at', { ascending: false });
+
+// Subscribe to new messages
+supabase
+  .channel('messages')
+  .on('postgres_changes', { 
+    event: 'INSERT', 
+    schema: 'public', 
+    table: 'messages',
+    filter: `listing_id=eq.${listingId}`
+  }, callback)
+  .subscribe();
 ```
 
-### 3. Update ListingDetailPage.tsx
-- Import PurchaseRequestModal
-- Add state for modal visibility
-- Wire up 'Buy Now' button to open modal
-- Handle success callback
+## Message Bubble Design
 
-### 4. Update MyListingsPage.tsx
-- Show pending transaction count on listing cards
-- When listing tapped, show pending requests section
-- Accept/Decline buttons for each pending request
-
-### 5. Update EditListingModal.tsx
-Add section showing pending requests:
 ```
-Pending Requests (2)
 ┌─────────────────────────────────┐
-│ John D. offered $40             │
-│ "Is this still available?"      │
-│ [Accept] [Decline]              │
+│ Received message on left        │  ← gray bg
 └─────────────────────────────────┘
-```
-
-### 6. Create notifications helper
-`src/lib/notifications.ts`
-
-```typescript
-export async function createNotification(
-  userId: string,
-  type: 'purchase_request' | 'request_accepted' | 'request_declined',
-  data: { listing_id: string; transaction_id: string; message?: string }
-): Promise<void>;
-```
-
-## Database Operations
-
-```typescript
-// Create transaction
-const { data, error } = await supabase
-  .from('transactions')
-  .insert({
-    listing_id: listingId,
-    buyer_id: buyerProfileId,
-    seller_id: sellerProfileId,
-    status: 'pending',
-    agreed_price: offerPrice,
-    message: message
-  })
-  .select()
-  .single();
-
-// Accept transaction
-await supabase.from('transactions').update({ status: 'accepted' }).eq('id', id);
-await supabase.from('listings').update({ status: 'reserved' }).eq('id', listingId);
-
-// Complete transaction
-await supabase.from('transactions').update({ status: 'completed' }).eq('id', id);
-await supabase.from('listings').update({ status: 'sold' }).eq('id', listingId);
+                    ┌─────────────────────────────────┐
+                    │        Sent message on right    │  ← blue bg
+                    └─────────────────────────────────┘
 ```
 
 ## Instructions
 
-1. Create `src/hooks/useTransactions.ts` with all transaction functions
-2. Create `src/components/PurchaseRequestModal.tsx`
-3. Update `src/pages/ListingDetailPage.tsx` to use the modal
-4. Update `src/pages/MyListingsPage.tsx` to show pending requests
-5. Update `src/components/EditListingModal.tsx` to handle requests
-6. Run `npm run build` to verify
-7. Commit with: `feat: [US-MKT-007] Add purchase request flow`
-8. Append progress to `scripts/ralph-fixes/progress.txt`
+1. Create `src/hooks/useMessages.ts` with all messaging functions
+2. Create `src/pages/MessagesPage.tsx` for conversation list
+3. Create `src/pages/ChatPage.tsx` for chat view
+4. Update `src/pages/index.ts` to export new pages
+5. Add routes in `src/App.tsx`
+6. Update `src/pages/ListingDetailPage.tsx` for Message Seller button
+7. Update `src/pages/SettingsPage.tsx` with Messages link + badge
+8. Run `npm run build` to verify
+9. Commit with: `feat: [US-MKT-008] Add in-app messaging`
+10. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:
 <promise>COMPLETE</promise>

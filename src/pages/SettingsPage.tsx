@@ -6,10 +6,11 @@
  * US-065: Implement push notification permission flow
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useMessages } from '@/hooks/useMessages';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useToast } from '@/hooks/useToast';
@@ -52,9 +53,23 @@ function ChevronRightIcon({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function ChatBubbleIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.2-4A7.76 7.76 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
+    </svg>
+  );
+}
+
 export function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
+  const { getUnreadCount } = useMessages();
   const { settings, updateSettings, isLoading: isLoadingSettings } = useUserSettings();
   const {
     permissionState,
@@ -70,6 +85,23 @@ export function SettingsPage() {
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [editingName, setEditingName] = useState(user?.user_metadata?.display_name || '');
   const [isSavingName, setIsSavingName] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const loadUnreadCount = async () => {
+      const count = await getUnreadCount();
+      setUnreadCount(count);
+    };
+
+    loadUnreadCount();
+
+    const handleFocus = () => {
+      loadUnreadCount();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [getUnreadCount]);
 
   const handleLogoutClick = () => {
     setShowLogoutDialog(true);
@@ -288,6 +320,25 @@ export function SettingsPage() {
                 <span className="text-base font-medium text-gray-900">My Listings</span>
               </div>
               <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            </Link>
+
+            {/* Messages Link */}
+            <Link
+              to="/messages"
+              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <ChatBubbleIcon className="w-5 h-5 text-gray-500" />
+                <span className="text-base font-medium text-gray-900">Messages</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-teal-600 text-white text-xs font-semibold">
+                    {unreadCount}
+                  </span>
+                )}
+                <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+              </div>
             </Link>
           </div>
         </section>

@@ -259,8 +259,16 @@ export function ListingDetailPage() {
   }, [success, showError]);
 
   const handleMessageSeller = useCallback(() => {
-    success('Messaging coming soon.');
-  }, [success]);
+    if (!user) {
+      showError('Please sign in to message the seller.');
+      return;
+    }
+    if (!listingId) {
+      showError('Listing not found.');
+      return;
+    }
+    navigate(`/messages/${listingId}`);
+  }, [listingId, navigate, showError, user]);
 
   const handlePrimaryAction = useCallback(() => {
     if (!user) {
