@@ -11,6 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMarketplace, type MarketplaceListing } from '@/hooks/useMarketplace';
 import { useToast } from '@/hooks/useToast';
 import { PurchaseRequestModal } from '@/components/PurchaseRequestModal';
+import { SaveButton } from '@/components/SaveButton';
 import { StarRating } from '@/components/StarRating';
 import type { ItemCondition, PriceType } from '@/types/database';
 
@@ -314,13 +315,16 @@ export function ListingDetailPage() {
             <BackIcon />
           </button>
           <h1 className="text-lg font-semibold text-gray-900">Listing Details</h1>
-          <button
-            onClick={handleShare}
-            className="p-2 -mr-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-            aria-label="Share listing"
-          >
-            <ShareIcon />
-          </button>
+          <div className="flex items-center gap-2 -mr-2">
+            <SaveButton listingId={listing.id} size="md" />
+            <button
+              onClick={handleShare}
+              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Share listing"
+            >
+              <ShareIcon />
+            </button>
+          </div>
         </div>
       </div>
 

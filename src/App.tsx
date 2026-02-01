@@ -4,7 +4,7 @@ import { AuthProvider, OfflineProvider, ToastProvider, ConfirmProvider } from '@
 import { AppShell } from '@/components/layout'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ToastContainer } from '@/components/Toast'
-import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage, MarketplacePage, ListingDetailPage, MessagesPage, ChatPage, NotFoundPage, LandingPage, MyListingsPage, SellerProfilePage } from '@/pages'
+import { SignupPage, LoginPage, SettingsPage, ResetPasswordPage, ResetPasswordConfirmPage, AddItemPage, ItemEditorPage, DashboardPage, InventoryPage, ItemDetailPage, EditItemPage, SearchPage, NotificationsPage, ShoppingPage, MarketplacePage, ListingDetailPage, MessagesPage, ChatPage, NotFoundPage, LandingPage, MyListingsPage, SellerProfilePage, SavedListingsPage } from '@/pages'
 import { useEffect } from 'react'
 import { useToast } from '@/hooks/useToast'
 
@@ -59,6 +59,7 @@ function AppContent() {
                       <Route path="/marketplace/:listingId" element={<ListingDetailPage />} />
                       <Route path="/marketplace/seller/:sellerId" element={<SellerProfilePage />} />
                       <Route path="/my-listings" element={<MyListingsPage />} />
+                      <Route path="/saved-listings" element={<SavedListingsPage />} />
                       {/* 404 for protected routes */}
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>

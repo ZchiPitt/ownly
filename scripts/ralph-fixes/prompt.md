@@ -1,161 +1,140 @@
-# US-MKT-010: User Ratings and Reviews
+# US-MKT-011: Saved Listings / Wishlist
 
-**Description:** As a user, I want to rate and review other users after transactions so the community can identify trustworthy members.
+**Description:** As a buyer, I want to save listings I'm interested in so I can find them later.
 
 ## Acceptance Criteria
 
-1. Create reviews table: id, transaction_id (FK), reviewer_id (FK), reviewee_id (FK), rating (1-5), comment (text 500), created_at
-2. After transaction complete, both parties can leave review (prompt appears)
-3. Review modal: star rating (required), comment (optional 500 chars)
-4. One review per user per transaction (cannot edit after submit)
-5. User profile shows: average rating, review count, recent reviews
-6. Seller profile on listing detail shows rating prominently
-7. Reviews visible on seller profile page
-8. Calculate and update seller_rating in profiles table after review
-9. npm run build passes
+1. Create saved_listings table: user_id, listing_id, created_at (composite PK)
+2. Heart/bookmark icon on listing cards and detail page
+3. Tap to save/unsave (optimistic UI update)
+4. New page /saved-listings showing all saved items
+5. Remove from saved when listing is sold/removed (or show 'No longer available' state)
+6. Empty state: 'No saved items yet'
+7. Add link to saved listings in Settings or profile area
+8. npm run build passes
 
 ## Technical Details
 
 **Files to Create/Modify:**
 
 ### 1. Database Migration
-`supabase/migrations/YYYYMMDD_create_reviews_table.sql`
+`supabase/migrations/YYYYMMDD_create_saved_listings_table.sql`
 
 ```sql
-CREATE TABLE reviews (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
-  reviewer_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  reviewee_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  comment TEXT,
+CREATE TABLE saved_listings (
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  UNIQUE(transaction_id, reviewer_id)
+  PRIMARY KEY (user_id, listing_id)
 );
 
--- RLS
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_listings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Reviews are viewable by everyone" ON reviews
-  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Users can view their saved listings" ON saved_listings
+  FOR SELECT TO authenticated
+  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
 
-CREATE POLICY "Users can create reviews for their transactions" ON reviews
+CREATE POLICY "Users can save listings" ON saved_listings
   FOR INSERT TO authenticated
-  WITH CHECK (reviewer_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
+  WITH CHECK (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
 
--- Function to update seller rating
-CREATE OR REPLACE FUNCTION update_seller_rating()
-RETURNS TRIGGER AS $$
-BEGIN
-  UPDATE profiles
-  SET 
-    seller_rating = (SELECT AVG(rating)::DECIMAL(3,2) FROM reviews WHERE reviewee_id = NEW.reviewee_id),
-    review_count = (SELECT COUNT(*) FROM reviews WHERE reviewee_id = NEW.reviewee_id)
-  WHERE id = NEW.reviewee_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+CREATE POLICY "Users can unsave listings" ON saved_listings
+  FOR DELETE TO authenticated
+  USING (user_id = (SELECT id FROM profiles WHERE user_id = auth.uid()));
 
-CREATE TRIGGER update_rating_after_review
-  AFTER INSERT ON reviews
-  FOR EACH ROW EXECUTE FUNCTION update_seller_rating();
+CREATE INDEX idx_saved_listings_user ON saved_listings(user_id);
 ```
 
-### 2. ReviewModal.tsx
-`src/components/ReviewModal.tsx`
+### 2. useSavedListings.ts Hook
+`src/hooks/useSavedListings.ts`
 
 ```typescript
-interface ReviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  transaction: {
-    id: string;
-    listing: { item_name: string };
-    other_user: { id: string; display_name: string };
-  };
-  onSuccess: () => void;
+export function useSavedListings() {
+  // Get all saved listings for current user
+  async function getSavedListings(): Promise<MarketplaceListing[]>;
+  
+  // Check if a listing is saved
+  async function isListingSaved(listingId: string): Promise<boolean>;
+  
+  // Save a listing
+  async function saveListing(listingId: string): Promise<boolean>;
+  
+  // Unsave a listing
+  async function unsaveListing(listingId: string): Promise<boolean>;
+  
+  // Toggle save status
+  async function toggleSave(listingId: string): Promise<boolean>;
+  
+  return { getSavedListings, isListingSaved, saveListing, unsaveListing, toggleSave };
 }
 ```
 
-Modal content:
-- Header: "Rate your experience with {name}"
-- Star rating: 5 clickable stars
-- Comment textarea (optional, 500 chars)
-- Submit button
+### 3. SavedListingsPage.tsx
+`src/pages/SavedListingsPage.tsx`
 
-### 3. useReviews.ts Hook
-`src/hooks/useReviews.ts`
+- Grid of saved listings (reuse MarketplaceCard)
+- Show "No longer available" overlay for sold/removed
+- Empty state with link to marketplace
+- Pull to refresh
+
+### 4. SaveButton Component
+`src/components/SaveButton.tsx`
 
 ```typescript
-export function useReviews() {
-  // Create a review
-  async function createReview(data: {
-    transaction_id: string;
-    reviewee_id: string;
-    rating: number;
-    comment?: string;
-  }): Promise<boolean>;
-  
-  // Get reviews for a user
-  async function getReviewsForUser(userId: string): Promise<Review[]>;
-  
-  // Check if user can review a transaction
-  async function canReviewTransaction(transactionId: string): Promise<boolean>;
-  
-  // Get pending reviews (transactions without my review)
-  async function getPendingReviews(): Promise<Transaction[]>;
-  
-  return { createReview, getReviewsForUser, canReviewTransaction, getPendingReviews };
+interface SaveButtonProps {
+  listingId: string;
+  initialSaved?: boolean;
+  size?: 'sm' | 'md';
+  onToggle?: (saved: boolean) => void;
 }
 ```
 
-### 4. Update SellerProfilePage.tsx
-Add reviews section:
+- Heart icon (outline when not saved, filled when saved)
+- Optimistic update on click
+- Toast feedback: "Saved!" / "Removed from saved"
+
+### 5. Update MarketplaceCard.tsx
+Add SaveButton in top-right corner of card.
+
+### 6. Update ListingDetailPage.tsx
+Add SaveButton next to share button in header.
+
+### 7. Update App.tsx
+Add route: `/saved-listings`
+
+### 8. Update SettingsPage.tsx
+Add link to Saved Listings.
+
+### 9. Update src/pages/index.ts
+Export SavedListingsPage.
+
+## UI Design
+
+Card with save button:
 ```
-Reviews (12)
-┌─────────────────────────────────────┐
-│ ⭐⭐⭐⭐⭐  Jane D.                  │
-│ "Great seller, fast response!"      │
-│ 2 weeks ago                         │
-└─────────────────────────────────────┘
+┌─────────────────┐
+│ [Photo]    [♡] │  ← Heart icon top-right
+│                 │
+├─────────────────┤
+│ Item Name       │
+│ $25 · Good      │
+└─────────────────┘
 ```
 
-### 5. Update Transaction Complete Flow
-After transaction marked complete, show prompt to leave review:
-- In MyListingsPage or a dedicated page
-- "How was your experience with {name}?"
-- Link to ReviewModal
-
-### 6. StarRating Component
-`src/components/StarRating.tsx`
-
-Reusable star rating component:
-- Display mode: shows filled/empty stars based on rating
-- Input mode: clickable stars for selecting rating
-
-### 7. Update types/database.ts
-Add Review type.
-
-## Star Rating Display
-
-```
-⭐⭐⭐⭐☆ 4.2 (12 reviews)
-```
-
-- Filled star: ⭐ (gold)
-- Empty star: ☆ (gray)
+Saved state: ♥ (filled red)
+Unsaved state: ♡ (outline gray)
 
 ## Instructions
 
-1. Create migration `supabase/migrations/20260201_create_reviews_table.sql`
-2. Create `src/components/StarRating.tsx`
-3. Create `src/components/ReviewModal.tsx`
-4. Create `src/hooks/useReviews.ts`
-5. Update `src/pages/SellerProfilePage.tsx` with reviews section
-6. Update `src/types/database.ts` with Review type
-7. Add review prompt in transaction complete flow
+1. Create migration `supabase/migrations/20260201_create_saved_listings_table.sql`
+2. Create `src/hooks/useSavedListings.ts`
+3. Create `src/components/SaveButton.tsx`
+4. Create `src/pages/SavedListingsPage.tsx`
+5. Update `src/components/MarketplaceCard.tsx` with SaveButton
+6. Update `src/pages/ListingDetailPage.tsx` with SaveButton
+7. Update `src/pages/index.ts`, `src/App.tsx`, `src/pages/SettingsPage.tsx`
 8. Run `npm run build` to verify
-9. Commit with: `feat: [US-MKT-010] Add user ratings and reviews`
+9. Commit with: `feat: [US-MKT-011] Add saved listings / wishlist`
 10. Append progress to `scripts/ralph-fixes/progress.txt`
 
 When ALL acceptance criteria are met and build passes, reply with:

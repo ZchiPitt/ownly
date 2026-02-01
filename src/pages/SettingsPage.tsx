@@ -66,6 +66,18 @@ function ChatBubbleIcon({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
+function HeartIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+      />
+    </svg>
+  );
+}
+
 export function SettingsPage() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
@@ -324,6 +336,18 @@ export function SettingsPage() {
               <div className="flex items-center gap-3">
                 <TagIcon className="w-5 h-5 text-gray-500" />
                 <span className="text-base font-medium text-gray-900">My Listings</span>
+              </div>
+              <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            </Link>
+
+            {/* Saved Listings Link */}
+            <Link
+              to="/saved-listings"
+              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+            >
+              <div className="flex items-center gap-3">
+                <HeartIcon className="w-5 h-5 text-gray-500" />
+                <span className="text-base font-medium text-gray-900">Saved Listings</span>
               </div>
               <ChevronRightIcon className="w-5 h-5 text-gray-400" />
             </Link>

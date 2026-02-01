@@ -3,10 +3,13 @@
  */
 
 import type { MarketplaceListing } from '@/hooks/useMarketplace';
+import { SaveButton } from '@/components/SaveButton';
 
 interface MarketplaceCardProps {
   listing: MarketplaceListing;
   onClick: () => void;
+  initialSaved?: boolean;
+  onSaveToggle?: (saved: boolean) => void;
 }
 
 const conditionLabels: Record<string, string> = {
@@ -38,7 +41,12 @@ function formatPrice(price: number | null): string {
   return formatter.format(price);
 }
 
-export function MarketplaceCard({ listing, onClick }: MarketplaceCardProps) {
+export function MarketplaceCard({
+  listing,
+  onClick,
+  initialSaved,
+  onSaveToggle,
+}: MarketplaceCardProps) {
   const imageUrl = listing.item.thumbnail_url || listing.item.photo_url;
   const displayName = listing.item.name || 'Untitled Item';
   const sellerName = listing.seller.display_name || 'Unknown seller';
@@ -48,9 +56,17 @@ export function MarketplaceCard({ listing, onClick }: MarketplaceCardProps) {
   const conditionStyle = conditionStyles[listing.condition] || 'bg-gray-100 text-gray-600';
 
   return (
-    <button
+    <div
       onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98] cursor-pointer"
     >
       <div className="relative w-full aspect-square bg-gray-100">
         <img
@@ -59,6 +75,14 @@ export function MarketplaceCard({ listing, onClick }: MarketplaceCardProps) {
           className="w-full h-full object-cover"
           loading="lazy"
         />
+        <div className="absolute top-3 right-3">
+          <SaveButton
+            listingId={listing.id}
+            initialSaved={initialSaved}
+            size="sm"
+            onToggle={onSaveToggle}
+          />
+        </div>
         {isFree && (
           <span className="absolute top-3 left-3 inline-flex items-center px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
             Free
@@ -88,7 +112,7 @@ export function MarketplaceCard({ listing, onClick }: MarketplaceCardProps) {
           {locationCity && <span className="uppercase tracking-wide">{locationCity}</span>}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 

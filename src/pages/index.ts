@@ -25,3 +25,4 @@ export { NotFoundPage } from './NotFoundPage';
 export { LandingPage } from './LandingPage';
 export { MyListingsPage } from './MyListingsPage';
 export { SellerProfilePage } from './SellerProfilePage';
+export { SavedListingsPage } from './SavedListingsPage';
