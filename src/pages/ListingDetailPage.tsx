@@ -272,6 +272,12 @@ export function ListingDetailPage() {
     setIsRequestOpen(true);
   }, [showError, user]);
 
+  // Derive action label from listing (must be before any early returns per rules-of-hooks)
+  const primaryActionLabel = useMemo(() => {
+    if (!listing) return 'Request Item';
+    return listing.price_type === 'free' || listing.price === null ? 'Request Item' : 'Buy Now';
+  }, [listing]);
+
   if (isLoading) {
     return <ListingDetailSkeleton />;
   }
@@ -297,10 +303,6 @@ export function ListingDetailPage() {
   const rating = listing.seller.seller_rating ?? 0;
   const reviewCount = listing.seller.review_count ?? 0;
   const ratingLabel = reviewCount > 0 ? rating.toFixed(1) : '0.0';
-
-  const primaryActionLabel = useMemo(() => {
-    return listing.price_type === 'free' || listing.price === null ? 'Request Item' : 'Buy Now';
-  }, [listing.price, listing.price_type]);
 
   return (
     <div className="min-h-screen bg-gray-50 pb-safe-area-pb">

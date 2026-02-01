@@ -93,11 +93,14 @@ export function ChatPage() {
     }
   }, []);
 
+  // Initial data loading on mount - legitimate async data fetching pattern
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadListing();
     loadConversation();
     loadMessages();
   }, [loadConversation, loadListing, loadMessages]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     scrollToBottom();

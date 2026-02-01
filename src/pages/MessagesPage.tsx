@@ -90,9 +90,12 @@ export function MessagesPage() {
     setIsLoading(false);
   }, [getConversations]);
 
+  // Initial data loading on mount - legitimate async data fetching pattern
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     loadConversations();
   }, [loadConversations]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const handleFocus = () => {

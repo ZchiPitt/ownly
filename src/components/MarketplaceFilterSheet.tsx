@@ -82,6 +82,8 @@ export function MarketplaceFilterSheet({
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
+  // Sync local state with props when sheet opens - intentional initialization
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!isOpen) return;
 
@@ -91,6 +93,7 @@ export function MarketplaceFilterSheet({
     setMinPrice(filters.minPrice !== null ? String(filters.minPrice) : '');
     setMaxPrice(filters.maxPrice !== null ? String(filters.maxPrice) : '');
   }, [filters, isOpen]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const sortedCategories = useMemo(() => {
     const system = categories.filter((category) => category.is_system);

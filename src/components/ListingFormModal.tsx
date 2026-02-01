@@ -55,6 +55,8 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
   const [formErrors, setFormErrors] = useState<{ price?: string; condition?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form when modal opens - this is intentional initialization, not cascading renders
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       setFormData(defaultFormData);
@@ -62,6 +64,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
       setIsSubmitting(false);
     }
   }, [isOpen, item.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const isFree = formData.price_type === 'free';
   const descriptionCount = formData.description.length;

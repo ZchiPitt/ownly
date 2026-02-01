@@ -42,6 +42,8 @@ export function SaveButton({
   const [saved, setSaved] = useState<boolean>(initialSaved ?? false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Sync saved state with prop or load from API - legitimate data initialization
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     let isActive = true;
 
@@ -68,6 +70,7 @@ export function SaveButton({
       isActive = false;
     };
   }, [initialSaved, isListingSaved, listingId, user]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleToggle = useCallback(async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();

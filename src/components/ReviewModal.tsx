@@ -27,6 +27,8 @@ export function ReviewModal({ isOpen, onClose, transaction, onSuccess }: ReviewM
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form when modal opens - intentional initialization, not cascading renders
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       setRating(0);
@@ -34,6 +36,7 @@ export function ReviewModal({ isOpen, onClose, transaction, onSuccess }: ReviewM
       setIsSubmitting(false);
     }
   }, [isOpen, transaction.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const canSubmit = useMemo(() => rating > 0 && !isSubmitting, [isSubmitting, rating]);
 

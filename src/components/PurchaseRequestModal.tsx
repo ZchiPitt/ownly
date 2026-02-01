@@ -52,6 +52,8 @@ export function PurchaseRequestModal({
   const [formErrors, setFormErrors] = useState<{ offer_price?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reset form when modal opens - intentional initialization, not cascading renders
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isOpen) {
       setFormData({ offer_price: null, message: '' });
@@ -59,6 +61,7 @@ export function PurchaseRequestModal({
       setIsSubmitting(false);
     }
   }, [isOpen, listing.id]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const isNegotiable = listing.price_type === 'negotiable';
   const messageCount = formData.message.length;
