@@ -28,6 +28,7 @@ import { useCallback, useEffect, useState, useRef } from 'react';
 import { ItemEditor, type ItemEditorValues } from '@/components/ItemEditor';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useRecentLocation } from '@/hooks/useRecentLocation';
 import { Toast } from '@/components/Toast';
 import type { DetectedItem } from '@/types/api';
 import type { ItemAIMetadata } from '@/types';
@@ -57,6 +58,7 @@ export function ItemEditorPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { locationId: recentLocationId } = useRecentLocation();
 
   // Extract state from router
   const state = location.state as ItemEditorState | null;
@@ -406,6 +408,7 @@ export function ItemEditorPage() {
             totalItems={state.totalItems}
             onFormChange={handleFormChange}
             locationError={locationError}
+            defaultLocationId={recentLocationId}
           />
         </div>
 

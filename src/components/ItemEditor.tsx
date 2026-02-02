@@ -46,6 +46,8 @@ export interface ItemEditorProps {
   onFormChange?: (values: ItemEditorValues) => void;
   /** Error message for location field (shown when validation fails) */
   locationError?: string;
+  /** Default location ID to pre-populate (e.g., user's most recent location) */
+  defaultLocationId?: string | null;
 }
 
 /**
@@ -552,6 +554,7 @@ export function ItemEditor({
   onViewFullImage,
   onFormChange,
   locationError,
+  defaultLocationId,
 }: ItemEditorProps) {
   // Get categories to find AI suggested category
   const { categories, isLoading: categoriesLoading } = useCategories();
@@ -625,10 +628,17 @@ export function ItemEditor({
   // Track if full image viewer is open
   const [isViewingFullImage, setIsViewingFullImage] = useState(false);
 
-  // Location state
-  const [locationId, setLocationId] = useState<string | null>(null);
+  // Location state - initialize with default location if provided
+  const [locationId, setLocationId] = useState<string | null>(defaultLocationId ?? null);
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const { locations, isLoading: locationsLoading } = useLocations();
+
+  // Update locationId when defaultLocationId arrives asynchronously (only if not already set)
+  useEffect(() => {
+    if (defaultLocationId && !locationId) {
+      setLocationId(defaultLocationId);
+    }
+  }, [defaultLocationId, locationId]);
 
   /**
    * Handle name change - clear AI indicator when user modifies
