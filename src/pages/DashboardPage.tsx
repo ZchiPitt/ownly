@@ -11,6 +11,7 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Toast } from '@/components/Toast';
 import { HeroSection } from '@/components/dashboard/HeroSection';
+import { MarketplaceSection } from '@/components/dashboard/MarketplaceSection';
 import { AgentSection } from '@/components/dashboard/AgentSection';
 
 /**
@@ -100,6 +101,9 @@ export function DashboardPage() {
         isLoading={recentLoading}
         totalItems={stats.totalItems} // Fallback nicely inside component if loading
       />
+
+      {/* Marketplace Section: Buy & sell with neighbors */}
+      <MarketplaceSection />
 
       {/* Agent Section: Talk to the Ownly Agent! */}
       <AgentSection />

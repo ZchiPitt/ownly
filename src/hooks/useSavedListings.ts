@@ -80,7 +80,7 @@ export function useSavedListings() {
           view_count,
           created_at,
           item:items!inner(id, name, photo_url, thumbnail_url, category_id),
-          seller:profiles!inner(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
+          seller:profiles!listings_seller_id_fkey(id, user_id, display_name, avatar_url, location_city, seller_rating, review_count, created_at)
         )
       `)
       .eq('user_id', profileId)

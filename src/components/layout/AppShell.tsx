@@ -56,6 +56,30 @@ function InventoryIcon({ active }: { active: boolean }) {
   )
 }
 
+function MarketplaceIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
+      fill={active ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={active ? 0 : 2}
+        d="M3.75 7.5h16.5l-1.5 12a2.25 2.25 0 01-2.25 2h-9a2.25 2.25 0 01-2.25-2l-1.5-12z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={active ? 0 : 2}
+        d="M9 7.5V6a3 3 0 116 0v1.5"
+      />
+    </svg>
+  )
+}
+
 function ShopIcon({ active }: { active: boolean }) {
   return (
     <svg
@@ -186,6 +210,15 @@ export function AppShell({
                 aria-label="Inventory"
               >
                 <InventoryIcon active={isActive('/inventory')} />
+              </NavLink>
+              <NavLink
+                to="/marketplace"
+                className={`p-2 rounded-lg transition-colors ${
+                  isActive('/marketplace') ? 'bg-teal-50' : 'hover:bg-gray-100'
+                }`}
+                aria-label="Marketplace"
+              >
+                <MarketplaceIcon active={isActive('/marketplace')} />
               </NavLink>
               <NavLink
                 to="/shopping"

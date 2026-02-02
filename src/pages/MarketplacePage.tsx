@@ -3,6 +3,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarketplace, MARKETPLACE_PAGE_SIZE } from '@/hooks/useMarketplace';
 import type { MarketplaceListing, MarketplaceFilters, SortOption } from '@/hooks/useMarketplace';
@@ -183,6 +184,7 @@ function EmptyState({ onClearFilters }: { onClearFilters: () => void }) {
 }
 
 export function MarketplacePage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { getListings } = useMarketplace();
 
@@ -287,7 +289,7 @@ export function MarketplacePage() {
         sort,
         page: pageToLoad,
         pageSize: MARKETPLACE_PAGE_SIZE,
-        excludeUserId: profileId ?? undefined,
+        // Show all listings including user's own
       });
 
       setListings((prev) => (append ? [...prev, ...nextListings] : nextListings));
@@ -540,9 +542,7 @@ export function MarketplacePage() {
                 <MarketplaceCard
                   key={listing.id}
                   listing={listing}
-                  onClick={() => {
-                    // Placeholder for future listing detail route
-                  }}
+                  onClick={() => navigate(`/marketplace/${listing.id}`)}
                 />
               ))}
             </div>

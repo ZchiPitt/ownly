@@ -56,10 +56,10 @@ function AppContent() {
                       <Route path="/messages/:listingId" element={<ChatPage />} />
                       <Route path="/shopping" element={<ShoppingPage />} />
                       <Route path="/marketplace" element={<MarketplacePage />} />
-                      <Route path="/marketplace/:listingId" element={<ListingDetailPage />} />
+                      <Route path="/marketplace/my-listings" element={<MyListingsPage />} />
+                      <Route path="/marketplace/saved" element={<SavedListingsPage />} />
                       <Route path="/marketplace/seller/:sellerId" element={<SellerProfilePage />} />
-                      <Route path="/my-listings" element={<MyListingsPage />} />
-                      <Route path="/saved-listings" element={<SavedListingsPage />} />
+                      <Route path="/marketplace/:listingId" element={<ListingDetailPage />} />
                       {/* 404 for protected routes */}
                       <Route path="*" element={<NotFoundPage />} />
                     </Routes>

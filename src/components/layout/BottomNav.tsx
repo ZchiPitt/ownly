@@ -194,7 +194,7 @@ export function BottomNav() {
                 ) : null}
               </div>
               <span
-                className={`hidden md:block text-xs mt-1 ${active ? 'text-teal-600 font-medium' : 'text-gray-500'}`}
+                className={`text-[10px] mt-0.5 ${active ? 'text-teal-600 font-medium' : 'text-gray-500'}`}
               >
                 {item.label}
               </span>
