@@ -362,7 +362,7 @@ export function ListingDetailPage() {
               <p className="text-xs text-teal-700">Manage pricing or status changes.</p>
             </div>
             <button
-              onClick={() => navigate('/my-listings')}
+              onClick={() => navigate('/marketplace/my-listings')}
               className="px-3 py-2 text-sm font-semibold text-teal-700 bg-white border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
             >
               Edit
