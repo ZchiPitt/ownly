@@ -13,6 +13,66 @@ import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { supabase } from '@/lib/supabase';
 
+/**
+ * Type declarations for Web Speech API
+ */
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
+
+declare global {
+  interface Window {
+    SpeechRecognition?: SpeechRecognitionConstructor;
+    webkitSpeechRecognition?: SpeechRecognitionConstructor;
+  }
+}
+
+/**
+ * Check if the Web Speech API is available
+ */
+function isSpeechRecognitionSupported(): boolean {
+  return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
 const defaultFilters: MarketplaceFilters = {
   categories: [],
   conditions: [],
@@ -123,6 +183,89 @@ function ClearIcon() {
   );
 }
 
+function MicrophoneIcon() {
+  return (
+    <svg
+      className="w-5 h-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+      />
+    </svg>
+  );
+}
+
+function PulsingMicIcon() {
+  return (
+    <div className="relative">
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute w-24 h-24 bg-red-500/20 rounded-full animate-ping" />
+        <div className="absolute w-20 h-20 bg-red-500/30 rounded-full animate-pulse" />
+      </div>
+      <div className="relative w-16 h-16 bg-red-500 rounded-full flex items-center justify-center">
+        <svg
+          className="w-8 h-8 text-white"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+          />
+        </svg>
+        <div className="absolute top-0 right-0 w-4 h-4 bg-red-600 rounded-full animate-pulse border-2 border-white" />
+      </div>
+    </div>
+  );
+}
+
+interface VoiceSearchOverlayProps {
+  isListening: boolean;
+  transcript: string;
+  onCancel: () => void;
+}
+
+function VoiceSearchOverlay({ isListening, transcript, onCancel }: VoiceSearchOverlayProps) {
+  if (!isListening) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center px-6"
+      onClick={onCancel}
+    >
+      <div className="mb-8">
+        <PulsingMicIcon />
+      </div>
+      <p className="text-xl font-medium text-gray-900 mb-4">
+        Listening...
+      </p>
+      <div className="min-h-[48px] w-full max-w-sm">
+        {transcript ? (
+          <p className="text-lg text-gray-700 text-center px-4 py-2 bg-gray-100 rounded-lg">
+            {transcript}
+          </p>
+        ) : (
+          <p className="text-sm text-gray-500 text-center">
+            Speak now...
+          </p>
+        )}
+      </div>
+      <p className="mt-8 text-sm text-gray-400">
+        Tap anywhere to cancel
+      </p>
+    </div>
+  );
+}
+
 function LoadingMoreSpinner() {
   return (
     <div className="flex items-center justify-center py-6">
@@ -203,6 +346,13 @@ export function MarketplacePage() {
   const [page, setPage] = useState(0);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(true);
+
+  // Voice search state
+  const [speechSupported] = useState(() => isSpeechRecognitionSupported());
+  const [isListening, setIsListening] = useState(false);
+  const [voiceTranscript, setVoiceTranscript] = useState('');
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
+  const noSpeechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
 
@@ -367,6 +517,123 @@ export function MarketplacePage() {
     setFilters(defaultFilters);
   }, []);
 
+  /**
+   * Stop voice search and clean up
+   */
+  const stopVoiceSearch = useCallback(() => {
+    if (speechRecognitionRef.current) {
+      speechRecognitionRef.current.abort();
+      speechRecognitionRef.current = null;
+    }
+    if (noSpeechTimeoutRef.current) {
+      clearTimeout(noSpeechTimeoutRef.current);
+      noSpeechTimeoutRef.current = null;
+    }
+    setIsListening(false);
+    setVoiceTranscript('');
+  }, []);
+
+  /**
+   * Handle voice search via Web Speech API
+   */
+  const handleMicrophoneClick = useCallback(() => {
+    if (isListening) {
+      stopVoiceSearch();
+      return;
+    }
+
+    const SpeechRecognitionClass = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionClass) {
+      return;
+    }
+
+    const recognition = new SpeechRecognitionClass();
+    speechRecognitionRef.current = recognition;
+
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+      setVoiceTranscript('');
+
+      noSpeechTimeoutRef.current = setTimeout(() => {
+        stopVoiceSearch();
+        alert("Didn't catch that. Please try again.");
+      }, 5000);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+        noSpeechTimeoutRef.current = null;
+      }
+
+      let finalTranscript = '';
+      let interimTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) {
+          finalTranscript += result[0].transcript;
+        } else {
+          interimTranscript += result[0].transcript;
+        }
+      }
+
+      const currentTranscript = finalTranscript || interimTranscript;
+      setVoiceTranscript(currentTranscript);
+
+      if (finalTranscript) {
+        setSearchQuery(finalTranscript.trim());
+        stopVoiceSearch();
+      }
+    };
+
+    recognition.onend = () => {
+      if (isListening) {
+        setIsListening(false);
+      }
+    };
+
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+        noSpeechTimeoutRef.current = null;
+      }
+
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        alert('Microphone access required. Please allow microphone access in your browser settings.');
+      } else if (event.error === 'no-speech') {
+        alert("Didn't catch that. Please try again.");
+      } else if (event.error !== 'aborted') {
+        console.error('Speech recognition error:', event.error);
+      }
+
+      stopVoiceSearch();
+    };
+
+    try {
+      recognition.start();
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      stopVoiceSearch();
+    }
+  }, [isListening, stopVoiceSearch]);
+
+  // Cleanup speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (speechRecognitionRef.current) {
+        speechRecognitionRef.current.abort();
+      }
+      if (noSpeechTimeoutRef.current) {
+        clearTimeout(noSpeechTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const hasSearchQuery = debouncedSearch.trim().length > 0;
   const showRecentSearches = isSearchFocused && searchQuery.trim().length === 0 && recentSearches.length > 0;
 
@@ -384,18 +651,30 @@ export function MarketplacePage() {
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             placeholder="Search marketplace..."
-            className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-10 pr-20 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-          {searchQuery.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              aria-label="Clear search"
-            >
-              <ClearIcon />
-            </button>
-          )}
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            {searchQuery.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                aria-label="Clear search"
+              >
+                <ClearIcon />
+              </button>
+            )}
+            {speechSupported && (
+              <button
+                type="button"
+                onClick={handleMicrophoneClick}
+                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                aria-label="Voice search"
+              >
+                <MicrophoneIcon />
+              </button>
+            )}
+          </div>
           {showRecentSearches && (
             <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
               <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
@@ -559,6 +838,12 @@ export function MarketplacePage() {
         filters={filters}
         onApply={handleApplyFilters}
         onClear={handleClearSheetFilters}
+      />
+
+      <VoiceSearchOverlay
+        isListening={isListening}
+        transcript={voiceTranscript}
+        onCancel={stopVoiceSearch}
       />
     </div>
   );

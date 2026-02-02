@@ -1433,7 +1433,7 @@ export function ItemDetailPage() {
         </div>
       </div>
 
-      {/* Hero Image */}
+      {/* Hero Image - use thumbnail (cropped) if available, fallback to full photo */}
       <div className="relative">
         <button
           onClick={() => setIsPhotoViewerOpen(true)}
@@ -1441,7 +1441,7 @@ export function ItemDetailPage() {
           aria-label="View full size photo"
         >
           <img
-            src={item.photo_url}
+            src={item.thumbnail_url || item.photo_url}
             alt={item.name || 'Item photo'}
             className="w-full max-h-[300px] object-contain bg-gray-100"
           />

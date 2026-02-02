@@ -18,7 +18,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { Toast } from '@/components/Toast';
 import { MultiItemSelection } from '@/components/MultiItemSelection';
 import type { ImageInfo } from '@/components/MultiItemSelection';
@@ -119,7 +118,6 @@ function HeicErrorModal({
 
 export function AddItemPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
   // References to hidden file inputs
@@ -142,8 +140,10 @@ export function AddItemPage() {
   const [analysisSecondsElapsed, setAnalysisSecondsElapsed] = useState(0);
   const analysisAbortRef = useRef<AbortController | null>(null);
   const analysisTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const [isBatchSaving, setIsBatchSaving] = useState(false);
-  const [batchSaveProgress, setBatchSaveProgress] = useState({ current: 0, total: 0 });
+  // Batch save state - passed to MultiItemSelection but no longer used for direct saves
+  // (all saves now go through the editor to ensure location is set)
+  const [isBatchSaving] = useState(false);
+  const [batchSaveProgress] = useState({ current: 0, total: 0 });
   const [showSingleItemChoice, setShowSingleItemChoice] = useState(false);
   const [singleDetectedItem, setSingleDetectedItem] = useState<DetectedItem | null>(null);
   const [isQuickAdding, setIsQuickAdding] = useState(false);
@@ -1089,87 +1089,16 @@ export function AddItemPage() {
   );
 
   const handleBatchSave = async (items: DetectedItem[]) => {
-    if (!user || !analysisResult) return;
+    // Location is required for all items, so redirect to editor
+    // to add items one by one with location selection
+    if (!analysisResult) return;
 
-    setIsBatchSaving(true);
-    setBatchSaveProgress({ current: 0, total: items.length });
-
-    const sourceBatchId = items.length > 1 ? crypto.randomUUID() : null;
-
-    let successCount = 0;
-    const errors: string[] = [];
-
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      setBatchSaveProgress({ current: i + 1, total: items.length });
-
-      try {
-        // Look up category ID from suggestion
-        let categoryId: string | null = null;
-        if (item.category_suggestion) {
-          const { data } = await (supabase
-            .from('categories') as ReturnType<typeof supabase.from>)
-            .select('id')
-            .or(`name.eq.${item.category_suggestion},and(user_id.eq.${user.id},name.eq.${item.category_suggestion})`)
-            .limit(1);
-          const categories = data as { id: string }[] | null;
-          if (categories && categories.length > 0) {
-            categoryId = categories[0].id;
-          }
-        }
-
-        // Create the item
-        const { error } = await (supabase
-          .from('items') as ReturnType<typeof supabase.from>)
-          .insert({
-            user_id: user.id,
-            photo_url: analysisResult.imageUrl,
-            thumbnail_url: item.thumbnail_url || analysisResult.thumbnailUrl,
-            source_batch_id: sourceBatchId,
-            name: item.name || 'Unnamed Item',
-            category_id: categoryId,
-            tags: item.tags || [],
-            brand: item.brand,
-            quantity: 1,
-            ai_metadata: {
-              detected_name: item.name,
-              detected_category: item.category_suggestion,
-              detected_tags: item.tags,
-              detected_brand: item.brand,
-              confidence_score: item.confidence,
-              analysis_provider: 'gemini',
-              analyzed_at: new Date().toISOString(),
-            },
-          });
-
-        if (error) {
-          console.error('Failed to save item:', item.name, error);
-          errors.push(item.name || 'Unknown');
-        } else {
-          successCount++;
-        }
-      } catch (error) {
-        console.error('Error saving item:', error);
-        errors.push(item.name || 'Unknown');
-      }
-    }
-
-    setIsBatchSaving(false);
-
-    // Show result
-    if (errors.length === 0) {
-      setToast({
-        message: `✓ ${successCount} items added!`,
-        type: 'success',
-      });
-      // Navigate to inventory after short delay
-      setTimeout(() => navigate('/inventory'), 1500);
-    } else {
-      setToast({
-        message: `${successCount} of ${items.length} items added. ${errors.length} failed.`,
-        type: errors.length === items.length ? 'error' : 'warning',
-      });
-    }
+    handleMultiItemProceed(items, {
+      imageUrl: analysisResult.imageUrl,
+      thumbnailUrl: analysisResult.thumbnailUrl,
+      imagePath: analysisResult.imagePath,
+      thumbnailPath: analysisResult.thumbnailPath,
+    });
   };
 
   // Render results view - multiple items detected using MultiItemSelection component
@@ -1193,75 +1122,8 @@ export function AddItemPage() {
   };
 
   const handleQuickAdd = async () => {
-    if (!user || !analysisResult || !singleDetectedItem) return;
-
-    setIsQuickAdding(true);
-
-    try {
-      // Look up category ID from suggestion
-      let categoryId: string | null = null;
-      if (singleDetectedItem.category_suggestion) {
-        const { data } = await (supabase
-          .from('categories') as ReturnType<typeof supabase.from>)
-          .select('id')
-          .or(`name.eq.${singleDetectedItem.category_suggestion},and(user_id.eq.${user.id},name.eq.${singleDetectedItem.category_suggestion})`)
-          .limit(1);
-        const categories = data as { id: string }[] | null;
-        if (categories && categories.length > 0) {
-          categoryId = categories[0].id;
-        }
-      }
-
-      // Create the item
-        const { error } = await (supabase
-          .from('items') as ReturnType<typeof supabase.from>)
-          .insert({
-            user_id: user.id,
-            photo_url: analysisResult.imageUrl,
-            thumbnail_url: singleDetectedItem.thumbnail_url || analysisResult.thumbnailUrl,
-            name: singleDetectedItem.name || 'Unnamed Item',
-            category_id: categoryId,
-          tags: singleDetectedItem.tags || [],
-          brand: singleDetectedItem.brand,
-          quantity: 1,
-          ai_metadata: {
-            detected_name: singleDetectedItem.name,
-            detected_category: singleDetectedItem.category_suggestion,
-            detected_tags: singleDetectedItem.tags,
-            detected_brand: singleDetectedItem.brand,
-            confidence_score: singleDetectedItem.confidence,
-            analysis_provider: 'gemini',
-            analyzed_at: new Date().toISOString(),
-          },
-        });
-
-      if (error) {
-        console.error('Failed to save item:', error);
-        setToast({
-          message: 'Failed to add item. Please try again.',
-          type: 'error',
-        });
-        setIsQuickAdding(false);
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
-
-      setToast({
-        message: '✓ Item added!',
-        type: 'success',
-      });
-
-      setTimeout(() => navigate('/inventory'), 1000);
-    } catch (error) {
-      console.error('Error in quick add:', error);
-      setToast({
-        message: 'Something went wrong. Please try again.',
-        type: 'error',
-      });
-      setIsQuickAdding(false);
-    }
+    // Location is required, so redirect to editor to select location
+    handleEditDetails();
   };
 
   const handleEditDetails = () => {

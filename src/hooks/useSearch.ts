@@ -10,6 +10,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  generateQueryEmbedding,
+  searchItemsByEmbedding,
+  type SemanticSearchResult,
+} from '@/lib/embeddingUtils';
 
 /**
  * Search result item with category and location info
@@ -29,6 +34,8 @@ export interface SearchResultItem {
   location_id: string | null;
   location_name: string | null;
   location_path: string | null;
+  similarity?: number; // Semantic search similarity score (0-1)
+  matchType?: 'text' | 'semantic' | 'both'; // How the item was matched
 }
 
 /**
@@ -121,42 +128,93 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
   }, [query, debounceMs]);
 
   /**
-   * Perform the search query against the database
-   * Searches across: name, description, tags, category.name, location.path, brand
+   * Common stop words to filter out from search queries
+   * These words are too common to be meaningful in search
    */
-  const performSearch = useCallback(async (searchQuery: string) => {
-    if (!user) {
-      setResults([]);
-      setIsLoading(false);
-      return;
+  const STOP_WORDS = new Set([
+    // English
+    'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'is', 'it', 'as', 'be', 'was', 'are',
+    'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+    'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can',
+    'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'we', 'they',
+    'my', 'your', 'his', 'her', 'its', 'our', 'their', 'what', 'which',
+    'who', 'whom', 'where', 'when', 'why', 'how', 'all', 'each', 'every',
+    'both', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+    'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 'just',
+    'also', 'now', 'here', 'there', 'then', 'if', 'about', 'after', 'before',
+    'search', 'find', 'look', 'looking', 'show', 'get', 'need', 'want',
+    // Chinese common words
+    '的', '是', '在', '了', '和', '与', '或', '这', '那', '个', '一',
+    '有', '我', '你', '他', '她', '它', '们', '什么', '哪', '哪里',
+    '怎么', '为什么', '找', '搜索', '查找', '看看', '给我',
+  ]);
+
+  /**
+   * Split search query into meaningful words
+   * Filters out stop words and short words
+   */
+  const splitSearchQuery = useCallback((query: string): string[] => {
+    // Split by whitespace and common punctuation
+    const words = query
+      .toLowerCase()
+      .split(/[\s,;.!?，。！？、；：]+/)
+      .map((word) => word.trim())
+      .filter((word) => {
+        // Keep words that are:
+        // - At least 2 characters (or 1 Chinese character)
+        // - Not in stop words list
+        const isChinese = /[\u4e00-\u9fa5]/.test(word);
+        const minLength = isChinese ? 1 : 2;
+        return word.length >= minLength && !STOP_WORDS.has(word);
+      });
+
+    // Remove duplicates
+    return [...new Set(words)];
+  }, []);
+
+  /**
+   * Build OR condition for multiple words
+   * Each word can match name, description, brand, or tags
+   */
+  const buildMultiWordOrCondition = useCallback((words: string[]): string => {
+    if (words.length === 0) return '';
+
+    const conditions: string[] = [];
+
+    for (const word of words) {
+      const term = `%${word}%`;
+      conditions.push(
+        `name.ilike.${term}`,
+        `description.ilike.${term}`,
+        `brand.ilike.${term}`,
+        `tags.cs.{${word}}`
+      );
     }
 
-    // Validate minimum query length
-    if (searchQuery.length < minQueryLength) {
-      setResults([]);
-      setIsLoading(false);
-      setHasSearched(false);
-      return;
-    }
+    return conditions.join(',');
+  }, []);
 
-    // Cancel any existing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
+  /**
+   * Perform text-based search (ILIKE matching)
+   * Supports multi-word queries - matches if ANY word matches
+   */
+  const performTextSearch = useCallback(
+    async (searchQuery: string, signal: AbortSignal): Promise<RawSearchItem[]> => {
+      if (!user) return [];
 
-    // Create new AbortController for this request
-    abortControllerRef.current = new AbortController();
+      // Split query into meaningful words
+      const words = splitSearchQuery(searchQuery);
 
-    setIsLoading(true);
-    setError(null);
-    setHasSearched(true);
+      // If no meaningful words after filtering, use original query
+      const searchTerms = words.length > 0 ? words : [searchQuery.toLowerCase().trim()];
 
-    try {
-      // Prepare search term for case-insensitive matching
-      const searchTerm = `%${searchQuery.toLowerCase()}%`;
+      // Build OR condition for all words
+      const orCondition = buildMultiWordOrCondition(searchTerms);
 
-      // Build the query with OR conditions across multiple fields
-      // Using Supabase's .or() for combining conditions
+      if (!orCondition) return [];
+
+      // Main text search
       const { data, error: searchError } = await supabase
         .from('items')
         .select(`
@@ -181,27 +239,19 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
         `)
         .eq('user_id', user.id)
         .is('deleted_at', null)
-        .or(
-          `name.ilike.${searchTerm},` +
-          `description.ilike.${searchTerm},` +
-          `brand.ilike.${searchTerm},` +
-          `tags.cs.{${searchQuery.toLowerCase()}}`
-        )
+        .or(orCondition)
         .order('updated_at', { ascending: false })
         .limit(50)
-        .abortSignal(abortControllerRef.current.signal)
+        .abortSignal(signal)
         .returns<RawSearchItem[]>();
 
-      if (searchError) {
-        // Don't throw if the request was aborted
-        if (searchError.message?.includes('abort')) {
-          return;
-        }
+      if (searchError && !searchError.message?.includes('abort')) {
         throw searchError;
       }
 
-      // Also search by category name and location path
-      // These require separate queries due to Supabase's join limitations
+      // Category name search - match any word
+      const categoryOrConditions = searchTerms.map((word) => `name.ilike.%${word}%`).join(',');
+
       const { data: categoryMatchData, error: categoryError } = await supabase
         .from('items')
         .select(`
@@ -226,15 +276,18 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
         `)
         .eq('user_id', user.id)
         .is('deleted_at', null)
-        .ilike('categories.name', searchTerm)
+        .or(categoryOrConditions, { referencedTable: 'categories' })
         .order('updated_at', { ascending: false })
         .limit(50)
-        .abortSignal(abortControllerRef.current.signal)
+        .abortSignal(signal)
         .returns<RawSearchItem[]>();
 
       if (categoryError && !categoryError.message?.includes('abort')) {
         console.warn('Category search failed:', categoryError);
       }
+
+      // Location path search - match any word
+      const locationOrConditions = searchTerms.map((word) => `path.ilike.%${word}%`).join(',');
 
       const { data: locationMatchData, error: locationError } = await supabase
         .from('items')
@@ -260,42 +313,207 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
         `)
         .eq('user_id', user.id)
         .is('deleted_at', null)
-        .ilike('locations.path', searchTerm)
+        .or(locationOrConditions, { referencedTable: 'locations' })
         .order('updated_at', { ascending: false })
         .limit(50)
-        .abortSignal(abortControllerRef.current.signal)
+        .abortSignal(signal)
         .returns<RawSearchItem[]>();
 
       if (locationError && !locationError.message?.includes('abort')) {
         console.warn('Location search failed:', locationError);
       }
 
-      // Combine results and deduplicate by id
-      const allItems = [
-        ...(data || []),
-        ...(categoryMatchData || []),
-        ...(locationMatchData || []),
-      ];
+      return [...(data || []), ...(categoryMatchData || []), ...(locationMatchData || [])];
+    },
+    [user, splitSearchQuery, buildMultiWordOrCondition]
+  );
 
-      const uniqueItemsMap = new Map<string, RawSearchItem>();
-      for (const item of allItems) {
-        if (!uniqueItemsMap.has(item.id)) {
-          uniqueItemsMap.set(item.id, item);
+  /**
+   * Perform semantic search using embeddings
+   */
+  const performSemanticSearch = useCallback(
+    async (searchQuery: string): Promise<SemanticSearchResult[]> => {
+      // Only do semantic search for queries >= 2 chars
+      if (searchQuery.length < 2) return [];
+
+      try {
+        // Generate embedding for the search query
+        const embedding = await generateQueryEmbedding(searchQuery);
+        if (!embedding) {
+          console.warn('Failed to generate query embedding');
+          return [];
+        }
+
+        // Search by embedding similarity
+        const results = await searchItemsByEmbedding(embedding, 0.5, 30);
+        return results;
+      } catch (error) {
+        console.warn('Semantic search failed:', error);
+        return [];
+      }
+    },
+    []
+  );
+
+  /**
+   * Fetch full item details for semantic search results
+   */
+  const enrichSemanticResults = useCallback(
+    async (
+      semanticResults: SemanticSearchResult[],
+      signal: AbortSignal
+    ): Promise<Map<string, { raw: RawSearchItem; similarity: number }>> => {
+      if (semanticResults.length === 0 || !user) {
+        return new Map();
+      }
+
+      const ids = semanticResults.map((r) => r.id);
+      const similarityMap = new Map(semanticResults.map((r) => [r.id, r.similarity]));
+
+      const { data, error } = await supabase
+        .from('items')
+        .select(`
+          id,
+          name,
+          description,
+          photo_url,
+          thumbnail_url,
+          tags,
+          brand,
+          category_id,
+          location_id,
+          categories (
+            name,
+            color,
+            icon
+          ),
+          locations (
+            name,
+            path
+          )
+        `)
+        .in('id', ids)
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .abortSignal(signal)
+        .returns<RawSearchItem[]>();
+
+      if (error && !error.message?.includes('abort')) {
+        console.warn('Failed to enrich semantic results:', error);
+        return new Map();
+      }
+
+      const resultMap = new Map<string, { raw: RawSearchItem; similarity: number }>();
+      for (const item of data || []) {
+        resultMap.set(item.id, {
+          raw: item,
+          similarity: similarityMap.get(item.id) || 0,
+        });
+      }
+
+      return resultMap;
+    },
+    [user]
+  );
+
+  /**
+   * Perform the search query against the database
+   * Combines text search (ILIKE) and semantic search (embeddings)
+   */
+  const performSearch = useCallback(async (searchQuery: string) => {
+    if (!user) {
+      setResults([]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate minimum query length
+    if (searchQuery.length < minQueryLength) {
+      setResults([]);
+      setIsLoading(false);
+      setHasSearched(false);
+      return;
+    }
+
+    // Cancel any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new AbortController for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    setIsLoading(true);
+    setError(null);
+    setHasSearched(true);
+
+    try {
+      // Run text search and semantic search in parallel
+      const [textResults, semanticResults] = await Promise.all([
+        performTextSearch(searchQuery, signal),
+        performSemanticSearch(searchQuery),
+      ]);
+
+      // Check if aborted
+      if (signal.aborted) return;
+
+      // Enrich semantic results with full item data
+      const enrichedSemanticResults = await enrichSemanticResults(semanticResults, signal);
+
+      // Check if aborted
+      if (signal.aborted) return;
+
+      // Combine and deduplicate results
+      const combinedResults: SearchResultItem[] = [];
+      const seenIds = new Set<string>();
+
+      // First, add text matches (they take priority)
+      for (const item of textResults) {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          const semanticMatch = enrichedSemanticResults.get(item.id);
+          combinedResults.push({
+            ...transformRawItem(item),
+            similarity: semanticMatch?.similarity,
+            matchType: semanticMatch ? 'both' : 'text',
+          });
         }
       }
 
-      const uniqueItems = Array.from(uniqueItemsMap.values());
-      const searchResults = uniqueItems.map(transformRawItem);
+      // Then, add semantic-only matches (not found by text search)
+      for (const [id, { raw, similarity }] of enrichedSemanticResults) {
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          combinedResults.push({
+            ...transformRawItem(raw),
+            similarity,
+            matchType: 'semantic',
+          });
+        }
+      }
 
-      setResults(searchResults);
+      // Sort: text matches first, then by similarity for semantic-only matches
+      combinedResults.sort((a, b) => {
+        // Both matches and text matches come first
+        if (a.matchType !== 'semantic' && b.matchType === 'semantic') return -1;
+        if (a.matchType === 'semantic' && b.matchType !== 'semantic') return 1;
+        // For semantic-only matches, sort by similarity
+        if (a.matchType === 'semantic' && b.matchType === 'semantic') {
+          return (b.similarity || 0) - (a.similarity || 0);
+        }
+        return 0;
+      });
 
-      // Call onSuccessfulSearch callback when we have results (query >= 2 chars and results >= 1)
-      if (searchResults.length > 0 && searchQuery.length >= 2 && onSuccessfulSearch) {
+      setResults(combinedResults);
+
+      // Call onSuccessfulSearch callback when we have results
+      if (combinedResults.length > 0 && searchQuery.length >= 2 && onSuccessfulSearch) {
         onSuccessfulSearch(searchQuery);
       }
     } catch (err) {
       // Don't set error if request was aborted
-      if (err instanceof Error && err.name === 'AbortError') {
+      if (err instanceof Error && (err.name === 'AbortError' || err.message?.includes('abort'))) {
         return;
       }
       console.error('Search error:', err);
@@ -304,7 +522,7 @@ export function useSearch(options: UseSearchOptions = {}): UseSearchResult {
     } finally {
       setIsLoading(false);
     }
-  }, [user, minQueryLength, onSuccessfulSearch]);
+  }, [user, minQueryLength, onSuccessfulSearch, performTextSearch, performSemanticSearch, enrichSemanticResults]);
 
   // Trigger search when debounced query changes
   useEffect(() => {

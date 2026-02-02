@@ -143,9 +143,8 @@ export function useMarketplace() {
       const searchTerm = filters.search?.trim();
       if (searchTerm && searchTerm.length > 0) {
         const safeSearchTerm = searchTerm.replace(/,/g, ' ');
-        query = query.or(
-          `item.name.ilike.%${safeSearchTerm}%,description.ilike.%${safeSearchTerm}%,item.categories.name.ilike.%${safeSearchTerm}%`
-        );
+        // Search on item name using referencedTable for foreign table filtering
+        query = query.or(`name.ilike.%${safeSearchTerm}%`, { referencedTable: 'items' });
       }
     }
 

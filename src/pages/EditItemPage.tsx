@@ -24,6 +24,7 @@ import { LocationPickerModal } from '@/components/LocationPickerModal';
 import { TagsInput } from '@/components/TagsInput';
 import { Toast } from '@/components/Toast';
 import type { Category } from '@/types';
+import { generateItemEmbedding } from '@/lib/embeddingUtils';
 
 /**
  * Raw item data from Supabase query
@@ -506,6 +507,7 @@ export function EditItemPage() {
   const [isLocationPickerOpen, setIsLocationPickerOpen] = useState(false);
   const [isAdditionalFieldsExpanded, setIsAdditionalFieldsExpanded] = useState(false);
   const [showFloatingSave, setShowFloatingSave] = useState(false);
+  const [locationError, setLocationError] = useState<string | undefined>(undefined);
 
   // Track if user wants to navigate away
   const pendingNavigationRef = useRef<(() => void) | null>(null);
@@ -659,7 +661,15 @@ export function EditItemPage() {
   const handleSave = useCallback(async () => {
     if (!formValues || !id || !user) return;
 
+    // Validate required fields
+    if (!formValues.locationId) {
+      setLocationError('Please select a location for this item');
+      setToast({ message: 'Please select a location', type: 'error' });
+      return;
+    }
+
     setIsSaving(true);
+    setLocationError(undefined);
 
     try {
       const updateData = {
@@ -685,6 +695,17 @@ export function EditItemPage() {
         .eq('user_id', user.id);
 
       if (updateError) throw updateError;
+
+      // Regenerate embedding if text-related fields changed
+      const embeddingFieldsChanged =
+        formValues.name !== initialValues?.name ||
+        formValues.description !== initialValues?.description ||
+        JSON.stringify(formValues.tags) !== JSON.stringify(initialValues?.tags) ||
+        formValues.brand !== initialValues?.brand;
+
+      if (embeddingFieldsChanged) {
+        generateItemEmbedding(id);
+      }
 
       // Update initial values to reflect saved state
       setInitialValues(formValues);
@@ -728,6 +749,10 @@ export function EditItemPage() {
    */
   const updateField = useCallback(<K extends keyof EditFormValues>(field: K, value: EditFormValues[K]) => {
     setFormValues((prev) => (prev ? { ...prev, [field]: value } : null));
+    // Clear location error when location is selected
+    if (field === 'locationId' && value) {
+      setLocationError(undefined);
+    }
   }, []);
 
   /**
@@ -894,14 +919,16 @@ export function EditItemPage() {
 
             {/* Location Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Location <span className="text-red-500">*</span>
+              </label>
               <button
                 type="button"
                 onClick={() => setIsLocationPickerOpen(true)}
                 disabled={locationsLoading}
                 className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
                   locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
-                } border-gray-300 bg-white`}
+                } ${locationError ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
@@ -938,6 +965,9 @@ export function EditItemPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
+              {locationError && (
+                <p className="mt-1 text-xs text-red-600">{locationError}</p>
+              )}
             </div>
 
             {/* Tags Field */}

@@ -23,6 +23,7 @@ interface GenerateEmbeddingRequest {
 interface GenerateEmbeddingResponse {
   success: boolean;
   item_id?: string;
+  embedding?: number[];
   embedding_dimensions: number;
   generated_at: string;
 }
@@ -348,9 +349,12 @@ Deno.serve(async (req: Request) => {
     }
 
     // Build response
+    // Include embedding in response only for text queries (not item_id)
+    // This allows the client to use the embedding for search
     const response: GenerateEmbeddingResponse = {
       success: true,
       item_id: itemId,
+      embedding: itemId ? undefined : embedding, // Only return embedding for text queries
       embedding_dimensions: embedding.length,
       generated_at: new Date().toISOString(),
     };

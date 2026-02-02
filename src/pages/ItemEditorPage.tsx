@@ -31,6 +31,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Toast } from '@/components/Toast';
 import type { DetectedItem } from '@/types/api';
 import type { ItemAIMetadata } from '@/types';
+import { generateItemEmbedding } from '@/lib/embeddingUtils';
 
 /**
  * State passed via router to ItemEditorPage
@@ -73,6 +74,9 @@ export function ItemEditorPage() {
   // Toast state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  // Validation error state
+  const [locationError, setLocationError] = useState<string | undefined>(undefined);
+
   // Auto-dismiss timer ref for success overlay
   const autoDismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -111,6 +115,10 @@ export function ItemEditorPage() {
    */
   const handleFormChange = useCallback((values: ItemEditorValues) => {
     formValuesRef.current = values;
+    // Clear location error when user selects a location
+    if (values.locationId) {
+      setLocationError(undefined);
+    }
   }, []);
 
   /**
@@ -120,7 +128,15 @@ export function ItemEditorPage() {
     const values = formValuesRef.current;
     if (!values || !user || !state) return;
 
+    // Validate required fields
+    if (!values.locationId) {
+      setLocationError('Please select a location for this item');
+      setToast({ message: 'Please select a location', type: 'error' });
+      return;
+    }
+
     setIsSaving(true);
+    setLocationError(undefined);
 
     try {
       // Build AI metadata if detected item exists
@@ -176,6 +192,9 @@ export function ItemEditorPage() {
 
       // Store saved item ID
       setSavedItemId(data.id);
+
+      // Generate embedding for semantic search (non-blocking)
+      generateItemEmbedding(data.id);
 
       // Determine success type based on queue state
       const hasMoreItems = state.itemQueue.length > 0;
@@ -386,6 +405,7 @@ export function ItemEditorPage() {
             currentItemIndex={state.currentItemIndex}
             totalItems={state.totalItems}
             onFormChange={handleFormChange}
+            locationError={locationError}
           />
         </div>
 

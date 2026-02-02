@@ -44,6 +44,8 @@ export interface ItemEditorProps {
   onViewFullImage?: () => void;
   /** Callback to get current form values (for parent to access) */
   onFormChange?: (values: ItemEditorValues) => void;
+  /** Error message for location field (shown when validation fails) */
+  locationError?: string;
 }
 
 /**
@@ -549,6 +551,7 @@ export function ItemEditor({
   totalItems,
   onViewFullImage,
   onFormChange,
+  locationError,
 }: ItemEditorProps) {
   // Get categories to find AI suggested category
   const { categories, isLoading: categoriesLoading } = useCategories();
@@ -988,14 +991,14 @@ export function ItemEditor({
             {/* Location Field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Location
+                Location <span className="text-red-500">*</span>
               </label>
               <button
                 type="button"
                 onClick={openLocationPicker}
                 disabled={locationsLoading}
                 className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  } border-gray-300 bg-white`}
+                  } ${locationError ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
@@ -1037,9 +1040,13 @@ export function ItemEditor({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
-              <p className="mt-1 text-xs text-gray-400">
-                Where is this item stored?
-              </p>
+              {locationError ? (
+                <p className="mt-1 text-xs text-red-600">{locationError}</p>
+              ) : (
+                <p className="mt-1 text-xs text-gray-400">
+                  Where is this item stored?
+                </p>
+              )}
             </div>
 
             {/* Tags Field */}
