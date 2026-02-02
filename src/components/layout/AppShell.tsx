@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { InstallBanner } from '../InstallBanner'
 import { IOSInstallBanner } from '../IOSInstallBanner'
 import { OfflineBanner } from '../OfflineBanner'
 import { Toast } from '../Toast'
+import { useMessages } from '@/hooks/useMessages'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -122,6 +123,24 @@ function SettingsIcon({ active }: { active: boolean }) {
   )
 }
 
+function MessagesIcon({ active }: { active: boolean }) {
+  return (
+    <svg
+      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
+      fill={active ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={active ? 0 : 2}
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
+    </svg>
+  )
+}
+
 function SearchIcon() {
   return (
     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,8 +172,25 @@ export function AppShell({
   onSearchClick,
 }: AppShellProps) {
   const [showInstallToast, setShowInstallToast] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
+  const { getUnreadCount } = useMessages()
+
+  // Fetch unread message count
+  useEffect(() => {
+    let isMounted = true
+    const loadUnreadCount = async () => {
+      const count = await getUnreadCount()
+      if (isMounted) {
+        setUnreadCount(count)
+      }
+    }
+    loadUnreadCount()
+    return () => {
+      isMounted = false
+    }
+  }, [getUnreadCount, location.pathname])
 
   const handleInstalled = () => {
     setShowInstallToast(true)
@@ -230,6 +266,20 @@ export function AppShell({
                 <ShopIcon active={isActive('/shopping')} />
               </NavLink>
               <NavLink
+                to="/messages"
+                className={`p-2 rounded-lg transition-colors relative ${
+                  isActive('/messages') ? 'bg-teal-50' : 'hover:bg-gray-100'
+                }`}
+                aria-label="Messages"
+              >
+                <MessagesIcon active={isActive('/messages')} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] leading-none rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center font-medium">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </NavLink>
+              <NavLink
                 to="/settings"
                 className={`p-2 rounded-lg transition-colors ${
                   isActive('/settings') ? 'bg-teal-50' : 'hover:bg-gray-100'
@@ -261,8 +311,8 @@ export function AppShell({
         {children}
       </main>
 
-      {/* Floating Add Button */}
-      {showAddButton && (
+      {/* Floating Add Button - hidden on settings page */}
+      {showAddButton && !location.pathname.startsWith('/settings') && (
         <NavLink
           to="/add"
           className="fixed bottom-6 right-4 flex items-center gap-2 px-5 py-3.5 bg-teal-600 text-white rounded-full shadow-lg hover:bg-teal-700 active:bg-teal-800 transition-all z-40"

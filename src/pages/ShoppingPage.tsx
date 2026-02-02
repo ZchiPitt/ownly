@@ -1505,6 +1505,56 @@ export function ShoppingPage() {
               </svg>
             </div>
           </button>
+
+          {/* Ask a Question Card */}
+          <button
+            onClick={() => setViewState('chat')}
+            disabled={isProcessing}
+            className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="flex items-center gap-4">
+              {/* Chat Icon */}
+              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-7 h-7 text-teal-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+              </div>
+              {/* Text */}
+              <div className="flex-1 text-left">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Ask a Question
+                </h3>
+                <p className="text-sm text-gray-500">
+                  Chat with me about your inventory
+                </p>
+              </div>
+              {/* Chevron */}
+              <svg
+                className="w-5 h-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </button>
         </div>
 
         {/* Processing Indicator */}

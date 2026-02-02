@@ -763,18 +763,30 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Spacer to push logout to bottom */}
-        <div className="flex-1" />
-      </div>
-
-      {/* Logout Button - Fixed at bottom */}
-      <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gray-50">
-        <button
-          onClick={handleLogoutClick}
-          className="w-full py-3 px-4 bg-white border-2 border-red-500 rounded-lg text-red-600 font-semibold hover:bg-red-50 active:bg-red-100 transition-colors"
-        >
-          Log out
-        </button>
+        {/* Logout Section */}
+        <section className="pb-24">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <button
+              onClick={handleLogoutClick}
+              className="w-full px-4 py-4 text-left hover:bg-red-50 transition-colors flex items-center gap-3"
+            >
+              <svg
+                className="w-5 h-5 text-red-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              <span className="text-base font-medium text-red-600">Log out</span>
+            </button>
+          </div>
+        </section>
       </div>
 
       {/* Logout Confirmation Dialog */}
