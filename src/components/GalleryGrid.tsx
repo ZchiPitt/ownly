@@ -32,12 +32,15 @@ function formatPrice(price: number | null, currency: string): string | null {
 interface ItemCardProps {
   item: InventoryItem;
   onClick?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 /**
  * Individual item card for gallery view - Ownly style
  */
-function ItemCard({ item, onClick }: ItemCardProps) {
+function ItemCard({ item, onClick, isSelectionMode, isSelected, onToggleSelect }: ItemCardProps) {
   const imageUrl = item.thumbnail_url || item.photo_url;
   const displayName = item.name || 'Untitled Item';
   const formattedPrice = formatPrice(item.price, item.currency);
@@ -45,10 +48,20 @@ function ItemCard({ item, onClick }: ItemCardProps) {
   const sharedPhotoCount = item.shared_photo_count ?? 0;
   const displayTags = item.tags ? item.tags.slice(0, 3) : [];
 
+  const handleClick = () => {
+    if (isSelectionMode && onToggleSelect) {
+      onToggleSelect();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
-      className="w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+      onClick={handleClick}
+      className={`w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98] ${
+        isSelectionMode && isSelected ? 'ring-2 ring-teal-500 ring-offset-1' : ''
+      }`}
     >
       {/* Image container - 4:5 aspect ratio */}
       <div className="relative w-full aspect-[4/5] bg-gray-100">
@@ -59,9 +72,28 @@ function ItemCard({ item, onClick }: ItemCardProps) {
           loading="lazy"
         />
 
-        {/* Category and listing badges (top-left) */}
+        {/* Selection checkbox (top-left when in selection mode) */}
+        {isSelectionMode && (
+          <div className="absolute top-3 left-3 z-10">
+            <div
+              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+                isSelected
+                  ? 'bg-teal-500 border-teal-500'
+                  : 'bg-white/90 border-gray-300'
+              }`}
+            >
+              {isSelected && (
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Category and listing badges (top-left, shifted when selection mode) */}
         {(item.category_name || item.has_active_listing) && (
-          <div className="absolute top-3 left-3 flex flex-col gap-1">
+          <div className={`absolute ${isSelectionMode ? 'top-11' : 'top-3'} left-3 flex flex-col gap-1`}>
             {item.has_active_listing && (
               <span className="inline-block px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
                 Listed
@@ -76,7 +108,7 @@ function ItemCard({ item, onClick }: ItemCardProps) {
         )}
 
         {/* Favorite indicator (top-right) */}
-        {item.is_favorite && (
+        {item.is_favorite && !isSelectionMode && (
           <div className="absolute top-3 right-3 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
             <svg
               className="w-4 h-4 text-red-500"
@@ -352,6 +384,12 @@ interface GalleryGridProps {
   error?: string | null;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
+  /** Whether selection mode is active */
+  isSelectionMode?: boolean;
+  /** Set of selected item IDs */
+  selectedIds?: Set<string>;
+  /** Callback when an item's selection is toggled */
+  onToggleSelect?: (itemId: string) => void;
 }
 
 /**
@@ -369,6 +407,9 @@ export function GalleryGrid({
   error,
   hasActiveFilters = false,
   onClearFilters,
+  isSelectionMode = false,
+  selectedIds,
+  onToggleSelect,
 }: GalleryGridProps) {
   const navigate = useNavigate();
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -502,6 +543,9 @@ export function GalleryGrid({
             key={item.id}
             item={item}
             onClick={() => handleItemClick(item.id)}
+            isSelectionMode={isSelectionMode}
+            isSelected={selectedIds?.has(item.id)}
+            onToggleSelect={() => onToggleSelect?.(item.id)}
           />
         ))}
       </div>

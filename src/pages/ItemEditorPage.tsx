@@ -397,8 +397,10 @@ export function ItemEditorPage() {
         </div>
 
         {/* ItemEditor Component */}
+        {/* Key prop forces remount when item changes, resetting all form state */}
         <div className="flex-1 overflow-hidden">
           <ItemEditor
+            key={`item-${state.currentItemIndex}`}
             detectedItem={state.detectedItem}
             imageUrl={state.imageUrl}
             thumbnailUrl={state.thumbnailUrl}

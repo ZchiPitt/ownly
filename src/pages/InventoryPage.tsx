@@ -20,10 +20,13 @@ import { ItemList } from '@/components/ItemList';
 import { SortBottomSheet } from '@/components/SortBottomSheet';
 import { LocationFilterBottomSheet } from '@/components/LocationFilterBottomSheet';
 import { CategoryFilterBottomSheet } from '@/components/CategoryFilterBottomSheet';
+import { SelectionToolbar } from '@/components/SelectionToolbar';
 import { useLocations } from '@/hooks/useLocations';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { PullToRefreshIndicator } from '@/components/PullToRefreshIndicator';
 import { Toast } from '@/components/Toast';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 // Key for storing scroll position in sessionStorage
 const SCROLL_POSITION_KEY = 'inventory-scroll-position';
@@ -163,6 +166,7 @@ export function InventoryPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
+  const { user } = useAuth();
 
   // Get sort from URL param, default to 'newest'
   const sortFromUrl = getSortFromUrlParam(searchParams.get('sort'));
@@ -213,6 +217,111 @@ export function InventoryPage() {
 
   // Toast state for refresh feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Selection mode state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+
+  // Selection mode handlers
+  const enterSelectionMode = useCallback(() => {
+    setIsSelectionMode(true);
+    setSelectedIds(new Set());
+  }, []);
+
+  const exitSelectionMode = useCallback(() => {
+    setIsSelectionMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleSelect = useCallback((itemId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAll = useCallback(() => {
+    setSelectedIds(new Set(items.map((item) => item.id)));
+  }, [items]);
+
+  const deselectAll = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  // Batch delete handler (soft delete)
+  // Uses RPC function to bypass RLS issues caused by location_item_count trigger
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedIds.size === 0 || !user) return;
+
+    setIsProcessingBatch(true);
+    try {
+      const idsToDelete = Array.from(selectedIds);
+
+      // Use RPC function for each item to bypass RLS issues with triggers
+      // The soft_delete_item function is SECURITY DEFINER and handles the trigger correctly
+      const deletePromises = idsToDelete.map((itemId) =>
+        (supabase as any).rpc('soft_delete_item', { item_id: itemId })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const errors = results.filter((r: { error: unknown }) => r.error);
+
+      if (errors.length > 0) {
+        console.error('Some items failed to delete:', errors);
+        throw new Error(`Failed to delete ${errors.length} item(s)`);
+      }
+
+      setToast({ message: `${idsToDelete.length} item${idsToDelete.length !== 1 ? 's' : ''} deleted`, type: 'success' });
+      exitSelectionMode();
+      await refreshItems();
+    } catch (err) {
+      console.error('Batch delete error:', err);
+      setToast({ message: 'Failed to delete items', type: 'error' });
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  }, [selectedIds, exitSelectionMode, refreshItems, user]);
+
+  // Batch mark as sold handler
+  // "Mark as Sold" archives items from inventory (same as soft delete)
+  // Uses RPC function to bypass RLS issues caused by location_item_count trigger
+  const handleBatchMarkAsSold = useCallback(async () => {
+    if (selectedIds.size === 0 || !user) return;
+
+    setIsProcessingBatch(true);
+    try {
+      const idsToUpdate = Array.from(selectedIds);
+
+      // Use RPC function for each item to bypass RLS issues with triggers
+      // "Mark as Sold" archives items from inventory (soft delete)
+      const updatePromises = idsToUpdate.map((itemId) =>
+        (supabase as any).rpc('soft_delete_item', { item_id: itemId })
+      );
+
+      const results = await Promise.all(updatePromises);
+      const errors = results.filter((r: { error: unknown }) => r.error);
+
+      if (errors.length > 0) {
+        console.error('Some items failed to mark as sold:', errors);
+        throw new Error(`Failed to mark ${errors.length} item(s) as sold`);
+      }
+
+      setToast({ message: `${idsToUpdate.length} item${idsToUpdate.length !== 1 ? 's' : ''} marked as sold`, type: 'success' });
+      exitSelectionMode();
+      await refreshItems();
+    } catch (err) {
+      console.error('Batch mark as sold error:', err);
+      setToast({ message: 'Failed to mark items as sold', type: 'error' });
+    } finally {
+      setIsProcessingBatch(false);
+    }
+  }, [selectedIds, exitSelectionMode, refreshItems, user]);
 
   // Scroll container ref for scroll position restoration
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -395,8 +504,21 @@ export function InventoryPage() {
             </p>
           </div>
 
-          {/* Right side: Search button and View toggle */}
+          {/* Right side: Select, Search button and View toggle */}
           <div className="flex items-center gap-2">
+            {/* Select button - enter selection mode */}
+            {!isSelectionMode && items.length > 0 && (
+              <button
+                onClick={enterSelectionMode}
+                className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                aria-label="Select items"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </button>
+            )}
+
             {/* Search button */}
             <button
               onClick={() => navigate('/search')}
@@ -405,7 +527,7 @@ export function InventoryPage() {
             >
               <SearchIcon />
             </button>
-            
+
             <ViewToggle
               viewMode={viewMode}
               onViewChange={handleViewChange}
@@ -567,7 +689,7 @@ export function InventoryPage() {
           isRefreshing={isPullRefreshing}
         />
 
-        <div className="p-4">
+        <div className={`p-4 ${isSelectionMode ? 'pb-36' : ''}`}>
           {viewMode === 'gallery' ? (
             <GalleryGrid
               items={items}
@@ -581,6 +703,9 @@ export function InventoryPage() {
               error={itemsError}
               hasActiveFilters={hasAnyActiveFilter}
               onClearFilters={handleClearAllFilters}
+              isSelectionMode={isSelectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
             />
           ) : (
             <ItemList
@@ -595,6 +720,9 @@ export function InventoryPage() {
               error={itemsError}
               hasActiveFilters={hasAnyActiveFilter}
               onClearFilters={handleClearAllFilters}
+              isSelectionMode={isSelectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
             />
           )}
         </div>
@@ -623,6 +751,20 @@ export function InventoryPage() {
         selectedCategoryIds={selectedCategoryIds}
         onApplyFilter={handleCategoryFilterApply}
       />
+
+      {/* Selection Toolbar - shown when in selection mode */}
+      {isSelectionMode && (
+        <SelectionToolbar
+          selectedCount={selectedIds.size}
+          totalCount={items.length}
+          onSelectAll={selectAll}
+          onDeselectAll={deselectAll}
+          onDelete={handleBatchDelete}
+          onMarkAsSold={handleBatchMarkAsSold}
+          onCancel={exitSelectionMode}
+          isProcessing={isProcessingBatch}
+        />
+      )}
 
       {/* Toast notification */}
       {toast && (

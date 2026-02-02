@@ -14,22 +14,52 @@ import type { InventoryItem } from '@/hooks/useInventoryItems';
 interface ItemRowProps {
   item: InventoryItem;
   onClick?: () => void;
+  isSelectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 /**
  * Individual item row for list view
  */
-function ItemRow({ item, onClick }: ItemRowProps) {
+function ItemRow({ item, onClick, isSelectionMode, isSelected, onToggleSelect }: ItemRowProps) {
   const imageUrl = item.thumbnail_url || item.photo_url;
   const displayName = item.name || 'Untitled Item';
   const locationPath = item.location_path || item.location_name;
 
+  const handleClick = () => {
+    if (isSelectionMode && onToggleSelect) {
+      onToggleSelect();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
   return (
     <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
+      onClick={handleClick}
+      className={`w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors text-left ${
+        isSelectionMode && isSelected ? 'bg-teal-50' : ''
+      }`}
       style={{ height: '72px' }}
     >
+      {/* Selection checkbox */}
+      {isSelectionMode && (
+        <div
+          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-teal-500 border-teal-500'
+              : 'bg-white border-gray-300'
+          }`}
+        >
+          {isSelected && (
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          )}
+        </div>
+      )}
+
       {/* Thumbnail - 60x60 */}
       <div className="relative flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100">
         <img
@@ -47,7 +77,7 @@ function ItemRow({ item, onClick }: ItemRowProps) {
         )}
 
         {/* Favorite indicator */}
-        {item.is_favorite && (
+        {item.is_favorite && !isSelectionMode && (
           <div className="absolute top-1 right-1 w-4 h-4 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
             <svg
               className="w-2.5 h-2.5 text-red-500"
@@ -323,6 +353,12 @@ interface ItemListProps {
   error?: string | null;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
+  /** Whether selection mode is active */
+  isSelectionMode?: boolean;
+  /** Set of selected item IDs */
+  selectedIds?: Set<string>;
+  /** Callback when an item's selection is toggled */
+  onToggleSelect?: (itemId: string) => void;
 }
 
 /**
@@ -340,6 +376,9 @@ export function ItemList({
   error,
   hasActiveFilters = false,
   onClearFilters,
+  isSelectionMode = false,
+  selectedIds,
+  onToggleSelect,
 }: ItemListProps) {
   const navigate = useNavigate();
   const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
@@ -471,6 +510,9 @@ export function ItemList({
             key={item.id}
             item={item}
             onClick={() => handleItemClick(item.id)}
+            isSelectionMode={isSelectionMode}
+            isSelected={selectedIds?.has(item.id)}
+            onToggleSelect={() => onToggleSelect?.(item.id)}
           />
         ))}
       </div>

@@ -75,6 +75,7 @@ interface AIFilledFields {
   name: boolean;
   description: boolean;
   category: boolean;
+  location: boolean;
   tags: boolean;
   brand: boolean;
 }
@@ -621,6 +622,7 @@ export function ItemEditor({
     name: !!detectedItem?.name,
     description: false, // AI doesn't provide description
     category: !!detectedItem?.category_suggestion,
+    location: !!defaultLocationId, // Location suggested from recent items
     tags: (detectedItem?.tags || []).length > 0,
     brand: !!detectedItem?.brand,
   }));
@@ -637,6 +639,7 @@ export function ItemEditor({
   useEffect(() => {
     if (defaultLocationId && !locationId) {
       setLocationId(defaultLocationId);
+      setAIFilledFields(prev => ({ ...prev, location: true }));
     }
   }, [defaultLocationId, locationId]);
 
@@ -688,11 +691,15 @@ export function ItemEditor({
   }, [aiFilledFields.category]);
 
   /**
-   * Handle location change
+   * Handle location change - clear AI indicator when user modifies
    */
   const handleLocationChange = useCallback((newLocationId: string | null) => {
     setLocationId(newLocationId);
-  }, []);
+    // Clear AI indicator when user selects a different location
+    if (aiFilledFields.location && newLocationId !== defaultLocationId) {
+      setAIFilledFields(prev => ({ ...prev, location: false }));
+    }
+  }, [aiFilledFields.location, defaultLocationId]);
 
   /**
    * Handle tags change
@@ -1000,21 +1007,34 @@ export function ItemEditor({
 
             {/* Location Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
                 Location <span className="text-red-500">*</span>
+                {aiFilledFields.location && (
+                  <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                    <SparkleIcon className="w-3 h-3" />
+                    AI
+                  </span>
+                )}
               </label>
               <button
                 type="button"
                 onClick={openLocationPicker}
                 disabled={locationsLoading}
-                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
-                  } ${locationError ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}`}
+                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  } ${locationError
+                    ? 'border-red-500 bg-red-50'
+                    : aiFilledFields.location
+                      ? 'border-teal-300 bg-teal-50/50'
+                      : 'border-gray-300 bg-white'}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
                     <>
                       <span className="text-lg flex-shrink-0">{selectedLocationDisplay.icon}</span>
                       <span className="truncate">{selectedLocationDisplay.path}</span>
+                      {aiFilledFields.location && locationId === defaultLocationId && (
+                        <span className="flex-shrink-0 text-xs text-teal-600">(AI suggested)</span>
+                      )}
                     </>
                   ) : (
                     <span className="text-gray-400 flex items-center gap-2">
