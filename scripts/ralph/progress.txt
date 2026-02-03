@@ -273,3 +273,20 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - IMMUTABLE functions can be used for key generation when no side effects occur
   - Partial indexes (`WHERE event_key IS NOT NULL`) optimize storage for nullable columns
 ---
+
+## 2026-02-03 - US-020
+- **What was implemented**: Notification sound and vibration with user toggle
+- **Files changed**:
+  - `supabase/migrations/20260203000011_add_notification_sound_enabled_to_user_settings.sql` (new)
+  - `src/types/database.ts` (updated - added notification_sound_enabled to UserSettings interface and Insert type)
+  - `src/hooks/useUserSettings.ts` (updated - added notification_sound_enabled to updateSettings type)
+  - `src/pages/SettingsPage.tsx` (updated - added notification sound toggle in Notifications section)
+  - `public/sw-push.js` (updated - added sound/vibration patterns based on notification type)
+  - `supabase/functions/send-push-notification/index.ts` (updated - fetch user sound preference and include in payload)
+- **Learnings for future iterations:**
+  - Web Push Notification API uses `silent` property (true = no sound, false/undefined = default sound)
+  - Vibration patterns are arrays of milliseconds: [duration, pause, duration, ...] - e.g., [100, 50, 100] for double vibration
+  - Service worker can receive user preferences via the push payload - Edge Function fetches from user_settings and includes in notification JSON
+  - Conditionally show settings UI based on feature state (e.g., show sound toggle only when push enabled AND permission granted)
+  - When adding new user_settings columns: update migration, database.ts (UserSettings interface + Insert type), useUserSettings.ts (updateSettings type union), and SettingsPage.tsx (handleSettingChange type union)
+---
