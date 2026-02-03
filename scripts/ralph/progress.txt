@@ -235,3 +235,15 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Tab management: `clients.matchAll()` finds existing windows, `client.navigate()` + `client.focus()` for reuse, `clients.openWindow()` for new tabs
   - When acceptance criteria are already met by previous work, document it and mark complete rather than duplicating effort
 ---
+
+## 2026-02-03 - US-017
+- **What was implemented**: Notification action buttons for quick response from push notifications
+- **Files changed**:
+  - `public/sw-push.js` (updated - added action buttons and refactored click handling)
+- **Learnings for future iterations:**
+  - Web Push API supports `actions` array in notification options with `action`, `title`, and `icon` properties
+  - `event.action` in notificationclick handler contains the action string if user clicked an action button (undefined for regular clicks)
+  - Action buttons provide shortcuts to the same destinations as clicking the notification body - same routing logic applies
+  - Refactored notification type constants (MESSAGE_TYPES, TRANSACTION_TYPES, ITEM_REMINDER_TYPES) to be shared between action generation and click handling
+  - Note: Maximum 2-3 actions supported on most platforms, some platforms may not show actions at all (graceful degradation)
+---
