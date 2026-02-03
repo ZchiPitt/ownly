@@ -4,7 +4,7 @@
  * Organized into Messages and Reminders tabs with unread count badges
  */
 
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useReviews, type PendingReviewTransaction } from '@/hooks/useReviews';
@@ -294,62 +294,201 @@ function NotificationItemSkeleton() {
 }
 
 /**
- * Notification item component
+ * Swipe-to-delete threshold in pixels
+ */
+const SWIPE_DELETE_THRESHOLD = 80;
+
+/**
+ * Notification item component with swipe-to-delete
  */
 interface NotificationItemProps {
   notification: Notification;
   onClick: () => void;
+  onDelete: () => Promise<void>;
 }
 
-function NotificationItem({ notification, onClick }: NotificationItemProps) {
+function NotificationItem({ notification, onClick, onDelete }: NotificationItemProps) {
   const isUnread = !notification.is_read;
   const iconColorClasses = getIconColorClasses(notification.type);
 
+  // Swipe state
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isHorizontalSwipe = useRef<boolean | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isDeleting) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isHorizontalSwipe.current = null;
+  }, [isDeleting]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null || isDeleting) return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = currentX - touchStartX.current;
+    const diffY = currentY - touchStartY.current;
+
+    // Determine swipe direction on first significant movement
+    if (isHorizontalSwipe.current === null) {
+      const absX = Math.abs(diffX);
+      const absY = Math.abs(diffY);
+      if (absX > 10 || absY > 10) {
+        isHorizontalSwipe.current = absX > absY;
+      }
+    }
+
+    // Only handle horizontal swipes (left swipe = negative diffX)
+    if (isHorizontalSwipe.current) {
+      e.preventDefault();
+      setIsSwiping(true);
+      // Only allow left swipe (negative offset), apply some resistance
+      const offset = Math.min(0, diffX * 0.8);
+      setSwipeOffset(Math.max(offset, -SWIPE_DELETE_THRESHOLD * 1.5));
+    }
+  }, [isDeleting]);
+
+  const handleTouchEnd = useCallback(async () => {
+    if (isDeleting) return;
+
+    const shouldDelete = swipeOffset <= -SWIPE_DELETE_THRESHOLD;
+
+    if (shouldDelete) {
+      // Animate out and delete
+      setIsDeleting(true);
+      setSwipeOffset(-window.innerWidth);
+
+      // Wait for animation, then delete
+      setTimeout(async () => {
+        try {
+          await onDelete();
+        } catch {
+          // Reset if delete failed
+          setSwipeOffset(0);
+          setIsDeleting(false);
+        }
+      }, 200);
+    } else {
+      // Snap back
+      setSwipeOffset(0);
+    }
+
+    touchStartX.current = null;
+    touchStartY.current = null;
+    isHorizontalSwipe.current = null;
+    setIsSwiping(false);
+  }, [swipeOffset, onDelete, isDeleting]);
+
+  const handleDeleteClick = useCallback(async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    setSwipeOffset(-window.innerWidth);
+
+    setTimeout(async () => {
+      try {
+        await onDelete();
+      } catch {
+        setSwipeOffset(0);
+        setIsDeleting(false);
+      }
+    }, 200);
+  }, [onDelete, isDeleting]);
+
+  const handleContentClick = useCallback(() => {
+    // Only trigger click if not swiping
+    if (Math.abs(swipeOffset) < 5 && !isSwiping) {
+      onClick();
+    }
+  }, [swipeOffset, isSwiping, onClick]);
+
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-start gap-3 p-4 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 border-b border-gray-100 ${
-        isUnread ? 'bg-blue-50/50' : 'bg-white'
-      }`}
+    <div
+      ref={containerRef}
+      className="relative overflow-hidden"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
-      {/* Type icon */}
+      {/* Delete action background */}
       <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconColorClasses}`}
+        className="absolute inset-y-0 right-0 flex items-center justify-end bg-red-500"
+        style={{ width: Math.max(-swipeOffset, SWIPE_DELETE_THRESHOLD) }}
       >
-        <NotificationIcon type={notification.type} />
+        <button
+          onClick={handleDeleteClick}
+          className="h-full px-6 flex items-center justify-center text-white font-medium"
+          aria-label="Delete notification"
+        >
+          <svg
+            className="w-5 h-5 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+          Delete
+        </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-2">
-          {/* Title */}
-          <p
-            className={`text-sm flex-1 ${
-              isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
-            }`}
-          >
-            {notification.title}
-          </p>
-
-          {/* Unread indicator */}
-          {isUnread && (
-            <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5" />
-          )}
+      {/* Notification content */}
+      <div
+        onClick={handleContentClick}
+        className={`relative flex items-start gap-3 p-4 text-left transition-transform border-b border-gray-100 cursor-pointer ${
+          isUnread ? 'bg-blue-50/50' : 'bg-white'
+        } ${!isSwiping ? 'transition-transform duration-200' : ''}`}
+        style={{ transform: `translateX(${swipeOffset}px)` }}
+      >
+        {/* Type icon */}
+        <div
+          className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${iconColorClasses}`}
+        >
+          <NotificationIcon type={notification.type} />
         </div>
 
-        {/* Body preview */}
-        {notification.body && (
-          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
-            {notification.body}
-          </p>
-        )}
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start gap-2">
+            {/* Title */}
+            <p
+              className={`text-sm flex-1 ${
+                isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
+              }`}
+            >
+              {notification.title}
+            </p>
 
-        {/* Relative time */}
-        <p className="text-xs text-gray-400 mt-1">
-          {getRelativeTime(notification.created_at)}
-        </p>
+            {/* Unread indicator */}
+            {isUnread && (
+              <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5" />
+            )}
+          </div>
+
+          {/* Body preview */}
+          {notification.body && (
+            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+              {notification.body}
+            </p>
+          )}
+
+          {/* Relative time */}
+          <p className="text-xs text-gray-400 mt-1">
+            {getRelativeTime(notification.created_at)}
+          </p>
+        </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -415,6 +554,7 @@ export function NotificationsPage() {
     error,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
   } = useNotifications();
   const { getPendingReviews } = useReviews();
 
@@ -710,6 +850,7 @@ export function NotificationsPage() {
                       key={notification.id}
                       notification={notification}
                       onClick={() => handleNotificationClick(notification)}
+                      onDelete={() => deleteNotification(notification.id)}
                     />
                   ))}
                 </div>

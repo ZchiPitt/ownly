@@ -16,6 +16,7 @@ export interface UseNotificationsReturn {
   refetch: () => Promise<void>;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
 }
 
 /**
@@ -113,6 +114,31 @@ export function useNotifications(): UseNotificationsReturn {
     }
   }, [user]);
 
+  // Delete a notification
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    if (!user) return;
+
+    try {
+      const { error: deleteError } = await (supabase
+        .from('notifications') as ReturnType<typeof supabase.from>)
+        .delete()
+        .eq('id', notificationId)
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        throw new Error(deleteError.message);
+      }
+
+      // Update local state - remove the notification
+      setNotifications((prev) =>
+        prev.filter((n) => n.id !== notificationId)
+      );
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      throw err;
+    }
+  }, [user]);
+
   return {
     notifications,
     unreadCount,
@@ -121,5 +147,6 @@ export function useNotifications(): UseNotificationsReturn {
     refetch: fetchNotifications,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
   };
 }
