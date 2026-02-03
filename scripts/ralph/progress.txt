@@ -259,3 +259,17 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Link to Settings page provides access to more detailed notification configuration
   - Conditionally render banner with: isPushSupported && permissionState === 'denied'
 ---
+
+## 2026-02-03 - US-019
+- **What was implemented**: Notification deduplication via event_key column
+- **Files changed**:
+  - `supabase/migrations/20260203000010_add_notification_deduplication.sql` (new)
+  - `src/types/database.ts` (updated - added event_key to Notification interface and table types)
+- **Learnings for future iterations:**
+  - Database-level deduplication (via triggers) is more reliable than client-side checks as it works regardless of notification source
+  - Use BEFORE INSERT trigger returning NULL to silently skip duplicate inserts without error
+  - Event key format: {type}:{identifier}:{date_bucket} provides good balance of uniqueness and 24-hour deduplication
+  - For marketplace notifications, use composite identifier (listing_id:sender_id for messages) to distinguish different senders
+  - IMMUTABLE functions can be used for key generation when no side effects occur
+  - Partial indexes (`WHERE event_key IS NOT NULL`) optimize storage for nullable columns
+---
