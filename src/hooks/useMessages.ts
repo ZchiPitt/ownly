@@ -272,6 +272,7 @@ export function useMessages() {
             sender_id: profileId,
             sender_name: senderName,
             item_name: itemName ?? undefined,
+            message_preview: trimmed,
           });
         } catch (notificationError) {
           console.warn('Failed to create new message notification:', notificationError);

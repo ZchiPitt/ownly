@@ -19,6 +19,8 @@ export interface MarketplaceNotificationData {
   sender_id?: string;
   sender_name?: string;
   item_name?: string;
+  /** Message preview for new_message notifications (first 50 chars) */
+  message_preview?: string;
 }
 
 export interface MarketplaceNotification {
@@ -60,11 +62,17 @@ function getNotificationContent(
         title: 'Request declined',
         body: `${senderName} declined your request for ${itemName}`,
       };
-    case 'new_message':
+    case 'new_message': {
+      // Format: "New message from {sender_name}" / message preview (first 50 chars)
+      const messagePreview = data.message_preview ?? '';
+      const truncatedPreview = messagePreview.length > 50
+        ? `${messagePreview.slice(0, 50)}...`
+        : messagePreview;
       return {
-        title: 'New message',
-        body: `${senderName} sent you a message about ${itemName}`,
+        title: `New message from ${senderName}`,
+        body: truncatedPreview || `Message about ${itemName}`,
       };
+    }
     case 'transaction_complete':
     default:
       return {

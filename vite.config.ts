@@ -22,6 +22,8 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024, // 3MB
         // Cache app shell (HTML, CSS, JS) on install, serve cache-first
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Import custom push notification handlers
+        importScripts: ['/sw-push.js'],
         // Runtime caching strategies
         runtimeCaching: [
           {
