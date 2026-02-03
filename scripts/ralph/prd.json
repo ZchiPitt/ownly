@@ -298,8 +298,8 @@
         "Verify in browser that denial state shows correct guidance"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added NotificationsDeniedBanner component to NotificationsPage that shows when push is supported but permission is denied. Banner is collapsible with platform-specific instructions for Chrome, Safari, Firefox, and mobile. Links to Settings page for more options."
     },
     {
       "id": "US-019",
