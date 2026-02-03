@@ -549,6 +549,139 @@ export function SettingsPage() {
           </div>
         </section>
 
+        {/* Push Notifications Section - US-013 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Notifications
+          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Master Toggle: Enable Push Notifications */}
+            <div className="px-4 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <label htmlFor="push-notifications-master" className="text-base font-medium text-gray-900">
+                    Enable Push Notifications
+                  </label>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    Receive alerts on your device for messages and reminders
+                  </p>
+                </div>
+                {isPushSupported ? (
+                  <button
+                    id="push-notifications-master"
+                    role="switch"
+                    aria-checked={settings?.push_notifications_enabled ?? false}
+                    onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
+                    disabled={isUpdating || isRequestingPush || permissionState === 'denied'}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      settings?.push_notifications_enabled && permissionState === 'granted' ? 'bg-teal-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    {isRequestingPush ? (
+                      <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
+                        <svg
+                          className="animate-spin h-3 w-3 text-teal-500"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          settings?.push_notifications_enabled && permissionState === 'granted' ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    )}
+                  </button>
+                ) : (
+                  <span className="text-sm text-gray-400">Not supported</span>
+                )}
+              </div>
+            </div>
+
+            {/* Permission Status Display */}
+            {isPushSupported && (
+              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  {permissionState === 'granted' && (
+                    <>
+                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-green-700">Notifications allowed</span>
+                    </>
+                  )}
+                  {permissionState === 'denied' && (
+                    <>
+                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-red-700">Notifications blocked</span>
+                    </>
+                  )}
+                  {permissionState === 'default' && (
+                    <>
+                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      <span className="text-sm text-gray-600">Permission not yet requested</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Instructions for denied state */}
+            {isPushSupported && permissionState === 'denied' && (
+              <div className="px-4 py-4 bg-amber-50">
+                <div className="flex gap-3">
+                  <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-amber-800">
+                      Notifications are blocked in your browser
+                    </p>
+                    <p className="text-sm text-amber-700 mt-1">
+                      To enable notifications, you'll need to update your browser settings:
+                    </p>
+                    <ul className="text-sm text-amber-700 mt-2 space-y-1 list-disc list-inside">
+                      <li><strong>Chrome:</strong> Click the lock icon in the address bar → Site settings → Notifications → Allow</li>
+                      <li><strong>Safari:</strong> Safari menu → Settings → Websites → Notifications → Allow for this site</li>
+                      <li><strong>Firefox:</strong> Click the lock icon → Clear permissions → Reload page</li>
+                      <li><strong>Mobile:</strong> Go to device Settings → find this app → enable Notifications</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Not supported message */}
+            {!isPushSupported && (
+              <div className="px-4 py-3 bg-gray-50">
+                <p className="text-sm text-gray-500">
+                  Push notifications are not supported in this browser. Try using Chrome, Firefox, Safari, or Edge on a supported device.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Marketplace Notifications Section - US-MKT-009 */}
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
