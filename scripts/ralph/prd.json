@@ -217,8 +217,8 @@
         "Verify in browser that permission flow works"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added dedicated Notifications section to SettingsPage with master toggle, permission state display (granted/denied/default with visual indicators), and detailed instructions for enabling notifications when blocked. Includes platform-specific guidance for Chrome, Safari, Firefox, and mobile."
     },
     {
       "id": "US-014",

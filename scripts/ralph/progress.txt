@@ -183,3 +183,15 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Supabase delete requires type casting like other mutations: `(supabase.from('notifications') as ReturnType<typeof supabase.from>).delete()`
   - Re-throw errors from delete function so component can reset UI state on failure
 ---
+
+## 2026-02-03 - US-013
+- **What was implemented**: Comprehensive notification settings section in SettingsPage
+- **Files changed**:
+  - `src/pages/SettingsPage.tsx` (updated - added dedicated Notifications section)
+- **Learnings for future iterations:**
+  - Permission state display should show visual indicators (green checkmark for granted, red X for denied, gray question for default)
+  - Denied permission instructions should be platform-specific (Chrome, Safari, Firefox, mobile)
+  - Master toggle should be disabled when permission is denied to prevent confusion
+  - The toggle should also check if permission is granted before showing as enabled (setting AND permission)
+  - usePushNotifications hook already provides requestPermission and unsubscribe functions that handle the full flow
+---
