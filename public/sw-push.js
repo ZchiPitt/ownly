@@ -4,6 +4,67 @@
  */
 
 /**
+ * Notification type categorization
+ */
+const MESSAGE_TYPES = ['new_message'];
+const TRANSACTION_TYPES = [
+  'new_inquiry',
+  'purchase_request',
+  'request_accepted',
+  'request_declined',
+  'transaction_complete',
+];
+const ITEM_REMINDER_TYPES = [
+  'unused_item',
+  'expiring_item',
+  'warranty_expiring',
+  'custom_reminder',
+];
+
+/**
+ * Get action buttons based on notification type
+ * @param {string} type - The notification type
+ * @returns {Array} Array of action objects for the notification
+ */
+function getActionsForNotificationType(type) {
+  // Chat message notifications: Reply action
+  if (MESSAGE_TYPES.includes(type)) {
+    return [
+      {
+        action: 'reply',
+        title: 'Reply',
+        icon: '/icons/icon-72x72.png',
+      },
+    ];
+  }
+
+  // Transaction notifications: View action
+  if (TRANSACTION_TYPES.includes(type)) {
+    return [
+      {
+        action: 'view',
+        title: 'View',
+        icon: '/icons/icon-72x72.png',
+      },
+    ];
+  }
+
+  // Item reminder notifications: View Item action
+  if (ITEM_REMINDER_TYPES.includes(type)) {
+    return [
+      {
+        action: 'view_item',
+        title: 'View Item',
+        icon: '/icons/icon-72x72.png',
+      },
+    ];
+  }
+
+  // Default: no actions for system or unknown types
+  return [];
+}
+
+/**
  * Handle incoming push notifications
  */
 self.addEventListener('push', (event) => {
@@ -35,6 +96,9 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Determine action buttons based on notification type
+  const actions = getActionsForNotificationType(notificationData.type);
+
   const options = {
     body: notificationData.body,
     icon: '/icons/icon-192x192.png',
@@ -42,6 +106,7 @@ self.addEventListener('push', (event) => {
     tag: notificationData.notification_id || `notification-${Date.now()}`,
     renotify: true,
     requireInteraction: false,
+    actions: actions,
     data: {
       ...notificationData.data,
       type: notificationData.type,
@@ -55,70 +120,98 @@ self.addEventListener('push', (event) => {
 });
 
 /**
- * Handle notification click events
- * Routes user to appropriate page based on notification type
+ * Get target URL based on action and notification data
+ * @param {string|undefined} action - The action string (if action button was clicked)
+ * @param {object} notificationData - The notification data
+ * @returns {string} The URL to navigate to
  */
-self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification clicked:', event);
-
-  event.notification.close();
-
-  const notificationData = event.notification.data || {};
+function getTargetUrl(action, notificationData) {
   const notificationType = notificationData.type;
   const listingId = notificationData.listing_id;
   const itemId = notificationData.item_id;
 
-  // Determine the URL to open based on notification type
-  let targetUrl = '/notifications';
-
-  // Transaction notification types that should open listing detail
-  const transactionTypes = [
-    'new_inquiry',
-    'purchase_request',
-    'request_accepted',
-    'request_declined',
-    'transaction_complete',
-  ];
-
-  // Item reminder types that should open item detail page
-  const itemReminderTypes = [
-    'unused_item',
-    'expiring_item',
-    'warranty_expiring',
-    'custom_reminder',
-  ];
-
-  if (notificationType === 'new_message' && listingId) {
-    // Chat messages open the messages/chat page
-    targetUrl = `/messages/${listingId}`;
-  } else if (transactionTypes.includes(notificationType) && listingId) {
-    // Transaction notifications open the listing detail page
-    targetUrl = `/listing/${listingId}`;
-  } else if (itemReminderTypes.includes(notificationType) && itemId) {
-    // Item reminders open the item detail page
-    targetUrl = `/item/${itemId}`;
-  } else if (listingId) {
-    // Other marketplace notifications with listing_id open the listing
-    targetUrl = `/listing/${listingId}`;
+  // Handle action button clicks
+  if (action) {
+    switch (action) {
+      case 'reply':
+        // Reply action opens chat (for message notifications)
+        if (listingId) {
+          return `/messages/${listingId}`;
+        }
+        break;
+      case 'view':
+        // View action opens listing detail (for transaction notifications)
+        if (listingId) {
+          return `/listing/${listingId}`;
+        }
+        break;
+      case 'view_item':
+        // View Item action opens item detail (for reminder notifications)
+        if (itemId) {
+          return `/item/${itemId}`;
+        }
+        break;
+    }
   }
 
+  // Handle regular notification clicks (not on action buttons)
+  // Route based on notification type
+  if (MESSAGE_TYPES.includes(notificationType) && listingId) {
+    // Chat messages open the messages/chat page
+    return `/messages/${listingId}`;
+  } else if (TRANSACTION_TYPES.includes(notificationType) && listingId) {
+    // Transaction notifications open the listing detail page
+    return `/listing/${listingId}`;
+  } else if (ITEM_REMINDER_TYPES.includes(notificationType) && itemId) {
+    // Item reminders open the item detail page
+    return `/item/${itemId}`;
+  } else if (listingId) {
+    // Other marketplace notifications with listing_id open the listing
+    return `/listing/${listingId}`;
+  }
+
+  // Default: open notifications page
+  return '/notifications';
+}
+
+/**
+ * Navigate to the target URL, reusing existing window if possible
+ * @param {string} targetUrl - The URL to navigate to
+ * @returns {Promise} Promise that resolves when navigation is complete
+ */
+function navigateToUrl(targetUrl) {
+  return clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    // Check if there's already an open window we can focus
+    for (const client of clientList) {
+      const clientUrl = new URL(client.url);
+      // If we have a window open at the app origin, navigate and focus it
+      if (clientUrl.origin === self.location.origin) {
+        client.navigate(targetUrl);
+        return client.focus();
+      }
+    }
+    // No existing window, open a new one
+    return clients.openWindow(targetUrl);
+  });
+}
+
+/**
+ * Handle notification click events
+ * Routes user to appropriate page based on notification type and action
+ */
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification clicked:', event);
+  console.log('[Service Worker] Action:', event.action);
+
+  event.notification.close();
+
+  const notificationData = event.notification.data || {};
+  const action = event.action; // Will be undefined for regular clicks, or action string for action button clicks
+
+  const targetUrl = getTargetUrl(action, notificationData);
   console.log('[Service Worker] Opening URL:', targetUrl);
 
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Check if there's already an open window we can focus
-      for (const client of clientList) {
-        const clientUrl = new URL(client.url);
-        // If we have a window open at the app origin, navigate and focus it
-        if (clientUrl.origin === self.location.origin) {
-          client.navigate(targetUrl);
-          return client.focus();
-        }
-      }
-      // No existing window, open a new one
-      return clients.openWindow(targetUrl);
-    })
-  );
+  event.waitUntil(navigateToUrl(targetUrl));
 });
 
 /**
