@@ -135,8 +135,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added warranty_expiry_date column to items table via migration. Updated generate-reminders Edge Function to query items with upcoming warranty expirations and create warranty_expiring notifications. Uses 7-day deduplication window to prevent duplicate reminders. Only queries items where warranty_expiry_date is between now and (now + warranty_reminder_days)."
     },
     {
       "id": "US-009",

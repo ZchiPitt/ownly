@@ -14,6 +14,7 @@ Started: Tue Feb  3 02:02:53 PST 2026
 - Hooks for database upserts should use type casting with `ReturnType<typeof supabase.from>` to handle typing issues
 - Custom service worker code: use vite-plugin-pwa `workbox.importScripts` with files in `public/` directory
 - Message batching uses pending_push_notifications table with 5-second window - process via scheduled job calling process-batched-notifications Edge Function
+- Items table columns: Update migration, database.ts (Item interface + Insert type), and ItemDetailPage.tsx RawItemDetails interface
 
 ## 2026-02-03 - US-001
 - **What was implemented**: Created `send-push-notification` Edge Function
@@ -110,4 +111,19 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - When adding new notification types, must update both the SQL constraint and the TypeScript NotificationType union
   - User settings columns with defaults should use NOT NULL DEFAULT to ensure new users get sensible values
   - Database type definitions in database.ts have three places to update: interface, Insert type (with optional fields), and Row type
+---
+
+## 2026-02-03 - US-008
+- **What was implemented**: Updated generate-reminders Edge Function for warranty alerts
+- **Files changed**:
+  - `supabase/migrations/20260203000007_add_warranty_expiry_date_to_items.sql` (new)
+  - `supabase/functions/generate-reminders/index.ts` (updated - added warranty reminder logic)
+  - `src/types/database.ts` (updated - added warranty_expiry_date to Item interface and Insert type)
+  - `src/pages/ItemDetailPage.tsx` (updated - added warranty_expiry_date to RawItemDetails and transform)
+- **Learnings for future iterations:**
+  - When adding columns to items table, must update: migration, database.ts Item interface, database.ts Insert type, and any component-specific raw types
+  - ItemDetailPage has its own RawItemDetails interface that mirrors Item - must be kept in sync manually
+  - The generate-reminders function queries user_settings with `or('reminder_enabled.eq.true,warranty_reminder_enabled.eq.true')` to get users who want any type of reminder
+  - Warranty notifications use 7-day deduplication window (longer than expiring_item's 24-hour window) to prevent spam for same item
+  - formatDate helper function formats dates as "Month Day, Year" (e.g., "February 15, 2026") for user-friendly display
 ---
