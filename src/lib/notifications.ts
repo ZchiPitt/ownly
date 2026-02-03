@@ -43,24 +43,28 @@ function getNotificationContent(
 
   switch (type) {
     case 'new_inquiry':
+      // Push format: 'New inquiry from {buyer}' / '{item_name}'
       return {
-        title: 'New inquiry',
-        body: `${senderName} asked about ${itemName}`,
+        title: `New inquiry from ${senderName}`,
+        body: itemName,
       };
     case 'purchase_request':
+      // Push format: '{buyer} wants to buy {item_name}'
       return {
-        title: 'New purchase request',
-        body: `${senderName} wants to buy ${itemName}`,
+        title: `${senderName} wants to buy ${itemName}`,
+        body: `Tap to view the purchase request`,
       };
     case 'request_accepted':
+      // Push format: '{seller} accepted your request for {item_name}'
       return {
-        title: 'Request accepted!',
-        body: `${senderName} accepted your request for ${itemName}`,
+        title: `${senderName} accepted your request`,
+        body: `Your request for ${itemName} was accepted`,
       };
     case 'request_declined':
+      // Push format: '{seller} declined your request'
       return {
-        title: 'Request declined',
-        body: `${senderName} declined your request for ${itemName}`,
+        title: `${senderName} declined your request`,
+        body: `Your purchase request was declined`,
       };
     case 'new_message': {
       // Format: "New message from {sender_name}" / message preview (first 50 chars)
@@ -74,10 +78,15 @@ function getNotificationContent(
       };
     }
     case 'transaction_complete':
-    default:
+      // Push format: 'Transaction complete! Leave a review'
       return {
         title: 'Transaction complete!',
-        body: `${senderName} marked the transaction for ${itemName} complete`,
+        body: 'Leave a review for this transaction',
+      };
+    default:
+      return {
+        title: 'Notification',
+        body: `You have a new notification`,
       };
   }
 }

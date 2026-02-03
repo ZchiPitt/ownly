@@ -70,9 +70,21 @@ self.addEventListener('notificationclick', (event) => {
   // Determine the URL to open based on notification type
   let targetUrl = '/notifications';
 
+  // Transaction notification types that should open listing detail
+  const transactionTypes = [
+    'new_inquiry',
+    'purchase_request',
+    'request_accepted',
+    'request_declined',
+    'transaction_complete',
+  ];
+
   if (notificationType === 'new_message' && listingId) {
     // Chat messages open the messages/chat page
     targetUrl = `/messages/${listingId}`;
+  } else if (transactionTypes.includes(notificationType) && listingId) {
+    // Transaction notifications open the listing detail page
+    targetUrl = `/listing/${listingId}`;
   } else if (listingId) {
     // Other marketplace notifications with listing_id open the listing
     targetUrl = `/listing/${listingId}`;
