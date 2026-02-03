@@ -233,8 +233,8 @@
         "Verify in browser that toggles persist correctly"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added custom_reminder_enabled column via migration. Created Item Reminders section in SettingsPage with toggles for expiry reminders (reminder_enabled), warranty reminders (warranty_reminder_enabled), and custom reminders (custom_reminder_enabled). All toggles update user_settings table immediately via useUserSettings hook."
     },
     {
       "id": "US-015",
