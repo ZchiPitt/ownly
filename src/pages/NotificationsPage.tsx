@@ -95,6 +95,67 @@ function getRelativeTime(dateString: string): string {
 }
 
 /**
+ * Date group types for notification grouping
+ */
+type DateGroup = 'today' | 'yesterday' | 'this_week' | 'earlier';
+
+const DATE_GROUP_LABELS: Record<DateGroup, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  this_week: 'This Week',
+  earlier: 'Earlier',
+};
+
+/**
+ * Determine which date group a notification belongs to
+ */
+function getDateGroup(dateString: string): DateGroup {
+  const date = new Date(dateString);
+  const now = new Date();
+
+  // Reset time components for accurate day comparison
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  // Calculate start of this week (Sunday)
+  const startOfWeek = new Date(today);
+  startOfWeek.setDate(startOfWeek.getDate() - today.getDay());
+
+  const notificationDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (notificationDate.getTime() >= today.getTime()) {
+    return 'today';
+  } else if (notificationDate.getTime() >= yesterday.getTime()) {
+    return 'yesterday';
+  } else if (notificationDate.getTime() >= startOfWeek.getTime()) {
+    return 'this_week';
+  } else {
+    return 'earlier';
+  }
+}
+
+/**
+ * Group notifications by date
+ */
+function groupNotificationsByDate(notifications: Notification[]): Map<DateGroup, Notification[]> {
+  const groups = new Map<DateGroup, Notification[]>();
+
+  // Initialize all groups to maintain order
+  const groupOrder: DateGroup[] = ['today', 'yesterday', 'this_week', 'earlier'];
+  groupOrder.forEach(group => groups.set(group, []));
+
+  // Notifications are already sorted by created_at (newest first)
+  // Group them while maintaining that order within each group
+  notifications.forEach(notification => {
+    const group = getDateGroup(notification.created_at);
+    groups.get(group)!.push(notification);
+  });
+
+  return groups;
+}
+
+/**
  * Get icon component based on notification type
  */
 function NotificationIcon({ type }: { type: NotificationType }) {
@@ -362,8 +423,8 @@ export function NotificationsPage() {
   const [selectedReview, setSelectedReview] = useState<PendingReviewTransaction | null>(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
-  // Calculate unread counts per tab
-  const { messagesUnreadCount, remindersUnreadCount, filteredNotifications, activeTab } = useMemo(() => {
+  // Calculate unread counts per tab and group notifications by date
+  const { messagesUnreadCount, remindersUnreadCount, filteredNotifications, groupedNotifications, activeTab } = useMemo(() => {
     const messagesUnread = notifications.filter(
       (n) => MESSAGE_TYPES.includes(n.type) && !n.is_read
     ).length;
@@ -385,10 +446,14 @@ export function NotificationsPage() {
     const types = tab === 'messages' ? MESSAGE_TYPES : REMINDER_TYPES;
     const filtered = notifications.filter((n) => types.includes(n.type));
 
+    // Group filtered notifications by date
+    const grouped = groupNotificationsByDate(filtered);
+
     return {
       messagesUnreadCount: messagesUnread,
       remindersUnreadCount: remindersUnread,
       filteredNotifications: filtered,
+      groupedNotifications: grouped,
       activeTab: tab,
     };
   }, [notifications, searchParams]);
@@ -625,15 +690,31 @@ export function NotificationsPage() {
           // Empty state
           <EmptyState tab={activeTab} />
         ) : (
-          // Notifications list
+          // Notifications list grouped by date
           <div>
-            {filteredNotifications.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onClick={() => handleNotificationClick(notification)}
-              />
-            ))}
+            {(['today', 'yesterday', 'this_week', 'earlier'] as const).map((group) => {
+              const groupNotifications = groupedNotifications.get(group) || [];
+              if (groupNotifications.length === 0) return null;
+
+              return (
+                <div key={group}>
+                  {/* Section header */}
+                  <div className="sticky top-[116px] z-[5] px-4 py-2 bg-gray-100 border-b border-gray-200">
+                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      {DATE_GROUP_LABELS[group]}
+                    </h3>
+                  </div>
+                  {/* Notifications in this group */}
+                  {groupNotifications.map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onClick={() => handleNotificationClick(notification)}
+                    />
+                  ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
