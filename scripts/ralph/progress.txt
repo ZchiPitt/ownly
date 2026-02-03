@@ -12,6 +12,7 @@ Started: Tue Feb  3 02:02:53 PST 2026
 - Trigger configuration requires `app.settings.supabase_url` and `app.settings.service_role_key` via Supabase Vault
 - User presence table tracks active_listing_id with last_seen timestamp for push suppression
 - Hooks for database upserts should use type casting with `ReturnType<typeof supabase.from>` to handle typing issues
+- Custom service worker code: use vite-plugin-pwa `workbox.importScripts` with files in `public/` directory
 
 ## 2026-02-03 - US-001
 - **What was implemented**: Created `send-push-notification` Edge Function
@@ -53,4 +54,19 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Trigger function extracts `listing_id` from notification `data` JSONB field for presence check
   - When skipping push due to presence, still mark `is_pushed = true` to prevent re-triggering
   - Type casting `supabase.from()` with `ReturnType<typeof supabase.from>` helps with upsert type issues
+---
+
+## 2026-02-03 - US-004
+- **What was implemented**: Real-time chat push notifications with proper formatting and service worker click handling
+- **Files changed**:
+  - `src/lib/notifications.ts` (updated - new_message format and message_preview field)
+  - `src/hooks/useMessages.ts` (updated - pass message preview to notification)
+  - `public/sw-push.js` (new - custom service worker for push/click handling)
+  - `vite.config.ts` (updated - importScripts for custom SW)
+- **Learnings for future iterations:**
+  - vite-plugin-pwa supports `importScripts` in workbox config to inject custom service worker code
+  - Custom SW file goes in `public/` directory and is served at root (e.g., `/sw-push.js`)
+  - Service worker `notificationclick` handler should use `clients.matchAll()` to find existing windows before opening new ones
+  - Notification `data` object persists custom fields (type, listing_id) through to the click handler
+  - Message preview should be truncated to 50 chars for push body to maintain readability
 ---
