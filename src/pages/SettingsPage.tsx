@@ -24,12 +24,28 @@ const UNUSED_THRESHOLD_OPTIONS = [
   { value: 365, label: '1 year' },
 ];
 
-// Expiration reminder options (days before)
+// Expiration reminder options (days before) - used in Reminders & Notifications section
 const EXPIRATION_REMINDER_OPTIONS = [
   { value: 3, label: '3 days before' },
   { value: 7, label: '7 days before' },
   { value: 14, label: '14 days before' },
   { value: 30, label: '30 days before' },
+];
+
+// Expiry reminder options for Item Reminders section (per US-015)
+const EXPIRY_REMINDER_OPTIONS = [
+  { value: 1, label: '1 day before' },
+  { value: 3, label: '3 days before' },
+  { value: 7, label: '7 days before' },
+  { value: 14, label: '14 days before' },
+];
+
+// Warranty reminder options (days before)
+const WARRANTY_REMINDER_OPTIONS = [
+  { value: 7, label: '7 days before' },
+  { value: 14, label: '14 days before' },
+  { value: 30, label: '30 days before' },
+  { value: 60, label: '60 days before' },
 ];
 
 function TagIcon({ className = 'w-5 h-5' }: { className?: string }) {
@@ -129,6 +145,7 @@ export function SettingsPage() {
       | 'marketplace_new_message_enabled'
       | 'marketplace_transaction_complete_enabled'
       | 'warranty_reminder_enabled'
+      | 'warranty_reminder_days'
       | 'custom_reminder_enabled',
     value: boolean | number | string
   ) => {
@@ -854,7 +871,7 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* Item Reminders Section - US-014 */}
+        {/* Item Reminders Section - US-014, US-015 */}
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Item Reminders
@@ -888,6 +905,30 @@ export function SettingsPage() {
               </button>
             </div>
 
+            {/* Expiry reminder timing dropdown - US-015 */}
+            {settings?.reminder_enabled && (
+              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+                <div className="flex-1 pr-4">
+                  <label htmlFor="expiry-reminder-timing" className="text-sm font-medium text-gray-700">
+                    Expiry reminder timing
+                  </label>
+                </div>
+                <select
+                  id="expiry-reminder-timing"
+                  value={settings?.expiration_reminder_days ?? 7}
+                  onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
+                  disabled={isUpdating}
+                  className="block w-36 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {EXPIRY_REMINDER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Warranty reminders toggle */}
             <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
               <div className="flex-1">
@@ -915,6 +956,30 @@ export function SettingsPage() {
                 />
               </button>
             </div>
+
+            {/* Warranty reminder timing dropdown - US-015 */}
+            {settings?.warranty_reminder_enabled && (
+              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+                <div className="flex-1 pr-4">
+                  <label htmlFor="warranty-reminder-timing" className="text-sm font-medium text-gray-700">
+                    Warranty reminder timing
+                  </label>
+                </div>
+                <select
+                  id="warranty-reminder-timing"
+                  value={settings?.warranty_reminder_days ?? 30}
+                  onChange={(e) => handleSettingChange('warranty_reminder_days', parseInt(e.target.value, 10))}
+                  disabled={isUpdating}
+                  className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {WARRANTY_REMINDER_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* Custom reminders toggle */}
             <div className="px-4 py-4 flex items-center justify-between">

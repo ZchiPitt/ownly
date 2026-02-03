@@ -25,6 +25,7 @@ interface UseUserSettingsReturn {
     | 'marketplace_new_message_enabled'
     | 'marketplace_transaction_complete_enabled'
     | 'warranty_reminder_enabled'
+    | 'warranty_reminder_days'
     | 'custom_reminder_enabled'
   >>) => Promise<boolean>;
   refetch: () => void;
@@ -83,6 +84,7 @@ export function useUserSettings(): UseUserSettingsReturn {
       | 'marketplace_new_message_enabled'
       | 'marketplace_transaction_complete_enabled'
       | 'warranty_reminder_enabled'
+      | 'warranty_reminder_days'
       | 'custom_reminder_enabled'
     >>
   ): Promise<boolean> => {
