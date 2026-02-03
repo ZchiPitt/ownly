@@ -118,8 +118,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created migration 20260203000006_add_warranty_expiring_notification_type.sql which adds warranty_expiring to notification type constraint and adds warranty_reminder_days (default 30) and warranty_reminder_enabled (default true) columns to user_settings."
     },
     {
       "id": "US-008",

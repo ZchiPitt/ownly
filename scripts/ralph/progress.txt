@@ -100,3 +100,14 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - All transaction notifications in useTransactions.ts already include listing_id in data for deep linking
   - The `new_inquiry` notification type exists but may not have a UI trigger yet - the formatting is ready
 ---
+
+## 2026-02-03 - US-007
+- **What was implemented**: Added warranty_expiring notification type and warranty reminder user settings
+- **Files changed**:
+  - `supabase/migrations/20260203000006_add_warranty_expiring_notification_type.sql` (new)
+  - `src/types/database.ts` (updated - added warranty_expiring type and warranty_reminder_* settings)
+- **Learnings for future iterations:**
+  - When adding new notification types, must update both the SQL constraint and the TypeScript NotificationType union
+  - User settings columns with defaults should use NOT NULL DEFAULT to ensure new users get sensible values
+  - Database type definitions in database.ts have three places to update: interface, Insert type (with optional fields), and Row type
+---
