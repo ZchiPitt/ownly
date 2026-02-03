@@ -313,8 +313,8 @@
         "Typecheck passes"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added event_key column with format {type}:{item_id|listing_id}:{date}. Database trigger auto-generates event_key and uses check_notification_duplicate() to skip duplicates within 24 hours. Deduplication handled entirely at database level for reliability regardless of notification source."
     },
     {
       "id": "US-020",
