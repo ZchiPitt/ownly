@@ -26,6 +26,8 @@ interface UserSettings {
   reminder_threshold_days: number;
   expiration_reminder_days: number;
   push_notifications_enabled: boolean;
+  warranty_reminder_enabled: boolean;
+  warranty_reminder_days: number;
 }
 
 interface Item {
@@ -34,13 +36,14 @@ interface Item {
   name: string | null;
   last_viewed_at: string | null;
   expiration_date: string | null;
+  warranty_expiry_date: string | null;
   keep_forever: boolean;
   deleted_at: string | null;
 }
 
 interface NotificationInsert {
   user_id: string;
-  type: 'unused_item' | 'expiring_item';
+  type: 'unused_item' | 'expiring_item' | 'warranty_expiring';
   title: string;
   body: string;
   item_id: string;
@@ -51,6 +54,7 @@ interface GenerateRemindersResponse {
   users_processed: number;
   unused_notifications_created: number;
   expiring_notifications_created: number;
+  warranty_notifications_created: number;
   errors: string[];
   executed_at: string;
 }
@@ -91,6 +95,17 @@ function formatDaysUntil(days: number): string {
   if (days === 0) return 'today';
   if (days === 1) return 'tomorrow';
   return `in ${days} day${days > 1 ? 's' : ''}`;
+}
+
+/**
+ * Format a date in a user-friendly format (e.g., "February 15, 2026")
+ */
+function formatDate(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 /**
@@ -148,15 +163,17 @@ Deno.serve(async (req: Request) => {
       users_processed: 0,
       unused_notifications_created: 0,
       expiring_notifications_created: 0,
+      warranty_notifications_created: 0,
       errors: [],
       executed_at: now.toISOString(),
     };
 
-    // Step 1: Get all users with reminders enabled
+    // Step 1: Get all users with reminders enabled (includes warranty reminder settings)
+    // Note: We query all users with reminder_enabled=true OR warranty_reminder_enabled=true
     const { data: usersWithReminders, error: usersError } = await supabase
       .from('user_settings')
-      .select('user_id, reminder_enabled, reminder_threshold_days, expiration_reminder_days, push_notifications_enabled')
-      .eq('reminder_enabled', true);
+      .select('user_id, reminder_enabled, reminder_threshold_days, expiration_reminder_days, push_notifications_enabled, warranty_reminder_enabled, warranty_reminder_days')
+      .or('reminder_enabled.eq.true,warranty_reminder_enabled.eq.true');
 
     if (usersError) {
       throw new Error(`Failed to fetch user settings: ${usersError.message}`);
@@ -282,6 +299,58 @@ Deno.serve(async (req: Request) => {
           }
         }
 
+        // Step 3b: Find warranty expiring items for this user (if warranty reminders enabled)
+        if (settings.warranty_reminder_enabled) {
+          const warrantyThreshold = new Date(now);
+          warrantyThreshold.setDate(warrantyThreshold.getDate() + settings.warranty_reminder_days);
+
+          const { data: warrantyItems, error: warrantyError } = await supabase
+            .from('items')
+            .select('id, user_id, name, warranty_expiry_date')
+            .eq('user_id', settings.user_id)
+            .is('deleted_at', null)
+            .not('warranty_expiry_date', 'is', null)
+            .lte('warranty_expiry_date', warrantyThreshold.toISOString().split('T')[0])
+            .gte('warranty_expiry_date', now.toISOString().split('T')[0]); // Only future warranty expirations
+
+          if (warrantyError) {
+            response.errors.push(`User ${settings.user_id}: Failed to fetch warranty items - ${warrantyError.message}`);
+          } else if (warrantyItems && warrantyItems.length > 0) {
+            // Check for existing warranty notifications to prevent duplicates
+            // Use a 7-day window to prevent spam for same item/expiry
+            const warrantyItemIds = warrantyItems.map(item => item.id);
+            const { data: existingWarrantyNotifications } = await supabase
+              .from('notifications')
+              .select('item_id')
+              .eq('user_id', settings.user_id)
+              .eq('type', 'warranty_expiring')
+              .in('item_id', warrantyItemIds)
+              .gte('created_at', new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString()); // Within last 7 days
+
+            const existingWarrantyItemIds = new Set(
+              existingWarrantyNotifications?.map(n => n.item_id) || []
+            );
+
+            for (const item of warrantyItems as Item[]) {
+              // Skip if notification already exists for this item within 7 days
+              if (existingWarrantyItemIds.has(item.id)) {
+                continue;
+              }
+
+              const itemName = item.name || 'Unnamed item';
+              const warrantyDate = new Date(item.warranty_expiry_date!);
+
+              notificationsToCreate.push({
+                user_id: settings.user_id,
+                type: 'warranty_expiring',
+                title: 'Warranty expiring soon',
+                body: `${itemName} warranty expires on ${formatDate(warrantyDate)}`,
+                item_id: item.id,
+              });
+            }
+          }
+        }
+
         // Step 4: Insert notifications in batch
         if (notificationsToCreate.length > 0) {
           const { data: insertedNotifications, error: insertError } = await supabase
@@ -294,8 +363,10 @@ Deno.serve(async (req: Request) => {
           } else if (insertedNotifications) {
             const unusedCount = insertedNotifications.filter(n => n.type === 'unused_item').length;
             const expiringCount = insertedNotifications.filter(n => n.type === 'expiring_item').length;
+            const warrantyCount = insertedNotifications.filter(n => n.type === 'warranty_expiring').length;
             response.unused_notifications_created += unusedCount;
             response.expiring_notifications_created += expiringCount;
+            response.warranty_notifications_created += warrantyCount;
           }
         }
 

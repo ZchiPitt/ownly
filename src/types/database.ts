@@ -121,6 +121,7 @@ export interface Item {
   currency: string;
   purchase_date: string | null;
   expiration_date: string | null;
+  warranty_expiry_date: string | null;
   brand: string | null;
   model: string | null;
   notes: string | null;
@@ -391,6 +392,7 @@ export type Database = {
           currency?: string;
           purchase_date?: string | null;
           expiration_date?: string | null;
+          warranty_expiry_date?: string | null;
           brand?: string | null;
           model?: string | null;
           notes?: string | null;

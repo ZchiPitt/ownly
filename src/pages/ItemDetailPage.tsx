@@ -80,6 +80,7 @@ interface RawItemDetails {
   currency: string;
   purchase_date: string | null;
   expiration_date: string | null;
+  warranty_expiry_date: string | null;
   brand: string | null;
   model: string | null;
   notes: string | null;
@@ -123,6 +124,7 @@ function transformRawItem(raw: RawItemDetails): ItemDetails {
     currency: raw.currency,
     purchase_date: raw.purchase_date,
     expiration_date: raw.expiration_date,
+    warranty_expiry_date: raw.warranty_expiry_date,
     brand: raw.brand,
     model: raw.model,
     notes: raw.notes,
