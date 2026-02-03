@@ -53,8 +53,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Presence updates every 20 seconds while user is viewing a conversation. Trigger checks user_presence table and skips push if last_seen is within 30 seconds."
     },
     {
       "id": "US-004",

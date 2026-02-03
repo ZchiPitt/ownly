@@ -10,6 +10,8 @@ Started: Tue Feb  3 02:02:53 PST 2026
 - Push subscriptions store `endpoint`, `p256dh`, `auth` keys from Web Push API
 - Database triggers use `pg_net` extension for async HTTP calls to Edge Functions
 - Trigger configuration requires `app.settings.supabase_url` and `app.settings.service_role_key` via Supabase Vault
+- User presence table tracks active_listing_id with last_seen timestamp for push suppression
+- Hooks for database upserts should use type casting with `ReturnType<typeof supabase.from>` to handle typing issues
 
 ## 2026-02-03 - US-001
 - **What was implemented**: Created `send-push-notification` Edge Function
@@ -35,4 +37,20 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Database settings for Edge Function URLs can be stored in Supabase Vault and accessed via `current_setting()`
   - AFTER INSERT triggers ensure the row exists when the Edge Function queries it
   - Edge Function should update `is_pushed = true` and `pushed_at = now()` after successful delivery to prevent duplicate pushes
+---
+
+## 2026-02-03 - US-003
+- **What was implemented**: Added user presence tracking for smart push suppression
+- **Files changed**:
+  - `supabase/migrations/20260203000002_create_user_presence_table.sql` (new)
+  - `supabase/migrations/20260203000003_add_presence_check_to_push_trigger.sql` (new)
+  - `src/hooks/usePresence.ts` (new)
+  - `src/pages/ChatPage.tsx` (updated - added presence tracking)
+  - `src/types/database.ts` (updated - added UserPresence type)
+- **Learnings for future iterations:**
+  - Presence tracking uses a unique index on user_id to ensure one presence record per user
+  - The usePresence hook uses setInterval (20s) to keep presence fresh while on a conversation
+  - Trigger function extracts `listing_id` from notification `data` JSONB field for presence check
+  - When skipping push due to presence, still mark `is_pushed = true` to prevent re-triggering
+  - Type casting `supabase.from()` with `ReturnType<typeof supabase.from>` helps with upsert type issues
 ---
