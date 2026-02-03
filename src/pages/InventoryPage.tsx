@@ -113,59 +113,10 @@ function SearchIcon() {
   );
 }
 
-/**
- * View toggle component for switching between gallery and list views
- * Ownly-style boxed toggle buttons
- */
-function ViewToggle({
-  viewMode,
-  onViewChange,
-  isLoading,
-}: {
-  viewMode: ViewMode;
-  onViewChange: (mode: ViewMode) => void;
-  isLoading: boolean;
-}) {
-  return (
-    <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-      {/* Gallery view button */}
-      <button
-        onClick={() => onViewChange('gallery')}
-        disabled={isLoading}
-        className={`p-2 transition-colors ${viewMode === 'gallery'
-            ? 'bg-teal-50 text-teal-600 border-teal-500'
-            : 'bg-white text-gray-400 hover:text-gray-600'
-          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        aria-label="Gallery view"
-        aria-pressed={viewMode === 'gallery'}
-      >
-        <GridIcon filled={viewMode === 'gallery'} />
-      </button>
-
-      {/* Divider */}
-      <div className="w-px h-6 bg-gray-200" />
-
-      {/* List view button */}
-      <button
-        onClick={() => onViewChange('list')}
-        disabled={isLoading}
-        className={`p-2 transition-colors ${viewMode === 'list'
-            ? 'bg-teal-50 text-teal-600'
-            : 'bg-white text-gray-400 hover:text-gray-600'
-          } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        aria-label="List view"
-        aria-pressed={viewMode === 'list'}
-      >
-        <ListIcon filled={viewMode === 'list'} />
-      </button>
-    </div>
-  );
-}
-
 export function InventoryPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { settings, isLoading: settingsLoading, updateSettings } = useUserSettings();
+  const { settings, updateSettings } = useUserSettings();
   const { user } = useAuth();
 
   // Get sort from URL param, default to 'newest'
@@ -482,192 +433,98 @@ export function InventoryPage() {
   }, [sortFromUrl, locationIdFromUrl, categoriesFromUrl]);
 
   return (
-    <div className="min-h-full bg-gray-50 pb-20">
+    <div className="min-h-full bg-[#fdf8f2] pb-32">
       {/* Header - Ownly style */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-4">
+      <div className="sticky top-0 z-30 glass border-b border-[#f5ebe0]/40 px-6 py-6 space-y-5">
         {/* Top row: Title and item count with view toggle */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between">
           {/* Title and count */}
-          <div>
-            <h1 className="text-xs font-semibold text-gray-500 tracking-[0.2em] uppercase">
+          <div className="cursor-pointer group" onClick={() => navigate('/dashboard')}>
+            <h1 className="text-[11px] font-black text-gray-400 tracking-[0.3em] uppercase group-hover:text-[#4a3f35] transition-colors">
               MY INVENTORY
             </h1>
-            <p className="text-sm text-gray-900 mt-1 flex items-center gap-1.5">
-              {itemsLoading ? (
-                <span className="inline-block w-20 h-4 bg-gray-200 rounded animate-pulse" />
-              ) : (
-                <>
-                  <span className="w-2 h-2 bg-teal-500 rounded-full" />
-                  <span className="font-medium">{totalCount} ITEMS ADDED</span>
-                </>
-              )}
-            </p>
+            <div className="flex items-center gap-2.5 mt-2">
+              <span className="w-2 h-2 bg-[#e3ead3] rounded-full animate-pulse" />
+              <p className="text-[10px] font-black text-[#8d7b6d] uppercase tracking-[0.25em]">
+                {itemsLoading ? 'Loading...' : `${totalCount} Objects Preserved`}
+              </p>
+            </div>
           </div>
 
-          {/* Right side: Select, Search button and View toggle */}
-          <div className="flex items-center gap-2">
-            {/* Select button - enter selection mode */}
+          {/* Right side: Search, Select, View Toggle */}
+          <div className="flex items-center gap-2.5">
             {!isSelectionMode && items.length > 0 && (
               <button
                 onClick={enterSelectionMode}
-                className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-                aria-label="Select items"
+                className="p-4 bg-white/60 rounded-3xl text-[#8d7b6d] active:scale-95 transition-all soft-shadow border border-white/50"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
               </button>
             )}
-
-            {/* Search button */}
             <button
               onClick={() => navigate('/search')}
-              className="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-              aria-label="Search items"
+              className="p-4 bg-white/60 rounded-3xl text-[#8d7b6d] active:scale-95 transition-all soft-shadow border border-white/50"
             >
               <SearchIcon />
             </button>
-
-            <ViewToggle
-              viewMode={viewMode}
-              onViewChange={handleViewChange}
-              isLoading={settingsLoading || isUpdatingView}
-            />
+            <div className="bg-white/40 p-1.5 rounded-[2rem] border border-white/50 soft-shadow flex items-center gap-1.5">
+              <button
+                onClick={() => handleViewChange('gallery')}
+                className={`p-2.5 rounded-full transition-all ${viewMode === 'gallery' ? 'bg-[#d6ccc2] text-white' : 'text-[#d6ccc2]'}`}
+              >
+                <GridIcon filled={viewMode === 'gallery'} />
+              </button>
+              <button
+                onClick={() => handleViewChange('list')}
+                className={`p-2.5 rounded-full transition-all ${viewMode === 'list' ? 'bg-[#d6ccc2] text-white' : 'text-[#d6ccc2]'}`}
+              >
+                <ListIcon filled={viewMode === 'list'} />
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Filter bar with chips */}
-        <div className="flex items-center gap-2 mt-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
-          {/* All Categories chip */}
+        <div className="flex items-center gap-3 overflow-x-auto pb-1 -mx-2 px-2 no-scrollbar">
           <button
             onClick={onCategoryChipClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${hasActiveCategories
-                ? 'bg-teal-600 text-white'
-                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${hasActiveCategories
+              ? 'bg-[#fbc4ab] text-white soft-shadow'
+              : 'bg-white/60 border border-white/50 text-[#8d7b6d] hover:bg-white'
               }`}
           >
-            {/* Category icon */}
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-              />
-            </svg>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
             <span>{categoryChipLabel}</span>
-            {/* Dropdown indicator */}
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
           </button>
 
-          {/* All Locations chip */}
           <button
             onClick={onLocationChipClick}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${hasActiveLocation
-                ? 'bg-teal-600 text-white'
-                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${hasActiveLocation
+              ? 'bg-[#e3ead3] text-[#4a3f35] soft-shadow'
+              : 'bg-white/60 border border-white/50 text-[#8d7b6d] hover:bg-white'
               }`}
           >
-            {/* Location icon */}
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
             <span>{locationChipLabel}</span>
-            {/* Dropdown indicator */}
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
           </button>
 
-          {/* Sort chip */}
           <button
             onClick={() => setIsSortSheetOpen(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${sortFromUrl !== 'newest'
-                ? 'bg-teal-600 text-white'
-                : 'border border-gray-300 text-gray-600 hover:bg-gray-50'
+            className={`flex items-center gap-2 px-5 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${sortFromUrl !== 'newest'
+              ? 'bg-[#d6ccc2] text-white soft-shadow'
+              : 'bg-white/60 border border-white/50 text-[#8d7b6d] hover:bg-white'
               }`}
           >
-            {/* Sort icon */}
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
-              />
-            </svg>
-            <span>Sort: {getSortLabel(sortFromUrl)}</span>
-            {/* Dropdown indicator */}
-            <svg
-              className="w-3.5 h-3.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4.5h14.25M3 9h9.75M3 13.5h9.75m4.5-4.5v12m0 0-3.75-3.75M17.25 21l3.75-3.75" /></svg>
+            <span>{getSortLabel(sortFromUrl)}</span>
           </button>
 
-          {/* Clear All link - only shown when filters are active */}
           {hasAnyActiveFilter && (
             <button
               onClick={handleClearAllFilters}
-              className="ml-auto flex-shrink-0 text-sm font-medium text-teal-600 hover:text-teal-700 whitespace-nowrap"
+              className="ml-auto text-[9px] font-black text-[#4a3f35] uppercase tracking-widest hover:underline decoration-2 underline-offset-4 pr-2"
             >
-              Clear All
+              Reset
             </button>
           )}
         </div>

@@ -22,10 +22,13 @@ interface ItemRowProps {
 /**
  * Individual item row for list view
  */
+/**
+ * Individual item row for list view - Warm Redesign
+ */
 function ItemRow({ item, onClick, isSelectionMode, isSelected, onToggleSelect }: ItemRowProps) {
   const imageUrl = item.thumbnail_url || item.photo_url;
   const displayName = item.name || 'Untitled Item';
-  const locationPath = item.location_path || item.location_name;
+  const locationPath = item.location_name || item.location_path;
 
   const handleClick = () => {
     if (isSelectionMode && onToggleSelect) {
@@ -38,52 +41,44 @@ function ItemRow({ item, onClick, isSelectionMode, isSelected, onToggleSelect }:
   return (
     <button
       onClick={handleClick}
-      className={`w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 active:bg-gray-100 transition-colors text-left ${
-        isSelectionMode && isSelected ? 'bg-teal-50' : ''
-      }`}
-      style={{ height: '72px' }}
+      className={`relative w-full flex items-center gap-4 p-4 transition-all text-left group mb-3 rounded-[1.5rem] border border-[#f5ebe0]/40 ${isSelectionMode && isSelected ? 'bg-[#e3ead3]/10 ring-4 ring-[#e3ead3]' : 'bg-white soft-shadow'
+        } active:scale-[0.98]`}
     >
       {/* Selection checkbox */}
       {isSelectionMode && (
         <div
-          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-            isSelected
-              ? 'bg-teal-500 border-teal-500'
-              : 'bg-white border-gray-300'
-          }`}
+          className={`flex-shrink-0 w-8 h-8 rounded-full border-4 flex items-center justify-center transition-all ${isSelected
+            ? 'bg-[#e3ead3] border-white'
+            : 'bg-white border-[#f5ebe0]'
+            }`}
         >
           {isSelected && (
-            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            <svg className="w-5 h-5 text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           )}
         </div>
       )}
 
-      {/* Thumbnail - 60x60 */}
-      <div className="relative flex-shrink-0 w-[60px] h-[60px] rounded-lg overflow-hidden bg-gray-100">
-        <img
-          src={imageUrl}
-          alt={displayName}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
-
-        {/* Quantity badge (if > 1) */}
-        {item.quantity > 1 && (
-          <div className="absolute top-1 left-1 px-1 py-0.5 bg-black/70 rounded text-[10px] font-medium text-white">
-            ×{item.quantity}
+      {/* Thumbnail - Rounded Square */}
+      <div className="relative flex-shrink-0 w-16 h-16 rounded-2xl overflow-hidden bg-[#fdf8f2] border border-[#f5ebe0]/40">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={displayName}
+            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[#d6ccc2]">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
           </div>
         )}
 
         {/* Favorite indicator */}
         {item.is_favorite && !isSelectionMode && (
-          <div className="absolute top-1 right-1 w-4 h-4 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
-            <svg
-              className="w-2.5 h-2.5 text-red-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
+          <div className="absolute top-1 right-1 w-5 h-5 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
+            <svg className="w-3 h-3 text-[#fbc4ab]" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
           </div>
@@ -91,72 +86,41 @@ function ItemRow({ item, onClick, isSelectionMode, isSelected, onToggleSelect }:
       </div>
 
       {/* Name and location - center */}
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-semibold text-gray-900 truncate">
+      <div className="flex-1 min-w-0 py-1 flex flex-col justify-center">
+        <h3 className="text-sm font-black text-[#4a3f35] tracking-tight truncate mb-1">
           {displayName}
         </h3>
         {locationPath && (
-          <p className="text-xs text-gray-500 mt-0.5 truncate flex items-center gap-1">
-            <svg
-              className="w-3 h-3 flex-shrink-0 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            <span className="truncate">{locationPath}</span>
-          </p>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <svg className="w-3.5 h-3.5 text-[#e3ead3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <span className="text-[10px] font-black text-[#8d7b6d] uppercase tracking-wider truncate">
+              {locationPath}
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Category badge and chevron - right */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {item.has_active_listing && (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-emerald-600 text-white">
-            Listed
-          </span>
-        )}
-        {/* Category badge */}
-        {item.category_name && (
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
-            style={{
-              backgroundColor: item.category_color || '#6B7280',
-            }}
-          >
-            {item.category_icon && (
-              <span className="mr-1">{item.category_icon}</span>
-            )}
-            {item.category_name}
-          </span>
-        )}
+      {/* Category badge and arrow - right */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex flex-col items-end gap-1.5">
+          {item.has_active_listing && (
+            <span className="px-3 py-1 bg-[#e3ead3]/80 rounded-full text-[8px] font-black text-[#4a3f35] uppercase tracking-widest border border-white/50">
+              Listed
+            </span>
+          )}
+          {item.category_name && (
+            <span className="px-3 py-1 bg-[#fdf8f2] border border-[#f5ebe0] rounded-full text-[9px] font-black text-[#8d7b6d] uppercase tracking-widest">
+              {item.category_name}
+            </span>
+          )}
+        </div>
 
-        {/* Chevron */}
-        <svg
-          className="w-5 h-5 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
+        {/* Action Indicator */}
+        <div className="w-10 h-10 rounded-2xl bg-[#fdf8f2] flex items-center justify-center text-[#d6ccc2] group-hover:bg-[#f5ebe0] group-hover:text-[#4a3f35] transition-all">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
       </div>
     </button>
   );
@@ -504,7 +468,7 @@ export function ItemList({
       )}
 
       {/* Item list */}
-      <div className="bg-white rounded-xl overflow-hidden divide-y divide-gray-100">
+      <div className="bg-transparent space-y-1">
         {items.map((item) => (
           <ItemRow
             key={item.id}

@@ -1,70 +1,39 @@
 import { useNavigate } from 'react-router-dom';
 
-const SAMPLE_QUERIES = [
-    "I need some space, what are the things that I can drop",
-    "Shall I buy any new stuff",
-    "I wanna find my soccer ball, where is it",
-];
-
 export function AgentSection() {
     const navigate = useNavigate();
 
-    const handleQueryClick = (query: string) => {
-        // Navigate to shopping page with the query as a URL parameter
-        navigate(`/shopping?query=${encodeURIComponent(query)}`);
-    };
-
-    const handleMicClick = () => {
-        // Navigate to shopping page (voice input can be implemented later)
-        navigate('/shopping');
-    };
-
     return (
-        <div className="bg-teal-600 rounded-3xl p-6 md:p-8 text-white relative overflow-hidden shadow-lg">
-            {/* Background decoration (Circuit/Brain pattern placeholder) */}
-            <div className="absolute right-0 top-0 h-full w-1/2 opacity-10 pointer-events-none">
-                <svg viewBox="0 0 200 200" className="h-full w-full">
-                    <path fill="currentColor" d="M150,50 C180,50 180,100 150,150" />
-                    {/* Add more complex paths for "brain" look if needed */}
-                </svg>
-            </div>
-
-            <div className="relative z-10">
-                <div className="flex justify-between items-start mb-6">
-                    <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                        Talk to the Ownly Agent!
-                    </h2>
-                    <button
-                        onClick={handleMicClick}
-                        className="bg-white/20 hover:bg-white/30 transition-colors rounded-xl p-3 backdrop-blur-sm cursor-pointer"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                            <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
-                            <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
-                        </svg>
-                    </button>
+        <div className="grid grid-cols-2 gap-6">
+            <button
+                onClick={() => navigate('/shopping')}
+                className="bg-[#e3ead3] p-10 rounded-[3.5rem] flex flex-col items-center gap-5 soft-shadow hover:-translate-y-1.5 transition-all group border-2 border-white/60"
+            >
+                <div className="p-5 bg-white/50 rounded-3xl group-hover:bg-white transition-all shadow-md">
+                    <svg className="w-8 h-8 text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                    </svg>
                 </div>
-
-                <div className="mb-4">
-                    <p className="text-xs font-bold tracking-widest uppercase text-teal-100 mb-3">Sample Queries</p>
-                    <div className="space-y-3">
-                        {SAMPLE_QUERIES.map((query, index) => (
-                            <button
-                                key={index}
-                                onClick={() => handleQueryClick(query)}
-                                className="w-full text-left bg-white/10 hover:bg-white/20 active:bg-white/30 transition-colors rounded-xl px-4 py-3 flex items-center justify-between group"
-                            >
-                                <span className="text-sm md:text-base font-medium truncate pr-4">{query}</span>
-                                <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-                                    </svg>
-                                </span>
-                            </button>
-                        ))}
-                    </div>
+                <div className="text-center">
+                    <span className="text-base font-black text-[#4a3f35] uppercase tracking-tight">TALK TO OWNLY</span>
+                    <p className="text-[10px] font-bold text-[#4a3f35]/70 mt-2 leading-relaxed px-2">Your AI bestie for finding and deciding</p>
                 </div>
-            </div>
+            </button>
+            <button
+                onClick={() => navigate('/add')}
+                className="bg-[#f8e1d7] p-10 rounded-[3.5rem] flex flex-col items-center gap-5 soft-shadow hover:-translate-y-1.5 transition-all group border-2 border-white/60"
+            >
+                <div className="p-5 bg-white/50 rounded-3xl group-hover:bg-white transition-all shadow-md">
+                    <svg className="w-8 h-8 text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                    </svg>
+                </div>
+                <div className="text-center">
+                    <span className="text-base font-black text-[#4a3f35] uppercase tracking-tight">ADD ITEMS</span>
+                    <p className="text-[10px] font-bold text-[#4a3f35]/70 mt-2 leading-relaxed px-2">Snap a photo and let AI organize the rest</p>
+                </div>
+            </button>
         </div>
     )
 }

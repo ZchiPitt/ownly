@@ -94,26 +94,26 @@ export function BottomSheet({
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-[#4a3f35]/20 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-300"
       aria-modal="true"
       role="dialog"
     >
       <div
-        className={`w-full ${maxWidth} bg-white rounded-t-2xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom duration-300`}
+        className={`w-full ${maxWidth} bg-[#fdf8f2] rounded-t-[3rem] soft-shadow max-h-[90vh] flex flex-col animate-in slide-in-from-bottom duration-500 border-t border-white/50`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle bar */}
         {showHandleBar && (
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+          <div className="flex justify-center pt-5 pb-2">
+            <div className="w-12 h-1.5 bg-[#4a3f35]/10 rounded-full" />
           </div>
         )}
 
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between px-8 py-4 flex-shrink-0">
             {title ? (
-              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+              <h2 className="text-2xl font-black text-[#4a3f35] tracking-tight">{title}</h2>
             ) : (
               <div />
             )}
@@ -121,7 +121,7 @@ export function BottomSheet({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="w-10 h-10 flex items-center justify-center bg-white rounded-2xl text-[#d6ccc2] hover:text-[#4a3f35] soft-shadow transition-all active:scale-95"
                 aria-label="Close"
               >
                 <svg
@@ -129,11 +129,11 @@ export function BottomSheet({
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  strokeWidth={3}
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeWidth={2}
                     d="M6 18L18 6M6 6l12 12"
                   />
                 </svg>
@@ -143,11 +143,11 @@ export function BottomSheet({
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div className="flex-1 overflow-y-auto px-6 pb-10 no-scrollbar">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-gray-100 p-4 flex-shrink-0">
+          <div className="px-8 py-6 bg-white/40 border-t border-[#f5ebe0]/60 flex-shrink-0 rounded-t-[2rem]">
             {footer}
           </div>
         )}

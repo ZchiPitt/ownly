@@ -7,8 +7,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { InventoryItem } from '@/hooks/useInventoryItems';
-import { TagChip } from '@/components/TagChip';
-import { getColorHex } from '@/lib/colorUtils';
 
 /**
  * Format price with currency symbol
@@ -40,13 +38,15 @@ interface ItemCardProps {
 /**
  * Individual item card for gallery view - Ownly style
  */
+/**
+ * Individual item card for gallery view - Warm Redesign
+ */
 function ItemCard({ item, onClick, isSelectionMode, isSelected, onToggleSelect }: ItemCardProps) {
   const imageUrl = item.thumbnail_url || item.photo_url;
   const displayName = item.name || 'Untitled Item';
   const formattedPrice = formatPrice(item.price, item.currency);
   const locationDisplay = item.location_name || item.location_path;
   const sharedPhotoCount = item.shared_photo_count ?? 0;
-  const displayTags = item.tags ? item.tags.slice(0, 3) : [];
 
   const handleClick = () => {
     if (isSelectionMode && onToggleSelect) {
@@ -59,141 +59,92 @@ function ItemCard({ item, onClick, isSelectionMode, isSelected, onToggleSelect }
   return (
     <button
       onClick={handleClick}
-      className={`w-full text-left bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all active:scale-[0.98] ${
-        isSelectionMode && isSelected ? 'ring-2 ring-teal-500 ring-offset-1' : ''
-      }`}
+      className={`relative w-full text-left bg-white rounded-[2.5rem] overflow-hidden soft-shadow border border-[#f5ebe0]/40 transition-all active:scale-95 group ${isSelectionMode && isSelected ? 'ring-4 ring-[#e3ead3] ring-offset-2' : ''
+        }`}
     >
-      {/* Image container - 4:5 aspect ratio */}
-      <div className="relative w-full aspect-[4/5] bg-gray-100">
-        <img
-          src={imageUrl}
-          alt={displayName}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+      {/* Image container - 1:1 aspect ratio for more "clay" look */}
+      <div className="relative w-full aspect-square bg-[#fdf8f2] overflow-hidden">
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={displayName}
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[#d6ccc2]">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+          </div>
+        )}
 
-        {/* Selection checkbox (top-left when in selection mode) */}
+        {/* Badges Overlay */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
+          <div className="flex flex-col gap-1.5">
+            {item.category_name && (
+              <span className="px-3 py-1 bg-white/85 backdrop-blur-md rounded-full text-[8px] font-black text-[#4a3f35] uppercase tracking-widest border border-white/50">
+                {item.category_name}
+              </span>
+            )}
+            {item.has_active_listing && (
+              <span className="px-3 py-1 bg-[#e3ead3]/90 backdrop-blur-md rounded-full text-[8px] font-black text-[#4a3f35] uppercase tracking-widest border border-white/50">
+                Listed
+              </span>
+            )}
+          </div>
+
+          {item.is_favorite && !isSelectionMode && (
+            <div className="w-8 h-8 bg-white/85 backdrop-blur-md rounded-full flex items-center justify-center soft-shadow border border-white/50">
+              <svg className="w-4 h-4 text-[#fbc4ab]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+            </div>
+          )}
+        </div>
+
+        {/* Checkbox Overlay (Selection Mode) */}
         {isSelectionMode && (
-          <div className="absolute top-3 left-3 z-10">
-            <div
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                isSelected
-                  ? 'bg-teal-500 border-teal-500'
-                  : 'bg-white/90 border-gray-300'
-              }`}
-            >
+          <div className="absolute inset-0 bg-black/5 flex items-center justify-center">
+            <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center transition-all ${isSelected ? 'bg-[#e3ead3] border-white' : 'bg-white/40 border-white/60'}`}>
               {isSelected && (
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+                <svg className="w-6 h-6 text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               )}
             </div>
           </div>
         )}
 
-        {/* Category and listing badges (top-left, shifted when selection mode) */}
-        {(item.category_name || item.has_active_listing) && (
-          <div className={`absolute ${isSelectionMode ? 'top-11' : 'top-3'} left-3 flex flex-col gap-1`}>
-            {item.has_active_listing && (
-              <span className="inline-block px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
-                Listed
-              </span>
-            )}
-            {item.category_name && (
-              <span className="inline-block px-2.5 py-1 bg-teal-500 text-white text-[10px] font-semibold uppercase tracking-wide rounded-md">
-                {item.category_name}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Favorite indicator (top-right) */}
-        {item.is_favorite && !isSelectionMode && (
-          <div className="absolute top-3 right-3 w-7 h-7 bg-white/90 rounded-full flex items-center justify-center shadow-sm">
-            <svg
-              className="w-4 h-4 text-red-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </div>
-        )}
-
-        {(sharedPhotoCount > 0 || item.quantity > 1) && (
-          <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1">
-            {sharedPhotoCount > 0 && (
-              <div className="px-2 py-0.5 bg-black/70 rounded text-[10px] font-semibold text-white">
-                📷 +{sharedPhotoCount}
-              </div>
-            )}
-            {item.quantity > 1 && (
-              <div className="px-2 py-0.5 bg-black/70 rounded text-xs font-medium text-white">
-                x{item.quantity}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Meta Overlays (Shared count, quantity) */}
+        <div className="absolute bottom-4 right-4 flex flex-col items-end gap-1.5 pointer-events-none">
+          {sharedPhotoCount > 0 && (
+            <div className="px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-lg text-[9px] font-black text-white uppercase tracking-wider">
+              {sharedPhotoCount} Photos
+            </div>
+          )}
+          {item.quantity > 1 && (
+            <div className="px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-lg text-[10px] font-black text-[#4a3f35] border border-white/50">
+              x{item.quantity}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Item info section */}
-      <div className="p-3">
-        {/* Item name */}
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-1 mb-1.5">
+      {/* Item Info section */}
+      <div className="p-5 space-y-3">
+        <h3 className="font-black text-[#4a3f35] text-[13px] tracking-tight truncate leading-tight">
           {displayName}
         </h3>
 
-        {/* Location and price row */}
-        <div className="flex items-center justify-between">
-          {/* Location with icon */}
-          <div className="flex items-center gap-1 min-w-0 flex-1">
-            {locationDisplay ? (
-              <>
-                <svg
-                  className="w-3.5 h-3.5 text-teal-500 flex-shrink-0"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
-                <span className="text-xs text-gray-500 truncate uppercase tracking-wide">
-                  {locationDisplay}
-                </span>
-              </>
-            ) : (
-              <span className="text-xs text-gray-400">No location</span>
-            )}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <svg className="w-3.5 h-3.5 text-[#e3ead3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <span className="text-[9px] font-black text-[#8d7b6d] uppercase tracking-wider truncate">
+              {locationDisplay || 'Unknown Spot'}
+            </span>
           </div>
 
-          {/* Price */}
           {formattedPrice && (
-            <span className="text-sm font-semibold text-teal-600 ml-2 flex-shrink-0">
+            <span className="px-3 py-1 bg-[#fdf8f2] border border-[#f5ebe0] rounded-full text-[10px] font-black text-[#4a3f35]">
               {formattedPrice}
             </span>
           )}
         </div>
-
-        {displayTags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
-            {displayTags.map((tag, index) => {
-              const colorHex = getColorHex(tag);
-              return (
-                <TagChip
-                  key={`${tag}-${index}`}
-                  label={tag}
-                  isColor={!!colorHex}
-                  colorHex={colorHex}
-                  className="text-[10px] px-2 py-0.5"
-                />
-              );
-            })}
-            {item.tags.length > displayTags.length && (
-              <span className="text-[10px] text-gray-400 px-1">
-                +{item.tags.length - displayTags.length}
-              </span>
-            )}
-          </div>
-        )}
       </div>
     </button>
   );
