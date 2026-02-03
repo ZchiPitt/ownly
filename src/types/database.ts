@@ -122,6 +122,9 @@ export interface Item {
   purchase_date: string | null;
   expiration_date: string | null;
   warranty_expiry_date: string | null;
+  reminder_date: string | null;
+  reminder_note: string | null;
+  reminder_sent: boolean;
   brand: string | null;
   model: string | null;
   notes: string | null;
@@ -143,6 +146,7 @@ export type NotificationType =
   | 'unused_item'
   | 'expiring_item'
   | 'warranty_expiring'
+  | 'custom_reminder'
   | 'system'
   | 'new_inquiry'
   | 'purchase_request'
@@ -393,6 +397,9 @@ export type Database = {
           purchase_date?: string | null;
           expiration_date?: string | null;
           warranty_expiry_date?: string | null;
+          reminder_date?: string | null;
+          reminder_note?: string | null;
+          reminder_sent?: boolean;
           brand?: string | null;
           model?: string | null;
           notes?: string | null;

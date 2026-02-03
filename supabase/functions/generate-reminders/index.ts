@@ -28,6 +28,7 @@ interface UserSettings {
   push_notifications_enabled: boolean;
   warranty_reminder_enabled: boolean;
   warranty_reminder_days: number;
+  custom_reminder_enabled?: boolean; // Optional, defaults to true if not present
 }
 
 interface Item {
@@ -37,13 +38,16 @@ interface Item {
   last_viewed_at: string | null;
   expiration_date: string | null;
   warranty_expiry_date: string | null;
+  reminder_date: string | null;
+  reminder_note: string | null;
+  reminder_sent: boolean;
   keep_forever: boolean;
   deleted_at: string | null;
 }
 
 interface NotificationInsert {
   user_id: string;
-  type: 'unused_item' | 'expiring_item' | 'warranty_expiring';
+  type: 'unused_item' | 'expiring_item' | 'warranty_expiring' | 'custom_reminder';
   title: string;
   body: string;
   item_id: string;
@@ -55,6 +59,7 @@ interface GenerateRemindersResponse {
   unused_notifications_created: number;
   expiring_notifications_created: number;
   warranty_notifications_created: number;
+  custom_reminder_notifications_created: number;
   errors: string[];
   executed_at: string;
 }
@@ -164,15 +169,16 @@ Deno.serve(async (req: Request) => {
       unused_notifications_created: 0,
       expiring_notifications_created: 0,
       warranty_notifications_created: 0,
+      custom_reminder_notifications_created: 0,
       errors: [],
       executed_at: now.toISOString(),
     };
 
-    // Step 1: Get all users with reminders enabled (includes warranty reminder settings)
-    // Note: We query all users with reminder_enabled=true OR warranty_reminder_enabled=true
+    // Step 1: Get all users with reminders enabled (includes warranty and custom reminder settings)
+    // Note: We query all users with any reminder type enabled
     const { data: usersWithReminders, error: usersError } = await supabase
       .from('user_settings')
-      .select('user_id, reminder_enabled, reminder_threshold_days, expiration_reminder_days, push_notifications_enabled, warranty_reminder_enabled, warranty_reminder_days')
+      .select('user_id, reminder_enabled, reminder_threshold_days, expiration_reminder_days, push_notifications_enabled, warranty_reminder_enabled, warranty_reminder_days, custom_reminder_enabled')
       .or('reminder_enabled.eq.true,warranty_reminder_enabled.eq.true');
 
     if (usersError) {
@@ -351,6 +357,55 @@ Deno.serve(async (req: Request) => {
           }
         }
 
+        // Step 3c: Find items with custom reminders that are due today
+        // Custom reminders are enabled by default if the setting doesn't exist
+        const customReminderEnabled = settings.custom_reminder_enabled !== false;
+        if (customReminderEnabled) {
+          const todayStr = now.toISOString().split('T')[0];
+
+          const { data: reminderItems, error: reminderError } = await supabase
+            .from('items')
+            .select('id, user_id, name, reminder_date, reminder_note, reminder_sent')
+            .eq('user_id', settings.user_id)
+            .is('deleted_at', null)
+            .eq('reminder_sent', false)
+            .not('reminder_date', 'is', null)
+            .lte('reminder_date', todayStr); // Due today or overdue
+
+          if (reminderError) {
+            response.errors.push(`User ${settings.user_id}: Failed to fetch reminder items - ${reminderError.message}`);
+          } else if (reminderItems && reminderItems.length > 0) {
+            // Track items to mark as sent after notification creation
+            const itemsToMarkSent: string[] = [];
+
+            for (const item of reminderItems as Item[]) {
+              const itemName = item.name || 'Unnamed item';
+              const reminderBody = item.reminder_note || 'You set a reminder for this item';
+
+              notificationsToCreate.push({
+                user_id: settings.user_id,
+                type: 'custom_reminder',
+                title: `Reminder: ${itemName}`,
+                body: reminderBody,
+                item_id: item.id,
+              });
+              itemsToMarkSent.push(item.id);
+            }
+
+            // Mark items as reminder_sent = true to prevent re-triggering
+            if (itemsToMarkSent.length > 0) {
+              const { error: updateError } = await supabase
+                .from('items')
+                .update({ reminder_sent: true })
+                .in('id', itemsToMarkSent);
+
+              if (updateError) {
+                response.errors.push(`User ${settings.user_id}: Failed to mark reminders as sent - ${updateError.message}`);
+              }
+            }
+          }
+        }
+
         // Step 4: Insert notifications in batch
         if (notificationsToCreate.length > 0) {
           const { data: insertedNotifications, error: insertError } = await supabase
@@ -364,9 +419,11 @@ Deno.serve(async (req: Request) => {
             const unusedCount = insertedNotifications.filter(n => n.type === 'unused_item').length;
             const expiringCount = insertedNotifications.filter(n => n.type === 'expiring_item').length;
             const warrantyCount = insertedNotifications.filter(n => n.type === 'warranty_expiring').length;
+            const customReminderCount = insertedNotifications.filter(n => n.type === 'custom_reminder').length;
             response.unused_notifications_created += unusedCount;
             response.expiring_notifications_created += expiringCount;
             response.warranty_notifications_created += warrantyCount;
+            response.custom_reminder_notifications_created += customReminderCount;
           }
         }
 

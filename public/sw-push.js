@@ -66,6 +66,7 @@ self.addEventListener('notificationclick', (event) => {
   const notificationData = event.notification.data || {};
   const notificationType = notificationData.type;
   const listingId = notificationData.listing_id;
+  const itemId = notificationData.item_id;
 
   // Determine the URL to open based on notification type
   let targetUrl = '/notifications';
@@ -79,12 +80,23 @@ self.addEventListener('notificationclick', (event) => {
     'transaction_complete',
   ];
 
+  // Item reminder types that should open item detail page
+  const itemReminderTypes = [
+    'unused_item',
+    'expiring_item',
+    'warranty_expiring',
+    'custom_reminder',
+  ];
+
   if (notificationType === 'new_message' && listingId) {
     // Chat messages open the messages/chat page
     targetUrl = `/messages/${listingId}`;
   } else if (transactionTypes.includes(notificationType) && listingId) {
     // Transaction notifications open the listing detail page
     targetUrl = `/listing/${listingId}`;
+  } else if (itemReminderTypes.includes(notificationType) && itemId) {
+    // Item reminders open the item detail page
+    targetUrl = `/item/${itemId}`;
   } else if (listingId) {
     // Other marketplace notifications with listing_id open the listing
     targetUrl = `/listing/${listingId}`;
