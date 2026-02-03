@@ -179,6 +179,7 @@ export interface Notification {
   is_read: boolean;
   is_pushed: boolean;
   pushed_at: string | null;
+  event_key: string | null;
   created_at: string;
 }
 
@@ -420,10 +421,11 @@ export type Database = {
       };
       notifications: {
         Row: Notification;
-        Insert: Omit<Notification, 'id' | 'created_at'> & {
+        Insert: Omit<Notification, 'id' | 'created_at' | 'event_key'> & {
           id?: string;
           is_read?: boolean;
           is_pushed?: boolean;
+          event_key?: string | null;
           created_at?: string;
         };
         Update: {
@@ -434,6 +436,7 @@ export type Database = {
           is_read?: boolean;
           is_pushed?: boolean;
           pushed_at?: string | null;
+          event_key?: string | null;
         };
         Relationships: [];
       };
