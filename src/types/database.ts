@@ -204,6 +204,24 @@ export interface UserPresence {
 }
 
 /**
+ * Pending push notification for message batching
+ * Table: pending_push_notifications
+ */
+export interface PendingPushNotification {
+  id: string;
+  user_id: string;
+  sender_id: string;
+  sender_name: string | null;
+  listing_id: string;
+  item_name: string | null;
+  message_count: number;
+  first_message_preview: string | null;
+  first_message_at: string;
+  last_message_at: string;
+  created_at: string;
+}
+
+/**
  * Marketplace listing status enum
  */
 export type ListingStatus = 'active' | 'sold' | 'reserved' | 'removed';
@@ -443,6 +461,30 @@ export type Database = {
           active_listing_id?: string | null;
           last_seen?: string;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      pending_push_notifications: {
+        Row: PendingPushNotification;
+        Insert: {
+          user_id: string;
+          sender_id: string;
+          listing_id: string;
+          id?: string;
+          sender_name?: string | null;
+          item_name?: string | null;
+          message_count?: number;
+          first_message_preview?: string | null;
+          first_message_at?: string;
+          last_message_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          sender_name?: string | null;
+          item_name?: string | null;
+          message_count?: number;
+          first_message_preview?: string | null;
+          last_message_at?: string;
         };
         Relationships: [];
       };

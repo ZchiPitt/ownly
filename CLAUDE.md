@@ -251,6 +251,7 @@ Edge functions are located in `supabase/functions/` and must be deployed to Supa
 | `generate-reminders` | Background job to create notification reminders |
 | `cleanup-deleted-items` | Background job to permanently delete soft-deleted items |
 | `send-push-notification` | Send Web Push notifications to user devices |
+| `process-batched-notifications` | Process batched message notifications (call every 5 seconds) |
 
 **Deploy with:**
 ```bash

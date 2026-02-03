@@ -1,9 +1,10 @@
 /**
  * Hook for managing user presence tracking
  * US-003: Add user presence tracking for smart push suppression
+ * US-005: Clear pending batches when user views conversation
  *
  * Tracks which listing conversation a user is currently viewing
- * to suppress redundant push notifications.
+ * to suppress redundant push notifications and clear pending batches.
  */
 
 import { useCallback, useEffect, useRef } from 'react';
@@ -19,6 +20,8 @@ export interface UsePresenceReturn {
   setActiveConversation: (listingId: string) => Promise<void>;
   /** Clear presence (user left the conversation) */
   clearPresence: () => Promise<void>;
+  /** Clear pending push notification batches for a specific listing */
+  clearPendingBatch: (listingId: string) => Promise<void>;
 }
 
 export function usePresence(): UsePresenceReturn {
@@ -83,13 +86,39 @@ export function usePresence(): UsePresenceReturn {
   }, []);
 
   /**
+   * Clear pending push notification batches when user views a conversation
+   * This ensures users don't receive batched notifications for messages
+   * they're already viewing.
+   */
+  const clearPendingBatch = useCallback(async (listingId: string): Promise<void> => {
+    if (!user) return;
+
+    try {
+      // Delete any pending batches for this user/listing combination
+      const { error } = await (supabase
+        .from('pending_push_notifications') as ReturnType<typeof supabase.from>)
+        .delete()
+        .eq('user_id', user.id)
+        .eq('listing_id', listingId);
+
+      if (error) {
+        console.error('Error clearing pending batch:', error);
+      }
+    } catch (err) {
+      console.error('Error clearing pending batch:', err);
+    }
+  }, [user]);
+
+  /**
    * Set the active listing conversation the user is viewing
    */
   const setActiveConversation = useCallback(async (listingId: string): Promise<void> => {
     activeListingRef.current = listingId;
     await updatePresence(listingId);
+    // Clear any pending batches for this conversation since user is now viewing it
+    await clearPendingBatch(listingId);
     startPresenceUpdates();
-  }, [updatePresence, startPresenceUpdates]);
+  }, [updatePresence, clearPendingBatch, startPresenceUpdates]);
 
   /**
    * Clear presence (user left the conversation)
@@ -118,5 +147,6 @@ export function usePresence(): UsePresenceReturn {
   return {
     setActiveConversation,
     clearPresence,
+    clearPendingBatch,
   };
 }
