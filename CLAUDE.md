@@ -250,6 +250,7 @@ Edge functions are located in `supabase/functions/` and must be deployed to Supa
 | `shopping-followup` | Conversational follow-ups in shopping assistant |
 | `generate-reminders` | Background job to create notification reminders |
 | `cleanup-deleted-items` | Background job to permanently delete soft-deleted items |
+| `send-push-notification` | Send Web Push notifications to user devices |
 
 **Deploy with:**
 ```bash
@@ -266,6 +267,18 @@ supabase functions deploy convert-image --no-verify-jwt
 ```
 
 Without this flag, Supabase's gateway may reject valid JWT tokens with "Invalid JWT" errors before they reach the function code.
+
+**VAPID Keys for Web Push:**
+The `send-push-notification` function requires VAPID keys for Web Push authorization. Generate them using `web-push generate-vapid-keys` and configure:
+
+```bash
+# Supabase secrets (set via Supabase CLI or dashboard)
+supabase secrets set VAPID_PUBLIC_KEY=your-vapid-public-key
+supabase secrets set VAPID_PRIVATE_KEY=your-vapid-private-key
+supabase secrets set VAPID_SUBJECT=mailto:your-email@example.com
+```
+
+The public key must also be available in the frontend via `VITE_VAPID_PUBLIC_KEY` environment variable for subscription requests.
 
 ### AI Features
 
