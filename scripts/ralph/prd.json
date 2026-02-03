@@ -86,8 +86,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Uses pending_push_notifications table with unique constraint on (user_id, sender_id, listing_id). Trigger batches new_message notifications. process-batched-notifications Edge Function should be called every 5 seconds via scheduled job."
     },
     {
       "id": "US-006",
