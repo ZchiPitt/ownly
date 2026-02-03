@@ -47,6 +47,7 @@ export interface UserSettings {
   marketplace_transaction_complete_enabled: boolean;
   warranty_reminder_days: number;
   warranty_reminder_enabled: boolean;
+  custom_reminder_enabled: boolean;
   default_view: 'gallery' | 'list';
   created_at: string;
   updated_at: string;
@@ -345,6 +346,7 @@ export type Database = {
           marketplace_transaction_complete_enabled?: boolean;
           warranty_reminder_days?: number;
           warranty_reminder_enabled?: boolean;
+          custom_reminder_enabled?: boolean;
           default_view?: 'gallery' | 'list';
           created_at?: string;
           updated_at?: string;

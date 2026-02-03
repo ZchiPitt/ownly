@@ -127,7 +127,9 @@ export function SettingsPage() {
       | 'marketplace_request_accepted_enabled'
       | 'marketplace_request_declined_enabled'
       | 'marketplace_new_message_enabled'
-      | 'marketplace_transaction_complete_enabled',
+      | 'marketplace_transaction_complete_enabled'
+      | 'warranty_reminder_enabled'
+      | 'custom_reminder_enabled',
     value: boolean | number | string
   ) => {
     if (isUpdating || isRequestingPush) return;
@@ -845,6 +847,98 @@ export function SettingsPage() {
               >
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_transaction_complete_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Item Reminders Section - US-014 */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            Item Reminders
+          </h2>
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            {/* Expiry reminders toggle */}
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Expiry reminders
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Get notified before items expire
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.reminder_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'reminder_enabled',
+                  !settings?.reminder_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            {/* Warranty reminders toggle */}
+            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Warranty reminders
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Alerts before warranty expires
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.warranty_reminder_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'warranty_reminder_enabled',
+                  !settings?.warranty_reminder_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.warranty_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.warranty_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                />
+              </button>
+            </div>
+
+            {/* Custom reminders toggle */}
+            <div className="px-4 py-4 flex items-center justify-between">
+              <div className="flex-1">
+                <label className="text-base font-medium text-gray-900">
+                  Custom reminders
+                </label>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Notifications for your scheduled reminders
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={settings?.custom_reminder_enabled ?? true}
+                onClick={() => handleSettingChange(
+                  'custom_reminder_enabled',
+                  !settings?.custom_reminder_enabled
+                )}
+                disabled={isUpdating}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.custom_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                  }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.custom_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
                     }`}
                 />
               </button>

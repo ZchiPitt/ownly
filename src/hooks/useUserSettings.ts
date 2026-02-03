@@ -24,6 +24,8 @@ interface UseUserSettingsReturn {
     | 'marketplace_request_declined_enabled'
     | 'marketplace_new_message_enabled'
     | 'marketplace_transaction_complete_enabled'
+    | 'warranty_reminder_enabled'
+    | 'custom_reminder_enabled'
   >>) => Promise<boolean>;
   refetch: () => void;
 }
@@ -80,6 +82,8 @@ export function useUserSettings(): UseUserSettingsReturn {
       | 'marketplace_request_declined_enabled'
       | 'marketplace_new_message_enabled'
       | 'marketplace_transaction_complete_enabled'
+      | 'warranty_reminder_enabled'
+      | 'custom_reminder_enabled'
     >>
   ): Promise<boolean> => {
     if (!user || !settings) {
