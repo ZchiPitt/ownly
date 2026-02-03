@@ -209,3 +209,16 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Toggles follow same pattern: use handleSettingChange with the setting key and negated current value
   - Default true for reminder toggles ensures users get notifications unless they explicitly opt out
 ---
+
+## 2026-02-03 - US-015
+- **What was implemented**: Reminder timing configuration dropdowns for expiry and warranty reminders
+- **Files changed**:
+  - `src/pages/SettingsPage.tsx` (updated - added EXPIRY_REMINDER_OPTIONS and WARRANTY_REMINDER_OPTIONS constants, added timing dropdowns to Item Reminders section)
+  - `src/hooks/useUserSettings.ts` (updated - added warranty_reminder_days to updateSettings type)
+- **Learnings for future iterations:**
+  - Existing dropdown patterns in SettingsPage already handle the Reminders & Notifications section - Item Reminders section needed its own dropdowns
+  - Conditional rendering of dropdowns (only when toggle is enabled) provides cleaner UX
+  - The expiration_reminder_days column was already in place from previous stories, warranty_reminder_days was added in US-007
+  - When adding new setting keys, update both useUserSettings hook types and handleSettingChange function type in SettingsPage
+  - Dropdown width should match the longest option text (w-36 for expiry, w-40 for warranty)
+---

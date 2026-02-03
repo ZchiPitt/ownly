@@ -249,8 +249,8 @@
         "Verify in browser that selections persist"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added EXPIRY_REMINDER_OPTIONS (1,3,7,14 days) and WARRANTY_REMINDER_OPTIONS (7,14,30,60 days). Dropdowns appear conditionally when their toggle is enabled. Uses existing expiration_reminder_days and warranty_reminder_days columns from user_settings. Updated useUserSettings hook and handleSettingChange type to include warranty_reminder_days."
     },
     {
       "id": "US-016",
