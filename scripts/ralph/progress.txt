@@ -195,3 +195,17 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - The toggle should also check if permission is granted before showing as enabled (setting AND permission)
   - usePushNotifications hook already provides requestPermission and unsubscribe functions that handle the full flow
 ---
+
+## 2026-02-03 - US-014
+- **What was implemented**: Per-category notification toggles for Item Reminders section
+- **Files changed**:
+  - `supabase/migrations/20260203000009_add_custom_reminder_enabled_to_user_settings.sql` (new)
+  - `src/types/database.ts` (updated - added custom_reminder_enabled to UserSettings interface and Insert type)
+  - `src/hooks/useUserSettings.ts` (updated - added warranty_reminder_enabled and custom_reminder_enabled to updateSettings type)
+  - `src/pages/SettingsPage.tsx` (updated - added Item Reminders section with expiry, warranty, and custom reminder toggles)
+- **Learnings for future iterations:**
+  - When adding new user_settings columns, update: migration, database.ts (UserSettings interface + Insert type), useUserSettings.ts (updateSettings type), and SettingsPage.tsx (handleSettingChange type)
+  - Marketplace Notifications section was already implemented in a previous story, Item Reminders section complements it
+  - Toggles follow same pattern: use handleSettingChange with the setting key and negated current value
+  - Default true for reminder toggles ensures users get notifications unless they explicitly opt out
+---
