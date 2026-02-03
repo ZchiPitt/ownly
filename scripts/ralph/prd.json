@@ -70,8 +70,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Custom service worker (sw-push.js) handles push events and notification clicks. Uses vite-plugin-pwa importScripts to inject into main service worker."
     },
     {
       "id": "US-005",
