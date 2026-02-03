@@ -167,3 +167,19 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Week boundary calculation: subtract day-of-week from today to get start of week (Sunday)
   - The groupedNotifications Map fits naturally into useMemo alongside filteredNotifications
 ---
+
+## 2026-02-03 - US-012
+- **What was implemented**: Swipe-to-delete for individual notifications
+- **Files changed**:
+  - `src/hooks/useNotifications.ts` (updated - added deleteNotification function)
+  - `src/pages/NotificationsPage.tsx` (updated - swipe gesture handling in NotificationItem)
+- **Learnings for future iterations:**
+  - Touch gesture implementation: use touchstart/touchmove/touchend events with refs to track start position
+  - Horizontal vs vertical swipe detection: compare absolute x/y differences on first significant movement (>10px)
+  - Prevent default on horizontal swipes to avoid scroll interference
+  - Apply resistance factor (0.8) and max offset limit (threshold * 1.5) for natural swipe feel
+  - Animation pattern: set isDeleting state, animate with CSS transform, then setTimeout for actual delete
+  - Click vs swipe distinction: check if swipeOffset < 5 and not actively swiping before triggering click handler
+  - Supabase delete requires type casting like other mutations: `(supabase.from('notifications') as ReturnType<typeof supabase.from>).delete()`
+  - Re-throw errors from delete function so component can reset UI state on failure
+---

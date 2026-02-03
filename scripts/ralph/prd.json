@@ -201,8 +201,8 @@
         "Verify in browser that swipe gesture and delete work"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implemented swipe gesture on NotificationItem with left swipe revealing red Delete action. Uses touch events (touchstart, touchmove, touchend) with horizontal/vertical swipe detection. Animates item off-screen before database deletion. Added deleteNotification function to useNotifications hook."
     },
     {
       "id": "US-013",
