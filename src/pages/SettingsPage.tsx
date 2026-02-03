@@ -146,7 +146,8 @@ export function SettingsPage() {
       | 'marketplace_transaction_complete_enabled'
       | 'warranty_reminder_enabled'
       | 'warranty_reminder_days'
-      | 'custom_reminder_enabled',
+      | 'custom_reminder_enabled'
+      | 'notification_sound_enabled',
     value: boolean | number | string
   ) => {
     if (isUpdating || isRequestingPush) return;
@@ -632,6 +633,38 @@ export function SettingsPage() {
                 )}
               </div>
             </div>
+
+            {/* Notification Sound Toggle - shown when push notifications are enabled */}
+            {settings?.push_notifications_enabled && permissionState === 'granted' && (
+              <div className="px-4 py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <label htmlFor="notification-sound-toggle" className="text-base font-medium text-gray-900">
+                      Notification Sound
+                    </label>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      Play sound and vibrate for notifications
+                    </p>
+                  </div>
+                  <button
+                    id="notification-sound-toggle"
+                    role="switch"
+                    aria-checked={settings?.notification_sound_enabled ?? true}
+                    onClick={() => handleSettingChange('notification_sound_enabled', !settings?.notification_sound_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      settings?.notification_sound_enabled ?? true ? 'bg-teal-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        settings?.notification_sound_enabled ?? true ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Permission Status Display */}
             {isPushSupported && (

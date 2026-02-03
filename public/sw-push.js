@@ -22,6 +22,52 @@ const ITEM_REMINDER_TYPES = [
 ];
 
 /**
+ * High priority notification types (chat, purchase requests) - use default sound
+ */
+const HIGH_PRIORITY_TYPES = ['new_message', 'purchase_request'];
+
+/**
+ * Get vibration pattern based on notification type
+ * Chat = short vibration [100ms]
+ * Transaction = double vibration [100ms, 50ms pause, 100ms]
+ * Reminders = gentle vibration [50ms]
+ * @param {string} type - The notification type
+ * @returns {number[]|undefined} Vibration pattern array or undefined for no vibration
+ */
+function getVibrationPattern(type) {
+  if (MESSAGE_TYPES.includes(type)) {
+    // Chat = short single vibration
+    return [100];
+  }
+  if (TRANSACTION_TYPES.includes(type)) {
+    // Transaction = double vibration
+    return [100, 50, 100];
+  }
+  if (ITEM_REMINDER_TYPES.includes(type)) {
+    // Reminders = gentle single vibration
+    return [50];
+  }
+  // Default = no vibration
+  return undefined;
+}
+
+/**
+ * Determine if notification should play sound based on type
+ * High priority (chat, purchase_request) = default sound
+ * Medium priority (other transactions, reminders) = silent (no sound property means default, 'default' explicitly uses default sound)
+ * @param {string} type - The notification type
+ * @param {boolean} soundEnabled - Whether sound is enabled in user settings
+ * @returns {boolean} Whether to use default sound
+ */
+function shouldPlaySound(type, soundEnabled) {
+  if (!soundEnabled) {
+    return false;
+  }
+  // High priority notifications always play sound when enabled
+  return HIGH_PRIORITY_TYPES.includes(type) || TRANSACTION_TYPES.includes(type) || ITEM_REMINDER_TYPES.includes(type);
+}
+
+/**
  * Get action buttons based on notification type
  * @param {string} type - The notification type
  * @returns {Array} Array of action objects for the notification
@@ -75,6 +121,7 @@ self.addEventListener('push', (event) => {
     body: 'You have a new notification',
     data: {},
     type: 'system',
+    sound_enabled: true, // Default to sound enabled
   };
 
   if (event.data) {
@@ -88,6 +135,7 @@ self.addEventListener('push', (event) => {
         data: payload.data || {},
         type: payload.type || 'system',
         notification_id: payload.notification_id,
+        sound_enabled: payload.sound_enabled !== false, // Default to true if not specified
       };
     } catch (error) {
       console.error('[Service Worker] Error parsing push data:', error);
@@ -99,6 +147,14 @@ self.addEventListener('push', (event) => {
   // Determine action buttons based on notification type
   const actions = getActionsForNotificationType(notificationData.type);
 
+  // Determine vibration pattern based on notification type
+  const vibrate = notificationData.sound_enabled
+    ? getVibrationPattern(notificationData.type)
+    : undefined;
+
+  // Determine if sound should play
+  const useSound = shouldPlaySound(notificationData.type, notificationData.sound_enabled);
+
   const options = {
     body: notificationData.body,
     icon: '/icons/icon-192x192.png',
@@ -107,6 +163,11 @@ self.addEventListener('push', (event) => {
     renotify: true,
     requireInteraction: false,
     actions: actions,
+    // Sound: 'default' plays the system notification sound, undefined = silent
+    // Note: 'silent' property controls sound - true = no sound, false/undefined = default sound
+    silent: !useSound,
+    // Vibration pattern for mobile devices
+    vibrate: vibrate,
     data: {
       ...notificationData.data,
       type: notificationData.type,

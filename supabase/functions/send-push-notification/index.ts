@@ -25,6 +25,7 @@ interface SendPushRequest {
   data?: Record<string, unknown>;
   type?: string;
   notification_id?: string;
+  sound_enabled?: boolean; // Whether to play sound/vibrate (fetched from user settings if not provided)
 }
 
 interface PushSubscription {
@@ -321,7 +322,8 @@ async function sendPushToSubscription(
   payload: SendPushRequest,
   vapidPublicKey: string,
   vapidPrivateKey: string,
-  vapidSubject: string
+  vapidSubject: string,
+  soundEnabled: boolean
 ): Promise<{ success: boolean; shouldRemove: boolean; error?: string }> {
   try {
     // Parse endpoint URL to get audience
@@ -335,6 +337,7 @@ async function sendPushToSubscription(
       data: payload.data || {},
       type: payload.type || 'system',
       notification_id: payload.notification_id,
+      sound_enabled: soundEnabled, // Include sound preference for service worker
     });
 
     // Encrypt payload
@@ -560,6 +563,21 @@ Deno.serve(async (req: Request) => {
     // Create Supabase client with service role key (bypasses RLS)
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Determine sound_enabled preference
+    // If explicitly provided in request, use that value; otherwise fetch from user settings
+    let soundEnabled = body.sound_enabled;
+    if (soundEnabled === undefined) {
+      const { data: userSettings } = await supabase
+        .from('user_settings')
+        .select('notification_sound_enabled')
+        .eq('user_id', body.user_id)
+        .single();
+
+      // Default to true if user settings not found or column not set
+      soundEnabled = userSettings?.notification_sound_enabled ?? true;
+      console.log(`[send-push] User sound preference: ${soundEnabled}`);
+    }
+
     // Get all active subscriptions for the user
     const { data: subscriptions, error: subscriptionsError } = await supabase
       .from('push_subscriptions')
@@ -599,7 +617,8 @@ Deno.serve(async (req: Request) => {
         body,
         vapidPublicKey,
         vapidPrivateKey,
-        vapidSubject
+        vapidSubject,
+        soundEnabled
       );
 
       results.push({

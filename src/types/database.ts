@@ -39,6 +39,7 @@ export interface UserSettings {
   reminder_threshold_days: number;
   expiration_reminder_days: number;
   push_notifications_enabled: boolean;
+  notification_sound_enabled: boolean;
   marketplace_new_inquiry_enabled: boolean;
   marketplace_purchase_request_enabled: boolean;
   marketplace_request_accepted_enabled: boolean;
@@ -339,6 +340,7 @@ export type Database = {
           reminder_threshold_days?: number;
           expiration_reminder_days?: number;
           push_notifications_enabled?: boolean;
+          notification_sound_enabled?: boolean;
           marketplace_new_inquiry_enabled?: boolean;
           marketplace_purchase_request_enabled?: boolean;
           marketplace_request_accepted_enabled?: boolean;
