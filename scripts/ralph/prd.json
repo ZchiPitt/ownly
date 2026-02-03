@@ -328,8 +328,8 @@
         "Typecheck passes"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added notification_sound_enabled column to user_settings with default true. Service worker implements type-based sound/vibration: high priority (chat, purchase_request) use default sound, chat uses [100ms] vibration, transactions use [100, 50, 100] double vibration, reminders use [50ms] gentle vibration. Toggle in Settings page shows when push notifications are enabled and permission is granted."
     }
   ]
 }
