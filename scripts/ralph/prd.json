@@ -19,8 +19,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implemented using native Deno crypto APIs for Web Push encryption and VAPID signing"
     },
     {
       "id": "US-002",
@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Uses pg_net extension for async HTTP calls from database trigger. Requires app.settings.supabase_url and app.settings.service_role_key to be configured via Supabase Vault."
     },
     {
       "id": "US-003",

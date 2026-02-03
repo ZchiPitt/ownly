@@ -1,3 +1,38 @@
 # Ralph Progress Log
-Started: Mon Feb  2 02:45:03 PST 2026
+Started: Tue Feb  3 02:02:53 PST 2026
+---
+
+## Codebase Patterns
+- Edge Functions use `Deno.serve()` for HTTP handling and `corsHeaders` from `../_shared/cors.ts`
+- Edge Functions use service role key for bypassing RLS when needed
+- Use `jsr:@supabase/supabase-js@2` for Supabase client in Edge Functions
+- Notifications table has `is_pushed` and `pushed_at` columns for tracking push delivery
+- Push subscriptions store `endpoint`, `p256dh`, `auth` keys from Web Push API
+- Database triggers use `pg_net` extension for async HTTP calls to Edge Functions
+- Trigger configuration requires `app.settings.supabase_url` and `app.settings.service_role_key` via Supabase Vault
+
+## 2026-02-03 - US-001
+- **What was implemented**: Created `send-push-notification` Edge Function
+- **Files changed**:
+  - `supabase/functions/send-push-notification/index.ts` (new)
+  - `CLAUDE.md` (updated Edge Functions table and VAPID documentation)
+- **Learnings for future iterations:**
+  - Web Push requires VAPID authentication with JWT tokens signed using ES256 (ECDSA P-256)
+  - Deno's native `crypto.subtle` API can handle ECDH key agreement and AES-GCM encryption
+  - Push subscriptions that return 404 or 410 should be removed (expired/unsubscribed)
+  - VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT must be set as Supabase secrets
+  - The `aes128gcm` content encoding format requires specific header structure: salt (16 bytes) + record size (4 bytes) + keyid length (1 byte) + server public key (65 bytes) + encrypted data
+---
+
+## 2026-02-03 - US-002
+- **What was implemented**: Created database trigger for notification push delivery
+- **Files changed**:
+  - `supabase/migrations/20260203000001_create_push_notification_trigger.sql` (new)
+  - `supabase/functions/send-push-notification/index.ts` (updated)
+- **Learnings for future iterations:**
+  - `pg_net` extension enables async HTTP calls from database triggers without blocking
+  - Trigger WHEN clause allows conditional execution (e.g., `WHEN (NEW.is_pushed = false)`)
+  - Database settings for Edge Function URLs can be stored in Supabase Vault and accessed via `current_setting()`
+  - AFTER INSERT triggers ensure the row exists when the Edge Function queries it
+  - Edge Function should update `is_pushed = true` and `pushed_at = now()` after successful delivery to prevent duplicate pushes
 ---
