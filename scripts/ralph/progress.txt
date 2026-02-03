@@ -88,3 +88,15 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Batches older than 1 hour should be deleted to prevent buildup from failed processing
   - Clear pending batches when user views conversation via setActiveConversation hook
 ---
+
+## 2026-02-03 - US-006
+- **What was implemented**: Transaction status push notification formatting and service worker routing
+- **Files changed**:
+  - `src/lib/notifications.ts` (updated - transaction notification title/body formatting per AC)
+  - `public/sw-push.js` (updated - explicit transaction type routing to listing detail)
+- **Learnings for future iterations:**
+  - Transaction notification format: title should contain actionable info (sender + action), body provides context
+  - Service worker should explicitly list transaction types for clearer routing logic
+  - All transaction notifications in useTransactions.ts already include listing_id in data for deep linking
+  - The `new_inquiry` notification type exists but may not have a UI trigger yet - the formatting is ready
+---

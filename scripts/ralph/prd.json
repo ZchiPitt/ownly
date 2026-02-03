@@ -104,8 +104,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Updated notification formatting in notifications.ts to match AC. Service worker explicitly routes transaction types to listing detail page. All transaction notifications already include listing_id via useTransactions.ts."
     },
     {
       "id": "US-007",
