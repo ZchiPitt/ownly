@@ -458,6 +458,28 @@ async function updateSubscriptionLastUsed(
 }
 
 /**
+ * Mark notification as pushed after successful delivery
+ */
+async function markNotificationAsPushed(
+  supabase: SupabaseClient,
+  notificationId: string
+): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({
+      is_pushed: true,
+      pushed_at: new Date().toISOString(),
+    })
+    .eq('id', notificationId);
+
+  if (error) {
+    console.error(`[send-push] Failed to mark notification ${notificationId} as pushed:`, error);
+  } else {
+    console.log(`[send-push] Marked notification ${notificationId} as pushed`);
+  }
+}
+
+/**
  * Main handler for the Edge Function
  */
 Deno.serve(async (req: Request) => {
@@ -606,6 +628,11 @@ Deno.serve(async (req: Request) => {
 
     const sentCount = results.filter((r) => r.success).length;
     const failedCount = results.filter((r) => !r.success).length;
+
+    // Mark notification as pushed if at least one push was successful
+    if (sentCount > 0 && body.notification_id) {
+      await markNotificationAsPushed(supabase, body.notification_id);
+    }
 
     console.log(`[send-push] Completed: ${sentCount} sent, ${failedCount} failed, ${subscriptionsToRemove.length} removed`);
 
