@@ -19,146 +19,6 @@ interface AppShellProps {
 }
 
 /**
- * Navigation icons
- */
-function HomeIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-      />
-    </svg>
-  )
-}
-
-function InventoryIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-      />
-    </svg>
-  )
-}
-
-function MarketplaceIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M3.75 7.5h16.5l-1.5 12a2.25 2.25 0 01-2.25 2h-9a2.25 2.25 0 01-2.25-2l-1.5-12z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M9 7.5V6a3 3 0 116 0v1.5"
-      />
-    </svg>
-  )
-}
-
-function ShopIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-      />
-    </svg>
-  )
-}
-
-function SettingsIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  )
-}
-
-function MessagesIcon({ active }: { active: boolean }) {
-  return (
-    <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
-      fill={active ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={active ? 0 : 2}
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-      />
-    </svg>
-  )
-}
-
-function SearchIcon() {
-  return (
-    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-    </svg>
-  )
-}
-
-function CameraIcon() {
-  return (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
-  )
-}
-
-/**
  * OwnlyLogo - Minimal, warm icon for the brand.
  */
 const OwnlyLogo = ({ className = 'w-14 h-14' }: { className?: string }) => (
@@ -183,13 +43,13 @@ const OwnlyLogo = ({ className = 'w-14 h-14' }: { className?: string }) => (
  */
 export function AppShell({
   children,
-  header,
+  header: _header,
   showAddButton = true,
   showSearch = false,
   onSearchClick,
 }: AppShellProps) {
   const [showInstallToast, setShowInstallToast] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [_unreadCount, setUnreadCount] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const { getUnreadCount } = useMessages()

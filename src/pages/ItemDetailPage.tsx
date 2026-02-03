@@ -81,6 +81,9 @@ interface RawItemDetails {
   purchase_date: string | null;
   expiration_date: string | null;
   warranty_expiry_date: string | null;
+  reminder_date: string | null;
+  reminder_note: string | null;
+  reminder_sent: boolean;
   brand: string | null;
   model: string | null;
   notes: string | null;
@@ -125,6 +128,9 @@ function transformRawItem(raw: RawItemDetails): ItemDetails {
     purchase_date: raw.purchase_date,
     expiration_date: raw.expiration_date,
     warranty_expiry_date: raw.warranty_expiry_date,
+    reminder_date: raw.reminder_date,
+    reminder_note: raw.reminder_note,
+    reminder_sent: raw.reminder_sent,
     brand: raw.brand,
     model: raw.model,
     notes: raw.notes,
@@ -899,6 +905,10 @@ export function ItemDetailPage() {
           currency,
           purchase_date,
           expiration_date,
+          warranty_expiry_date,
+          reminder_date,
+          reminder_note,
+          reminder_sent,
           brand,
           model,
           notes,

@@ -164,7 +164,7 @@ export function InventoryPage() {
 
   // Track if user has explicitly changed the view (to avoid overriding with settings)
   const [userSelectedView, setUserSelectedView] = useState<ViewMode | null>(null);
-  const [isUpdatingView, setIsUpdatingView] = useState(false);
+  const [, setIsUpdatingView] = useState(false);
 
   // Toast state for refresh feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
