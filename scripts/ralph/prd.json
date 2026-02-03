@@ -152,8 +152,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Migration adds custom_reminder notification type and reminder fields to items table. generate-reminders Edge Function queries items with reminder_date <= today and reminder_sent = false, creates notifications with title 'Reminder: {item_name}' and marks reminder_sent = true. Service worker routes custom_reminder to /item/{itemId}."
     },
     {
       "id": "US-010",

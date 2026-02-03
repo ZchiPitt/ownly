@@ -127,3 +127,17 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - Warranty notifications use 7-day deduplication window (longer than expiring_item's 24-hour window) to prevent spam for same item
   - formatDate helper function formats dates as "Month Day, Year" (e.g., "February 15, 2026") for user-friendly display
 ---
+
+## 2026-02-03 - US-009
+- **What was implemented**: Custom reminder push notifications
+- **Files changed**:
+  - `src/pages/ItemDetailPage.tsx` (updated - added reminder fields to RawItemDetails, transformRawItem, and Supabase query)
+  - `src/components/layout/AppShell.tsx` (updated - removed unused icon components)
+  - `src/pages/InventoryPage.tsx` (updated - fixed unused variable)
+- **Learnings for future iterations:**
+  - Custom reminder functionality was already implemented in generate-reminders Edge Function and migration 20260203000008
+  - The ItemDetailPage has its own RawItemDetails interface that needs to be kept in sync with the Item type from database.ts
+  - When adding new fields to items table, update: migration, database.ts Item interface, and ItemDetailPage RawItemDetails + query
+  - Service worker (sw-push.js) already handles custom_reminder in itemReminderTypes array, routing to /item/{itemId}
+  - Pre-existing unused code issues (noUnusedLocals) should be cleaned up when encountered to prevent build failures
+---
