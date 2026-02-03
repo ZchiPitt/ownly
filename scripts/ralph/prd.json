@@ -267,8 +267,8 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All acceptance criteria already implemented in public/sw-push.js from US-004. Service worker handles push events with JSON parsing, shows notifications with app icon, handles clicks with type-based routing (messages, transactions, item reminders), and focuses existing tabs or opens new ones."
     },
     {
       "id": "US-017",

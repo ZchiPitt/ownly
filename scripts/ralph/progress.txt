@@ -222,3 +222,16 @@ Started: Tue Feb  3 02:02:53 PST 2026
   - When adding new setting keys, update both useUserSettings hook types and handleSettingChange function type in SettingsPage
   - Dropdown width should match the longest option text (w-36 for expiry, w-40 for warranty)
 ---
+
+## 2026-02-03 - US-016
+- **What was implemented**: Verified service worker push notification handling (already complete from US-004)
+- **Files changed**:
+  - `scripts/ralph/prd.json` (updated - marked US-016 as passes: true)
+- **Learnings for future iterations:**
+  - The custom service worker (public/sw-push.js) was implemented in US-004 and already satisfies all US-016 criteria
+  - vite-plugin-pwa `importScripts` config imports custom SW code into the generated service worker
+  - Service worker push event handler: parse JSON payload, extract title/body/data, show notification with app icon
+  - Service worker notificationclick handler: type-based URL routing (messages→/messages/{id}, transactions→/listing/{id}, reminders→/item/{id})
+  - Tab management: `clients.matchAll()` finds existing windows, `client.navigate()` + `client.focus()` for reuse, `clients.openWindow()` for new tabs
+  - When acceptance criteria are already met by previous work, document it and mark complete rather than duplicating effort
+---
