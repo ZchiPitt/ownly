@@ -5,8 +5,9 @@
  */
 
 import { useCallback, useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useNotifications } from '@/hooks/useNotifications';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { useReviews, type PendingReviewTransaction } from '@/hooks/useReviews';
 import { ReviewModal } from '@/components/ReviewModal';
 import type { MarketplaceNotificationType } from '@/lib/notifications';
@@ -545,6 +546,140 @@ function EmptyState({ tab }: { tab: NotificationTab }) {
   );
 }
 
+/**
+ * Banner shown when push notifications are blocked
+ * Provides platform-specific instructions for enabling notifications
+ */
+function NotificationsDeniedBanner() {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="mx-4 mt-4 bg-amber-50 rounded-xl border border-amber-200 overflow-hidden">
+      <div className="p-4">
+        <div className="flex gap-3">
+          {/* Warning icon */}
+          <div className="flex-shrink-0">
+            <svg
+              className="w-6 h-6 text-amber-500"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </div>
+
+          <div className="flex-1">
+            {/* Main message */}
+            <h3 className="text-sm font-semibold text-amber-800">
+              Push notifications are disabled
+            </h3>
+            <p className="text-sm text-amber-700 mt-1">
+              You won't receive alerts for new messages or reminders outside the app.
+            </p>
+
+            {/* Toggle for instructions */}
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-2 text-sm font-medium text-amber-800 hover:text-amber-900 flex items-center gap-1"
+            >
+              {isExpanded ? 'Hide instructions' : 'How to enable'}
+              <svg
+                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Expanded instructions */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-amber-200">
+            <p className="text-sm text-amber-700 mb-3">
+              To receive push notifications, enable them in your browser settings:
+            </p>
+            <ul className="space-y-3 text-sm text-amber-700">
+              <li className="flex items-start gap-2">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-200 rounded-full text-xs font-semibold text-amber-800 flex-shrink-0 mt-0.5">
+                  1
+                </span>
+                <div>
+                  <strong className="text-amber-800">Chrome (Desktop):</strong>{' '}
+                  Click the lock/tune icon in the address bar → Site settings → Notifications → Allow
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-200 rounded-full text-xs font-semibold text-amber-800 flex-shrink-0 mt-0.5">
+                  2
+                </span>
+                <div>
+                  <strong className="text-amber-800">Safari (Mac):</strong>{' '}
+                  Safari menu → Settings → Websites → Notifications → Find this site → Allow
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-200 rounded-full text-xs font-semibold text-amber-800 flex-shrink-0 mt-0.5">
+                  3
+                </span>
+                <div>
+                  <strong className="text-amber-800">Firefox:</strong>{' '}
+                  Click the lock icon in the address bar → Clear "Notifications" permission → Reload page
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-200 rounded-full text-xs font-semibold text-amber-800 flex-shrink-0 mt-0.5">
+                  4
+                </span>
+                <div>
+                  <strong className="text-amber-800">Mobile (iOS/Android):</strong>{' '}
+                  Open device Settings → Find this app or browser → Enable Notifications
+                </div>
+              </li>
+            </ul>
+
+            {/* Link to Settings page */}
+            <div className="mt-4 pt-3 border-t border-amber-200">
+              <Link
+                to="/settings"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-800 hover:text-amber-900"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                Go to notification settings
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function NotificationsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -557,6 +692,7 @@ export function NotificationsPage() {
     deleteNotification,
   } = useNotifications();
   const { getPendingReviews } = useReviews();
+  const { permissionState, isSupported: isPushSupported } = usePushNotifications();
 
   const [pendingReviews, setPendingReviews] = useState<PendingReviewTransaction[]>([]);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
@@ -757,6 +893,11 @@ export function NotificationsPage() {
 
       {/* Content */}
       <div className="pb-20">
+        {/* Notification permission denied banner */}
+        {isPushSupported && permissionState === 'denied' && (
+          <NotificationsDeniedBanner />
+        )}
+
         <div className="px-4 pt-4">
           <div className="bg-white border border-gray-200 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
