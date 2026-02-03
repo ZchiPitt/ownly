@@ -8,6 +8,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { useMessages, type ChatMessage, type Conversation } from '@/hooks/useMessages';
+import { usePresence } from '@/hooks/usePresence';
 import { useToast } from '@/hooks/useToast';
 
 function BackIcon({ className = 'w-6 h-6' }: { className?: string }) {
@@ -32,6 +33,7 @@ export function ChatPage() {
   const { user } = useAuth();
   const { getListingById } = useMarketplace();
   const { getMessages, sendMessage, markAsRead, getConversations, subscribeToMessages } = useMessages();
+  const { setActiveConversation, clearPresence } = usePresence();
   const { error: showError } = useToast();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -108,6 +110,17 @@ export function ChatPage() {
       markAsRead(listingId);
     }
   }, [listingId, markAsRead]);
+
+  // Track user presence on this conversation for smart push suppression
+  useEffect(() => {
+    if (listingId) {
+      setActiveConversation(listingId);
+    }
+
+    return () => {
+      clearPresence();
+    };
+  }, [listingId, setActiveConversation, clearPresence]);
 
   useEffect(() => {
     if (!listingId) return;

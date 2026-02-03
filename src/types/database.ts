@@ -192,6 +192,18 @@ export interface PushSubscription {
 }
 
 /**
+ * User presence tracking for smart push suppression
+ * Table: user_presence
+ */
+export interface UserPresence {
+  id: string;
+  user_id: string;
+  active_listing_id: string | null;
+  last_seen: string;
+  updated_at: string;
+}
+
+/**
  * Marketplace listing status enum
  */
 export type ListingStatus = 'active' | 'sold' | 'reserved' | 'removed';
@@ -415,6 +427,22 @@ export type Database = {
           is_active?: boolean;
           updated_at?: string;
           last_used_at?: string | null;
+        };
+        Relationships: [];
+      };
+      user_presence: {
+        Row: UserPresence;
+        Insert: {
+          user_id: string;
+          id?: string;
+          active_listing_id?: string | null;
+          last_seen?: string;
+          updated_at?: string;
+        };
+        Update: {
+          active_listing_id?: string | null;
+          last_seen?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
