@@ -45,6 +45,8 @@ export interface UserSettings {
   marketplace_request_declined_enabled: boolean;
   marketplace_new_message_enabled: boolean;
   marketplace_transaction_complete_enabled: boolean;
+  warranty_reminder_days: number;
+  warranty_reminder_enabled: boolean;
   default_view: 'gallery' | 'list';
   created_at: string;
   updated_at: string;
@@ -139,6 +141,7 @@ export interface Item {
 export type NotificationType =
   | 'unused_item'
   | 'expiring_item'
+  | 'warranty_expiring'
   | 'system'
   | 'new_inquiry'
   | 'purchase_request'
@@ -335,6 +338,8 @@ export type Database = {
           marketplace_request_declined_enabled?: boolean;
           marketplace_new_message_enabled?: boolean;
           marketplace_transaction_complete_enabled?: boolean;
+          warranty_reminder_days?: number;
+          warranty_reminder_enabled?: boolean;
           default_view?: 'gallery' | 'list';
           created_at?: string;
           updated_at?: string;
