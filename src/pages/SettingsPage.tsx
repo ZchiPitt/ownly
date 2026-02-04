@@ -392,7 +392,8 @@ export function SettingsPage() {
             </Link>
           </div>
         </section>
-
+        {/* Subscription Section - US-089 */}
+        <section>           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">             Subscription           </h2>           <Link to="/plans" className="flex items-center justify-between gap-3 px-4 py-3 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"           >             <div className="min-w-0 flex-1">               <span className="text-base font-medium text-gray-900">Plans</span>               <p className="text-sm text-gray-500 mt-0.5">Subscribe for more features</p>             </div>             <ChevronRightIcon className="w-5 h-5 shrink-0 text-gray-400" />           </Link>         </section>
         {/* Reminders & Notifications Section - US-064 */}
         <section>
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
@@ -1066,8 +1067,8 @@ export function SettingsPage() {
                     onClick={() => handleSettingChange('default_view', 'gallery')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'gallery'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-teal-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Gallery
@@ -1076,8 +1077,8 @@ export function SettingsPage() {
                     onClick={() => handleSettingChange('default_view', 'list')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'list'
-                        ? 'bg-white text-teal-600 shadow-sm'
-                        : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-teal-600 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     List
