@@ -14,13 +14,6 @@ const stripe = stripeSecretKey
   ? new Stripe(stripeSecretKey, { apiVersion: '2024-11-20.acacia' })
   : null;
 
-function getPriceIdFromEnv(plan: 'basic' | 'pro'): string | null {
-  const basic = Deno.env.get('STRIPE_PRICE_ID_BASIC');
-  const pro = Deno.env.get('STRIPE_PRICE_ID_PRO');
-  const fallback = Deno.env.get('STRIPE_PRICE_ID');
-  if (plan === 'basic') return basic || fallback || null;
-  return pro || fallback || null;
-}
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -97,7 +90,7 @@ Deno.serve(async (req: Request) => {
   const priceId =
     (planRow?.stripe_price_id && planRow.stripe_price_id.trim() !== ''
       ? planRow.stripe_price_id
-      : null) || getPriceIdFromEnv(plan);
+      : null);
 
   if (!priceId) {
     return new Response(
