@@ -10,6 +10,41 @@ interface HeroSectionProps {
 export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionProps) {
     const navigate = useNavigate()
 
+    const renderShortcutIcon = (label: string) => {
+        switch (label) {
+            case 'Clothes':
+                return (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 4.5 8.25 7.5 5.25 6l-1.5 3.75 3 1.5V19.5h10.5v-8.25l3-1.5L18.75 6l-3 1.5-1.5-3Z" />
+                    </svg>
+                )
+            case 'Bedroom':
+                return (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12.75h16.5v6.75M3.75 15.75V9.75A2.25 2.25 0 0 1 6 7.5h12a2.25 2.25 0 0 1 2.25 2.25v6M6.75 12.75V9.75h4.5a1.5 1.5 0 0 1 1.5 1.5v1.5m0 0h4.5v-3" />
+                    </svg>
+                )
+            case 'Kitchen':
+                return (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75v8.25M10.5 3.75v8.25M7.5 7.5h3m-3 12.75v-8.25m9-8.25v16.5m0-16.5c1.657 0 3 1.343 3 3v3h-6v-3c0-1.657 1.343-3 3-3Z" />
+                    </svg>
+                )
+            case 'Tools':
+                return (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.25 5.25 4.5 4.5m-9.75.75 8.25 8.25a1.5 1.5 0 0 1-2.121 2.121L6.88 12.62m2.12-2.12L5.25 6.75m0 0 2.25-2.25 3.75 3.75-2.25 2.25Z" />
+                    </svg>
+                )
+            default:
+                return (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+                    </svg>
+                )
+        }
+    }
+
     return (
         <div className="bg-white rounded-[3rem] p-8 soft-shadow border border-[#f5ebe0]/40 overflow-hidden relative">
             <div className="flex items-center justify-between mb-6">
@@ -84,19 +119,15 @@ export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionP
             <div className="bg-[#fdf8f2]/40 rounded-[2.5rem] p-7 border border-[#f5ebe0]/30 shadow-inner">
                 <div className="grid grid-cols-4 gap-6 w-full text-center">
                     {[
-                        { icon: 'Shirt', label: 'Clothes', color: 'rose' },
-                        { icon: 'Bed', label: 'Bedroom', color: 'misty' },
-                        { icon: 'Utensils', label: 'Kitchen', color: 'cream' },
-                        { icon: 'Wrench', label: 'Tools', color: 'sage' }
+                        { label: 'Clothes' },
+                        { label: 'Bedroom' },
+                        { label: 'Kitchen' },
+                        { label: 'Tools' }
                     ].map((cat, i) => (
                         <button key={i} onClick={() => navigate('/inventory')} className="flex flex-col items-center gap-2 group active:scale-95 transition-all">
-                            <div className={`p-4 bg-white rounded-2xl shadow-sm group-hover:bg-[#f8e1d7] transition-colors border border-white/50`}>
+                            <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:bg-[#f8e1d7] transition-colors border border-white/50">
                                 <div className="w-5 h-5 text-[#4a3f35]">
-                                    {/* Placeholder for Lucide icons as SVG or emoji */}
-                                    {cat.label === 'Clothes' && '👕'}
-                                    {cat.label === 'Bedroom' && '🛏️'}
-                                    {cat.label === 'Kitchen' && '🍴'}
-                                    {cat.label === 'Tools' && '🔧'}
+                                    {renderShortcutIcon(cat.label)}
                                 </div>
                             </div>
                             <span className="text-[9px] font-black uppercase tracking-tighter text-[#8d7b6d]">{cat.label}</span>

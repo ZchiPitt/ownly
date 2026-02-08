@@ -847,19 +847,19 @@ export function ShoppingPage() {
     const matchPercentage = Math.round(item.similarity * 100);
     const matchColor =
       matchPercentage >= 90
-        ? 'bg-red-100 text-red-700'
+        ? 'bg-[#f8e1d7] text-[#a04d2b]'
         : matchPercentage >= 70
-          ? 'bg-orange-100 text-orange-700'
-          : 'bg-green-100 text-green-700';
+          ? 'bg-[#fcf6bd] text-[#826a2a]'
+          : 'bg-[#e3ead3] text-[#516241]';
 
     return (
       <button
         key={item.id}
         onClick={() => setSelectedItem(item)}
-        className="flex items-center gap-3 p-2 bg-white rounded-lg border border-gray-200 hover:border-teal-300 hover:shadow-sm transition-all active:scale-[0.98] w-full text-left"
+        className="flex items-center gap-3 p-2.5 bg-white/90 rounded-2xl border border-[#f5ebe0]/60 hover:bg-white transition-all soft-shadow active:scale-[0.98] w-full text-left"
       >
         {/* Thumbnail */}
-        <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+        <div className="w-12 h-12 rounded-xl bg-[#f3ece4] flex-shrink-0 overflow-hidden">
           <img
             src={item.thumbnail_url || item.photo_url}
             alt={item.name || 'Item'}
@@ -869,11 +869,11 @@ export function ShoppingPage() {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 truncate">
+          <p className="text-sm font-black text-[#4a3f35] truncate">
             {item.name || 'Unnamed item'}
           </p>
           {item.location_path && (
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-[#8d7b6d] truncate">
               📍 {item.location_path}
             </p>
           )}
@@ -901,18 +901,18 @@ export function ShoppingPage() {
 
     return (
       <div className="flex justify-start mb-2">
-        <div className="max-w-[90%] rounded-2xl bg-gray-200 text-gray-900 rounded-bl-md px-4 py-3">
+        <div className="max-w-[90%] rounded-2xl bg-white/90 border border-[#f5ebe0]/60 text-[#4a3f35] rounded-bl-md px-4 py-3 soft-shadow">
           {/* Detected Item Header */}
           {data.detected_item && (
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-lg">🔍</span>
-                <span className="font-medium text-gray-900">
+                <span className="font-black text-[#4a3f35]">
                   {data.detected_item.name}
                 </span>
               </div>
               {data.detected_item.category_suggestion && (
-                <span className="inline-block px-2 py-0.5 bg-teal-100 text-teal-700 text-xs rounded-full">
+                <span className="inline-block px-2 py-0.5 bg-[#e3ead3] text-[#516241] text-xs rounded-full">
                   {data.detected_item.category_suggestion}
                 </span>
               )}
@@ -923,7 +923,7 @@ export function ShoppingPage() {
           {hasSimilarItems ? (
             <div className="mb-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-semibold text-[#6f5f52]">
                   {highMatchItems.length > 0
                     ? `⚠️ Found ${highMatchItems.length} very similar item${highMatchItems.length > 1 ? 's' : ''}!`
                     : `📦 ${data.similar_items.length} similar item${data.similar_items.length > 1 ? 's' : ''} in your inventory`}
@@ -933,16 +933,16 @@ export function ShoppingPage() {
                 {data.similar_items.slice(0, 3).map(renderSimilarItem)}
               </div>
               {data.similar_items.length > 3 && (
-                <p className="text-xs text-gray-500 mt-2 text-center">
+                <p className="text-xs text-[#8d7b6d] mt-2 text-center">
                   +{data.similar_items.length - 3} more items
                 </p>
               )}
             </div>
           ) : (
-            <div className="mb-3 p-3 bg-green-50 rounded-lg">
+            <div className="mb-3 p-3 bg-[#e3ead3] rounded-xl border border-[#d7e1c2]">
               <div className="flex items-center gap-2">
-                <span className="text-green-600">✅</span>
-                <span className="text-sm text-green-700">
+                <span className="text-[#516241]">✅</span>
+                <span className="text-sm text-[#516241]">
                   No similar items found in your inventory
                 </span>
               </div>
@@ -951,8 +951,8 @@ export function ShoppingPage() {
 
           {/* AI Advice */}
           {data.advice && (
-            <div className="pt-3 border-t border-gray-300">
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">
+            <div className="pt-3 border-t border-[#ece2d8]">
+              <p className="text-sm text-[#4a3f35] whitespace-pre-wrap">
                 {data.advice}
               </p>
             </div>
@@ -960,8 +960,8 @@ export function ShoppingPage() {
 
           {/* Usage indicator */}
           {data.usage && (
-            <div className="mt-3 pt-2 border-t border-gray-300">
-              <p className="text-xs text-gray-500">
+            <div className="mt-3 pt-2 border-t border-[#ece2d8]">
+              <p className="text-xs text-[#8d7b6d]">
                 📸 {data.usage.photo_count}/{data.usage.photo_limit} daily analyses used
               </p>
             </div>
@@ -986,7 +986,7 @@ export function ShoppingPage() {
         {/* Timestamp */}
         {showTimestamp && (
           <div className="text-center my-3">
-            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">
+            <span className="text-xs text-[#8d7b6d] bg-[#f3ece4] px-2 py-1 rounded-full">
               {formatMessageTime(message.timestamp)}
             </span>
           </div>
@@ -1001,8 +1001,8 @@ export function ShoppingPage() {
           >
             <div
               className={`max-w-[80%] rounded-2xl ${isUser
-                  ? 'bg-teal-600 text-white rounded-br-md'
-                  : 'bg-gray-200 text-gray-900 rounded-bl-md'
+                  ? 'bg-[#d6ccc2] text-[#4a3f35] rounded-br-md'
+                  : 'bg-white/90 border border-[#f5ebe0]/60 text-[#4a3f35] rounded-bl-md soft-shadow'
                 } ${message.type === 'image' ? 'p-1' : 'px-4 py-3'}`}
             >
               {message.type === 'image' && message.imageUrl ? (
@@ -1028,7 +1028,7 @@ export function ShoppingPage() {
   // Render Chat Interface
   if (viewState === 'chat') {
     return (
-      <div className="h-full flex flex-col bg-gray-50">
+      <div className="h-full flex flex-col bg-[#fdf8f2]">
         {/* Usage Warning Banner */}
         {(showPhotoWarning || photoLimitReached) && (
           <div
@@ -1056,11 +1056,11 @@ export function ShoppingPage() {
         )}
 
         {/* Chat Header */}
-        <div className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex-shrink-0 glass border-b border-[#f5ebe0]/40 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={handleNewChat}
-              className="p-1 -ml-1 text-gray-500 hover:text-gray-700"
+              className="p-1 -ml-1 text-[#8d7b6d] hover:text-[#4a3f35]"
               aria-label="Back to initial state"
             >
               <svg
@@ -1078,41 +1078,41 @@ export function ShoppingPage() {
               </svg>
             </button>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">
+              <h1 className="text-lg font-black text-[#4a3f35] tracking-tight">
                 Shopping Assistant
               </h1>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#8d7b6d] uppercase tracking-wider">
                 {isTyping ? 'Analyzing...' : 'Online'}
               </p>
             </div>
           </div>
           <button
             onClick={handleNewChat}
-            className="text-sm text-teal-600 font-medium hover:text-teal-700"
+            className="text-xs text-[#8d7b6d] font-black uppercase tracking-wider hover:text-[#4a3f35]"
           >
             New Chat
           </button>
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
+        <div className="flex-1 overflow-y-auto px-4 py-4 max-w-3xl w-full mx-auto">
           {messages.map((msg, index) => renderMessage(msg, index))}
 
           {/* Typing Indicator */}
           {isTyping && (
             <div className="flex justify-start mb-2">
-              <div className="bg-gray-200 rounded-2xl rounded-bl-md px-4 py-3">
+              <div className="bg-white/90 border border-[#f5ebe0]/60 rounded-2xl rounded-bl-md px-4 py-3 soft-shadow">
                 <div className="flex gap-1">
                   <span
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#b9a99b] rounded-full animate-bounce"
                     style={{ animationDelay: '0ms' }}
                   />
                   <span
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#b9a99b] rounded-full animate-bounce"
                     style={{ animationDelay: '150ms' }}
                   />
                   <span
-                    className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                    className="w-2 h-2 bg-[#b9a99b] rounded-full animate-bounce"
                     style={{ animationDelay: '300ms' }}
                   />
                 </div>
@@ -1125,15 +1125,15 @@ export function ShoppingPage() {
         </div>
 
         {/* Chat Input Bar - Sticky at bottom */}
-        <div className="flex-shrink-0 bg-white border-t border-gray-200 px-4 py-3 pb-safe">
-          <div className="flex items-center gap-2">
+        <div className="flex-shrink-0 bg-white/90 border-t border-[#f5ebe0]/60 px-4 py-3 pb-safe backdrop-blur">
+          <div className="flex items-center gap-2 max-w-3xl mx-auto">
             {/* Camera Button */}
             <button
               onClick={handleChatCameraClick}
               disabled={photoLimitReached}
               className={`flex-shrink-0 p-2 rounded-full transition-colors ${photoLimitReached
-                  ? 'text-gray-300 cursor-not-allowed'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                  ? 'text-[#cdbfb2] cursor-not-allowed'
+                  : 'text-[#8d7b6d] hover:text-[#4a3f35] hover:bg-[#f3ece4]'
                 }`}
               aria-label="Add photo"
             >
@@ -1169,8 +1169,8 @@ export function ShoppingPage() {
                 disabled={textLimitReached}
                 placeholder={textLimitReached ? "Daily limit reached" : "Ask a follow-up..."}
                 className={`w-full px-4 py-2 rounded-full border border-transparent focus:outline-none transition-colors ${textLimitReached
-                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                    : 'bg-gray-100 focus:border-teal-300 focus:bg-white'
+                    ? 'bg-[#f0e8df] text-[#b9a99b] cursor-not-allowed'
+                    : 'bg-[#f3ece4] focus:border-[#d6ccc2] focus:bg-white text-[#4a3f35]'
                   }`}
               />
             </div>
@@ -1180,8 +1180,8 @@ export function ShoppingPage() {
               onClick={handleSendMessage}
               disabled={!inputValue.trim() || textLimitReached}
               className={`flex-shrink-0 p-2 rounded-full transition-colors ${inputValue.trim() && !textLimitReached
-                  ? 'bg-teal-600 text-white hover:bg-teal-700'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-[#d6ccc2] text-[#4a3f35] hover:bg-[#c8b9ab]'
+                  : 'bg-[#f0e8df] text-[#b9a99b] cursor-not-allowed'
                 }`}
               aria-label="Send message"
             >
@@ -1220,17 +1220,17 @@ export function ShoppingPage() {
             onClick={() => setSelectedItem(null)}
           >
             <div
-              className="bg-white w-full max-w-lg rounded-t-2xl max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300"
+              className="bg-[#fdf8f2] w-full max-w-lg rounded-t-[2rem] max-h-[85vh] overflow-hidden animate-in slide-in-from-bottom duration-300 border-t border-[#f5ebe0]/70"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900">
+              <div className="flex items-center justify-between p-4 border-b border-[#ece2d8]">
+                <h3 className="text-lg font-black text-[#4a3f35]">
                   Item Details
                 </h3>
                 <button
                   onClick={() => setSelectedItem(null)}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2 text-[#8d7b6d] hover:text-[#4a3f35] hover:bg-[#f3ece4] rounded-full transition-colors"
                   aria-label="Close"
                 >
                   <svg
@@ -1252,7 +1252,7 @@ export function ShoppingPage() {
               {/* Modal Content */}
               <div className="p-4 overflow-y-auto">
                 {/* Item Image */}
-                <div className="w-full aspect-square rounded-xl bg-gray-100 overflow-hidden mb-4">
+                <div className="w-full aspect-square rounded-2xl bg-[#f3ece4] overflow-hidden mb-4 border border-[#f5ebe0]/60">
                   <img
                     src={selectedItem.photo_url}
                     alt={selectedItem.name || 'Item'}
@@ -1262,13 +1262,13 @@ export function ShoppingPage() {
 
                 {/* Item Info */}
                 <div className="space-y-3">
-                  <h4 className="text-xl font-semibold text-gray-900">
+                  <h4 className="text-xl font-black text-[#4a3f35]">
                     {selectedItem.name || 'Unnamed item'}
                   </h4>
 
                   {/* Match Badge */}
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Match:</span>
+                    <span className="text-sm text-[#8d7b6d]">Match:</span>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${selectedItem.similarity >= 0.9
                           ? 'bg-red-100 text-red-700'
@@ -1283,7 +1283,7 @@ export function ShoppingPage() {
 
                   {/* Location */}
                   {selectedItem.location_path && (
-                    <div className="flex items-center gap-2 text-gray-600">
+                    <div className="flex items-center gap-2 text-[#8d7b6d]">
                       <svg
                         className="w-5 h-5 flex-shrink-0"
                         fill="none"
@@ -1316,13 +1316,13 @@ export function ShoppingPage() {
                       // Navigate to item detail page
                       window.location.href = `/item/${selectedItem.id}`;
                     }}
-                    className="flex-1 py-3 px-4 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors"
+                    className="flex-1 py-3 px-4 bg-[#d6ccc2] text-[#4a3f35] font-semibold rounded-xl hover:bg-[#c8b9ab] transition-colors"
                   >
                     View Item
                   </button>
                   <button
                     onClick={() => setSelectedItem(null)}
-                    className="py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors"
+                    className="py-3 px-4 bg-[#f3ece4] text-[#6f5f52] font-semibold rounded-xl hover:bg-[#eadfd4] transition-colors"
                   >
                     Close
                   </button>
@@ -1346,7 +1346,7 @@ export function ShoppingPage() {
 
   // Render Initial State
   return (
-    <div className="min-h-full flex flex-col bg-gray-50">
+    <div className="min-h-full flex flex-col bg-[#fdf8f2]">
       {/* Usage Warning Banner */}
       {(showPhotoWarning || photoLimitReached) && (
         <div
@@ -1361,18 +1361,18 @@ export function ShoppingPage() {
       )}
 
       {/* Header */}
-      <div className="flex-shrink-0 pt-6 pb-4 px-4">
-        <h1 className="text-2xl font-bold text-gray-900">Shop</h1>
+      <div className="flex-shrink-0 pt-6 pb-4 px-4 max-w-3xl w-full mx-auto">
+        <h1 className="text-3xl font-black tracking-tight text-[#4a3f35]">Shop</h1>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 px-4 pb-6">
+      <div className="flex-1 px-4 pb-6 max-w-3xl w-full mx-auto">
         {/* Initial State - Icon and Helper Text */}
         <div className="flex flex-col items-center text-center mb-8 pt-4">
           {/* Shopping Bag Icon */}
-          <div className="w-24 h-24 rounded-full bg-teal-50 flex items-center justify-center mb-4">
+          <div className="w-24 h-24 rounded-full bg-[#e3ead3] flex items-center justify-center mb-4 border border-white/60 soft-shadow">
             <svg
-              className="w-12 h-12 text-teal-600"
+              className="w-12 h-12 text-[#4a3f35]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1388,12 +1388,12 @@ export function ShoppingPage() {
           </div>
 
           {/* Heading */}
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-2xl font-black text-[#4a3f35] mb-2 tracking-tight">
             Smart Shopping Assistant
           </h2>
 
           {/* Subtext */}
-          <p className="text-gray-500 max-w-xs">
+          <p className="text-[#8d7b6d] max-w-xs">
             Take a photo of something you're thinking of buying and I'll check if you already have it
           </p>
         </div>
@@ -1404,13 +1404,13 @@ export function ShoppingPage() {
           <button
             onClick={handleTakePhoto}
             disabled={isProcessing || photoLimitReached}
-            className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-6 bg-white/90 rounded-[1.75rem] soft-shadow border border-[#f5ebe0]/60 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
               {/* Camera Icon */}
-              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#f8e1d7] flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-teal-600"
+                  className="w-7 h-7 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1432,16 +1432,16 @@ export function ShoppingPage() {
               </div>
               {/* Text */}
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-black text-[#4a3f35]">
                   Take Photo
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#8d7b6d]">
                   Snap a photo of the item you're considering
                 </p>
               </div>
               {/* Chevron */}
               <svg
-                className="w-5 h-5 text-gray-400"
+                className="w-5 h-5 text-[#b9a99b]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1460,13 +1460,13 @@ export function ShoppingPage() {
           <button
             onClick={handleChooseFromGallery}
             disabled={isProcessing || photoLimitReached}
-            className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-6 bg-white/90 rounded-[1.75rem] soft-shadow border border-[#f5ebe0]/60 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
               {/* Gallery Icon */}
-              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#fcf6bd] flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-teal-600"
+                  className="w-7 h-7 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1482,16 +1482,16 @@ export function ShoppingPage() {
               </div>
               {/* Text */}
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-black text-[#4a3f35]">
                   Choose from Gallery
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#8d7b6d]">
                   Select an existing photo from your device
                 </p>
               </div>
               {/* Chevron */}
               <svg
-                className="w-5 h-5 text-gray-400"
+                className="w-5 h-5 text-[#b9a99b]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1510,13 +1510,13 @@ export function ShoppingPage() {
           <button
             onClick={() => setViewState('chat')}
             disabled={isProcessing}
-            className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-6 bg-white/90 rounded-[1.75rem] soft-shadow border border-[#f5ebe0]/60 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
               {/* Chat Icon */}
-              <div className="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#e3ead3] flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-teal-600"
+                  className="w-7 h-7 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1532,16 +1532,16 @@ export function ShoppingPage() {
               </div>
               {/* Text */}
               <div className="flex-1 text-left">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-black text-[#4a3f35]">
                   Ask a Question
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#8d7b6d]">
                   Chat with me about your inventory
                 </p>
               </div>
               {/* Chevron */}
               <svg
-                className="w-5 h-5 text-gray-400"
+                className="w-5 h-5 text-[#b9a99b]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1559,7 +1559,7 @@ export function ShoppingPage() {
 
         {/* Processing Indicator */}
         {isProcessing && (
-          <div className="flex items-center justify-center gap-2 text-gray-600 mb-6">
+          <div className="flex items-center justify-center gap-2 text-[#8d7b6d] mb-6">
             <svg
               className="animate-spin h-5 w-5"
               xmlns="http://www.w3.org/2000/svg"
@@ -1589,7 +1589,7 @@ export function ShoppingPage() {
           <section>
             <div className="flex items-center gap-2 mb-3">
               <svg
-                className="w-5 h-5 text-gray-500"
+                className="w-5 h-5 text-[#8d7b6d]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1601,7 +1601,7 @@ export function ShoppingPage() {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="text-lg font-semibold text-gray-900">Recent</h3>
+              <h3 className="text-lg font-black text-[#4a3f35]">Recent</h3>
             </div>
 
             <div className="space-y-2">
@@ -1609,10 +1609,10 @@ export function ShoppingPage() {
                 <button
                   key={query.id}
                   onClick={() => handleRecentQueryClick(query)}
-                  className="w-full flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow active:scale-[0.98]"
+                  className="w-full flex items-center gap-3 p-3 bg-white/90 rounded-2xl border border-[#f5ebe0]/60 soft-shadow hover:bg-white transition-all active:scale-[0.98]"
                 >
                   {/* Thumbnail */}
-                  <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 rounded-xl bg-[#f3ece4] flex-shrink-0 overflow-hidden">
                     {query.thumbnailUrl ? (
                       <img
                         src={query.thumbnailUrl}
@@ -1622,7 +1622,7 @@ export function ShoppingPage() {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <svg
-                          className="w-5 h-5 text-gray-400"
+                          className="w-5 h-5 text-[#b9a99b]"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1640,17 +1640,17 @@ export function ShoppingPage() {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium text-gray-900 truncate">
+                    <p className="text-sm font-black text-[#4a3f35] truncate">
                       {query.itemName}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#8d7b6d]">
                       {getRelativeTime(query.timestamp)}
                     </p>
                   </div>
 
                   {/* Chevron */}
                   <svg
-                    className="w-5 h-5 text-gray-400 flex-shrink-0"
+                    className="w-5 h-5 text-[#b9a99b] flex-shrink-0"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -1670,19 +1670,19 @@ export function ShoppingPage() {
 
         {/* Empty state for recent queries - only show when no queries */}
         {recentQueries.length === 0 && (
-          <div className="p-4 bg-gray-100 rounded-lg text-center">
-            <p className="text-sm text-gray-500">
+          <div className="p-4 bg-white/80 border border-[#f5ebe0]/60 rounded-2xl text-center soft-shadow">
+            <p className="text-sm text-[#8d7b6d]">
               Your recent shopping queries will appear here
             </p>
           </div>
         )}
 
         {/* Tips Section */}
-        <div className="mt-6 p-4 bg-teal-50 rounded-lg">
-          <h4 className="text-sm font-semibold text-teal-800 mb-2">
+        <div className="mt-6 p-5 bg-[#f3ece4] rounded-2xl border border-[#ece2d8]">
+          <h4 className="text-sm font-black text-[#4a3f35] mb-2 uppercase tracking-wider">
             How it works
           </h4>
-          <ul className="text-sm text-teal-700 space-y-1">
+          <ul className="text-sm text-[#6f5f52] space-y-1">
             <li>1. Take a photo of something you want to buy</li>
             <li>2. AI will search your inventory for similar items</li>
             <li>3. Get smart advice on whether to make the purchase</li>

@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -39,13 +39,7 @@ function ChevronLeftIcon({ className = 'w-5 h-5' }: { className?: string }) {
   );
 }
 
-function ChevronRightIcon({ className = 'w-5 h-5' }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-    </svg>
-  );
-}
+
 
 function CheckIcon({ className = '' }: { className?: string }) {
   return (
@@ -70,36 +64,59 @@ interface PlanCardProps {
 
 function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkoutLoading, isCurrent }: PlanCardProps) {
   const isPro = slug === 'pro';
-  const isFree = slug === 'free';
 
-  // Pro: slight green background, no border; app (blue) for button
+  // Ownly Styling: rounded-[2.5rem], soft shadow, white bg, thin cream border
   const cardWrapperClass = isPro
-    ? 'rounded-2xl bg-green-50 shadow-sm overflow-hidden'
-    : isFree
-      ? 'rounded-2xl bg-white border-2 border-gray-200 shadow-sm overflow-hidden'
-      : 'rounded-2xl bg-white border-2 border-gray-200 shadow-sm overflow-hidden';
+    ? 'rounded-[2.5rem] bg-white shadow-xl ring-1 ring-[#d6ccc2]/50 scale-105 z-10 overflow-hidden relative'
+    : 'rounded-[2.5rem] bg-white shadow-sm border border-[#f5ebe0] overflow-hidden opacity-90 hover:opacity-100 hover:shadow-md transition-all';
 
   return (
-    <article className={`flex flex-col ${cardWrapperClass}`}>
-      <div className="p-6 pb-5 flex-1 flex flex-col">
-        <div className="flex items-baseline justify-between gap-2">
-          <h2 className={`text-xl font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{title}</h2>
-          {price && <span className={`text-lg font-semibold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{price}</span>}
+    <article className={`flex flex-col ${cardWrapperClass} h-full`}>
+      {/* Featured Badge for Pro */}
+      {isPro && (
+        <div className="absolute top-0 right-0 bg-[#d6ccc2] text-[#4a3f35] text-xs font-bold px-4 py-1.5 rounded-bl-2xl">
+          MOST POPULAR
         </div>
-        <p className="text-sm mt-2 text-gray-500">{tagline}</p>
-        <ul className="mt-4 space-y-4 flex-1">
+      )}
+
+      <div className="p-8 pb-5 flex-1 flex flex-col">
+        <div className="mb-2">
+          {/* Title Color: Brown */}
+          <h2 className={`text-2xl font-black tracking-tight ${isPro ? 'text-[#4a3f35]' : 'text-[#4a3f35]'}`}>{title}</h2>
+          <p className="text-sm mt-1 text-[#8d7b6d] font-medium">{tagline}</p>
+        </div>
+
+        {/* Price */}
+        {price ? (
+          <div className="mt-4 mb-6 flex items-baseline gap-1">
+            <span className="text-4xl font-black text-[#4a3f35] tracking-tight">{price.split('/')[0]}</span>
+            <span className="text-sm text-[#8d7b6d] font-medium">/ month</span>
+          </div>
+        ) : (
+          <div className="mt-4 mb-6 flex items-baseline gap-1">
+            <span className="text-4xl font-black text-[#4a3f35] tracking-tight">Free</span>
+          </div>
+        )}
+
+        {/* Divider */}
+        <div className="w-full h-px bg-[#f5ebe0] mb-6" />
+
+        <ul className="space-y-4 flex-1">
           {features.map((f, i) => (
-            <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-              <CheckIcon className={`mt-0.5 ${isPro ? 'text-green-600' : 'text-gray-500'}`} />
-              <span>{f}</span>
+            <li key={i} className="flex items-start gap-3 text-sm text-[#4a3f35]">
+              <div className={`mt-0.5 rounded-full p-0.5 ${isPro ? 'bg-[#d6ccc2]/30 text-[#4a3f35]' : 'bg-[#f5ebe0] text-[#8d7b6d]'}`}>
+                <CheckIcon />
+              </div>
+              <span className="leading-snug">{f}</span>
             </li>
           ))}
         </ul>
       </div>
-      <div className="mt-auto p-6 pt-0 min-h-[52px] flex flex-col justify-end">
+
+      <div className="mt-auto p-8 pt-0">
         {isCurrent ? (
-          <div className="py-3 text-center text-sm font-medium text-gray-500">
-            Current Plan
+          <div className="w-full py-4 rounded-2xl bg-[#f5ebe0] text-[#4a3f35] text-center text-sm font-bold tracking-wide">
+            CURRENT PLAN
           </div>
         ) : (slug === 'basic' || slug === 'pro') && onSubscribe ? (
           <button
@@ -108,15 +125,14 @@ function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkout
             disabled={checkoutLoading !== null}
             className={
               isPro
-                ? 'w-full min-h-[44px] py-3 rounded-xl font-medium text-sm text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed'
-                : 'w-full min-h-[44px] py-3 rounded-xl font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-90'
+                ? 'w-full py-4 rounded-2xl font-bold text-sm text-white bg-[#4a3f35] hover:bg-[#3d332b] shadow-lg shadow-[#4a3f35]/10 transform transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed'
+                : 'w-full py-4 rounded-2xl font-bold text-sm text-[#4a3f35] bg-white border-2 border-[#f5ebe0] hover:border-[#d6ccc2] hover:bg-[#f9f5f1] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
             }
-            style={isPro ? undefined : { backgroundColor: '#374151', color: '#fff', borderWidth: 1, borderColor: '#1f2937' }}
           >
             {checkoutLoading === (slug === 'basic' ? 'basic' : 'pro') ? 'Redirecting…' : 'Subscribe'}
           </button>
         ) : (
-          <div className="py-3 text-center text-sm font-medium text-gray-400">
+          <div className="w-full py-4 text-center text-sm font-medium text-[#8d7b6d]">
             —
           </div>
         )}
@@ -174,7 +190,8 @@ export function PlansPage() {
       let data: { url?: string; error?: { message?: string } };
       try {
         data = await res.json();
-      } catch {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (e) {
         error(res.ok ? 'Invalid response from server.' : `Checkout failed (${res.status} ${res.statusText}). Is the function deployed?`);
         return;
       }
@@ -197,32 +214,33 @@ export function PlansPage() {
   };
 
   return (
-    <div className="min-h-full">
-      <div className="bg-white border-b border-gray-200 px-4 py-4 relative">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center p-3 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-          aria-label="Go back"
-        >
-          <ChevronLeftIcon className="w-6 h-6" />
-        </button>
-        <div className="text-center pl-12 pr-4">
-          <h1 className="text-2xl font-bold text-gray-900">Subscription Plans</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Choose a plan that fits you.</p>
+    <div className="min-h-screen bg-[#f9f5f1]">
+      {/* Header */}
+      <div className="px-6 py-8 sm:px-8 border-b border-[#f5ebe0]/0">
+        <div className="max-w-7xl mx-auto relative flex items-center justify-center">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center p-3 rounded-full text-[#8d7b6d] hover:bg-[#f5ebe0] transition-colors"
+            aria-label="Go back"
+          >
+            <ChevronLeftIcon className="w-6 h-6" />
+          </button>
+          <div className="text-center">
+            <h1 className="text-3xl font-black text-[#4a3f35] tracking-tight">Subscription Plans</h1>
+            <p className="text-[#8d7b6d] mt-1 font-medium">Unlock the full potential of your inventory.</p>
+          </div>
         </div>
       </div>
 
-      <div className="px-6 pb-10 sm:px-8 sm:pb-12">
-        {/* Spacer so gap below header is always visible */}
-        <div className="h-8 sm:h-10 shrink-0" aria-hidden />
-        <div className="mx-auto w-full max-w-5xl">
-          <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3 lg:gap-14 items-stretch pb-12">
+      <div className="px-6 pb-20 sm:px-8">
+        <div className="mx-auto w-full max-w-6xl mt-8">
+          <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-10 items-start pb-12">
             {subscriptionLoading ? (
               <>
-                <SkeletonCard showImage={false} lines={5} className="rounded-2xl border-2 border-gray-200" />
-                <SkeletonCard showImage={false} lines={5} className="rounded-2xl border-2 border-gray-200" />
-                <SkeletonCard showImage={false} lines={5} className="rounded-2xl border-2 border-gray-200" />
+                <SkeletonCard showImage={false} lines={5} className="rounded-[2.5rem] h-96 bg-white soft-shadow" />
+                <SkeletonCard showImage={false} lines={5} className="rounded-[2.5rem] h-96 bg-white soft-shadow" />
+                <SkeletonCard showImage={false} lines={5} className="rounded-[2.5rem] h-96 bg-white soft-shadow" />
               </>
             ) : (
               <>
@@ -237,7 +255,7 @@ export function PlansPage() {
                 <PlanCard
                   slug="basic"
                   title="Basic Plan"
-                  price="$2.99 / month"
+                  price="$2.99"
                   tagline="Designed for light or casual users."
                   features={BASIC_FEATURES}
                   onSubscribe={handleSubscribe}
@@ -247,8 +265,8 @@ export function PlansPage() {
                 <PlanCard
                   slug="pro"
                   title="Pro Plan"
-                  price="$9.99 / month"
-                  tagline="Designed for power users and frequent sellers."
+                  price="$9.99"
+                  tagline="Best for power users & sellers."
                   features={PRO_FEATURES}
                   onSubscribe={handleSubscribe}
                   checkoutLoading={checkoutLoading}
@@ -257,16 +275,6 @@ export function PlansPage() {
               </>
             )}
           </div>
-        </div>
-
-        <div className="mx-auto mt-12 w-full max-w-5xl">
-          <Link
-            to="/settings"
-            className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
-          >
-            <span className="text-base font-medium">Back to Settings</span>
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
-          </Link>
         </div>
       </div>
     </div>

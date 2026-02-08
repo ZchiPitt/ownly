@@ -281,25 +281,25 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <div>
+        <h1 className="text-3xl font-black text-[#4a3f35] tracking-tight">Settings</h1>
       </div>
 
       {/* Settings Content */}
-      <div className="p-4 space-y-6">
+      <div className="space-y-6">
         {/* Account Section - US-088 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Account
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-2 soft-shadow border border-[#f5ebe0]/40 overflow-hidden">
             {/* User Profile Info */}
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="px-4 py-6 border-b border-[#f5ebe0]/40">
               <div className="flex items-center space-x-4">
                 {/* User Avatar or Initials */}
-                <div className="h-14 w-14 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                <div className="h-14 w-14 rounded-full bg-[#d6ccc2] flex items-center justify-center text-[#4a3f35] font-bold text-lg shadow-sm">
                   {user?.user_metadata?.display_name
                     ? user.user_metadata.display_name
                       .split(' ')
@@ -323,7 +323,7 @@ export function SettingsPage() {
             {/* Edit Profile Button */}
             <button
               onClick={handleEditProfileClick}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-b-0"
+              className="w-full px-4 py-4 text-left hover:bg-[#f8e1d7]/30 transition-colors flex items-center justify-between border-b border-[#f5ebe0]/40 last:border-b-0"
             >
               <div>
                 <p className="text-base font-medium text-gray-900">Edit Profile</p>
@@ -337,7 +337,7 @@ export function SettingsPage() {
             {/* Change Password Link */}
             <button
               onClick={() => navigate('/reset-password')}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
+              className="w-full px-4 py-4 text-left hover:bg-[#f8e1d7]/30 transition-colors flex items-center justify-between"
             >
               <div>
                 <p className="text-base font-medium text-gray-900">Change Password</p>
@@ -351,7 +351,7 @@ export function SettingsPage() {
             {/* My Listings Link */}
             <Link
               to="/my-listings"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
                 <TagIcon className="w-5 h-5 text-gray-500" />
@@ -363,7 +363,7 @@ export function SettingsPage() {
             {/* Saved Listings Link */}
             <Link
               to="/saved-listings"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
                 <HeartIcon className="w-5 h-5 text-gray-500" />
@@ -375,7 +375,7 @@ export function SettingsPage() {
             {/* Messages Link */}
             <Link
               to="/messages"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
                 <ChatBubbleIcon className="w-5 h-5 text-gray-500" />
@@ -383,7 +383,7 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-teal-600 text-white text-xs font-semibold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#fbc4ab] text-[#4a3f35] text-xs font-black">
                     {unreadCount}
                   </span>
                 )}
@@ -393,13 +393,28 @@ export function SettingsPage() {
           </div>
         </section>
         {/* Subscription Section - US-089 */}
-        <section>           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">             Subscription           </h2>           <Link to="/plans" className="flex items-center justify-between gap-3 px-4 py-3 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"           >             <div className="min-w-0 flex-1">               <span className="text-base font-medium text-gray-900">Plans</span>               <p className="text-sm text-gray-500 mt-0.5">Subscribe for more features</p>             </div>             <ChevronRightIcon className="w-5 h-5 shrink-0 text-gray-400" />           </Link>         </section>
+        <section>
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
+            Subscription
+          </h2>
+          <Link
+            to="/plans"
+            className="flex items-center justify-between gap-3 px-6 py-6 bg-white rounded-[2.5rem] soft-shadow border border-[#f5ebe0]/40 hover:bg-[#f8e1d7]/30 transition-colors"
+          >
+            <div className="min-w-0 flex-1">
+              <span className="text-base font-medium text-gray-900">Plans</span>
+              <p className="text-sm text-gray-500 mt-0.5">Subscribe for more features</p>
+            </div>
+            <ChevronRightIcon className="w-5 h-5 shrink-0 text-gray-400" />
+          </Link>
+        </section>
+
         {/* Reminders & Notifications Section - US-064 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Reminders & Notifications
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
             {/* Loading state */}
             {isLoadingSettings ? (
               <div className="px-4 py-4 flex items-center justify-center">
@@ -411,12 +426,12 @@ export function SettingsPage() {
             ) : (
               <>
                 {/* Master Toggle: Enable Reminders */}
-                <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                <div className="py-2 flex items-center justify-between border-b border-[#f5ebe0]/40 pb-4">
                   <div className="flex-1">
-                    <label htmlFor="reminder-toggle" className="text-base font-medium text-gray-900">
+                    <label htmlFor="reminder-toggle" className="text-base font-medium text-[#4a3f35]">
                       Enable Reminders
                     </label>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">
                       Get notified about unused and expiring items
                     </p>
                   </div>
@@ -426,7 +441,7 @@ export function SettingsPage() {
                     aria-checked={settings?.reminder_enabled ?? true}
                     onClick={() => handleSettingChange('reminder_enabled', !settings?.reminder_enabled)}
                     disabled={isUpdating}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                       }`}
                   >
                     <span
@@ -440,12 +455,12 @@ export function SettingsPage() {
                 {settings?.reminder_enabled && (
                   <div className="pl-8">
                     {/* Unused Item Reminder Threshold */}
-                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                    <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                       <div className="flex-1 pr-4">
-                        <label htmlFor="unused-threshold" className="text-sm font-medium text-gray-900">
+                        <label htmlFor="unused-threshold" className="text-base font-medium text-[#4a3f35]">
                           Unused Item Reminder
                         </label>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-[#8d7b6d] mt-0.5">
                           Remind about items not viewed for
                         </p>
                       </div>
@@ -454,7 +469,7 @@ export function SettingsPage() {
                         value={settings?.reminder_threshold_days ?? 90}
                         onChange={(e) => handleSettingChange('reminder_threshold_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-32 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-32 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {UNUSED_THRESHOLD_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -465,12 +480,12 @@ export function SettingsPage() {
                     </div>
 
                     {/* Expiration Reminder Days */}
-                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                    <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                       <div className="flex-1 pr-4">
-                        <label htmlFor="expiration-reminder" className="text-sm font-medium text-gray-900">
+                        <label htmlFor="expiration-reminder" className="text-base font-medium text-[#4a3f35]">
                           Expiration Reminder
                         </label>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-[#8d7b6d] mt-0.5">
                           Remind before items expire
                         </p>
                       </div>
@@ -479,7 +494,7 @@ export function SettingsPage() {
                         value={settings?.expiration_reminder_days ?? 7}
                         onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-40 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {EXPIRATION_REMINDER_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -490,13 +505,13 @@ export function SettingsPage() {
                     </div>
 
                     {/* Push Notifications Toggle */}
-                    <div className="px-4 py-4">
+                    <div className="py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
-                          <label htmlFor="push-toggle" className="text-sm font-medium text-gray-900">
+                          <label htmlFor="push-toggle" className="text-base font-medium text-[#4a3f35]">
                             Push Notifications
                           </label>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-sm text-[#8d7b6d] mt-0.5">
                             Receive reminders on your device
                           </p>
                         </div>
@@ -507,7 +522,7 @@ export function SettingsPage() {
                             aria-checked={settings?.push_notifications_enabled ?? false}
                             onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
                             disabled={isUpdating || isRequestingPush}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.push_notifications_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.push_notifications_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                               }`}
                           >
                             {isRequestingPush ? (
@@ -572,18 +587,18 @@ export function SettingsPage() {
 
         {/* Push Notifications Section - US-013 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Notifications
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
             {/* Master Toggle: Enable Push Notifications */}
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="py-4 border-b border-[#f5ebe0]/40">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <label htmlFor="push-notifications-master" className="text-base font-medium text-gray-900">
+                  <label htmlFor="push-notifications-master" className="text-base font-medium text-[#4a3f35]">
                     Enable Push Notifications
                   </label>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="text-sm text-[#8d7b6d] mt-0.5">
                     Receive alerts on your device for messages and reminders
                   </p>
                 </div>
@@ -594,9 +609,8 @@ export function SettingsPage() {
                     aria-checked={settings?.push_notifications_enabled ?? false}
                     onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
                     disabled={isUpdating || isRequestingPush || permissionState === 'denied'}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      settings?.push_notifications_enabled && permissionState === 'granted' ? 'bg-teal-600' : 'bg-gray-200'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.push_notifications_enabled && permissionState === 'granted' ? 'bg-[#d6ccc2]' : 'bg-gray-200'
+                      }`}
                   >
                     {isRequestingPush ? (
                       <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
@@ -623,9 +637,8 @@ export function SettingsPage() {
                       </span>
                     ) : (
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          settings?.push_notifications_enabled && permissionState === 'granted' ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.push_notifications_enabled && permissionState === 'granted' ? 'translate-x-5' : 'translate-x-0'
+                          }`}
                       />
                     )}
                   </button>
@@ -637,13 +650,13 @@ export function SettingsPage() {
 
             {/* Notification Sound Toggle - shown when push notifications are enabled */}
             {settings?.push_notifications_enabled && permissionState === 'granted' && (
-              <div className="px-4 py-4 border-b border-gray-100">
+              <div className="py-4 border-b border-[#f5ebe0]/40">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
-                    <label htmlFor="notification-sound-toggle" className="text-base font-medium text-gray-900">
+                    <label htmlFor="notification-sound-toggle" className="text-base font-medium text-[#4a3f35]">
                       Notification Sound
                     </label>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">
                       Play sound and vibrate for notifications
                     </p>
                   </div>
@@ -653,14 +666,12 @@ export function SettingsPage() {
                     aria-checked={settings?.notification_sound_enabled ?? true}
                     onClick={() => handleSettingChange('notification_sound_enabled', !settings?.notification_sound_enabled)}
                     disabled={isUpdating}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      settings?.notification_sound_enabled ?? true ? 'bg-teal-600' : 'bg-gray-200'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.notification_sound_enabled ?? true ? 'bg-[#d6ccc2]' : 'bg-gray-200'
+                      }`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        settings?.notification_sound_enabled ?? true ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.notification_sound_enabled ?? true ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
                   </button>
                 </div>
@@ -737,16 +748,16 @@ export function SettingsPage() {
 
         {/* Marketplace Notifications Section - US-MKT-009 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Marketplace Notifications
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   New inquiries
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Get notified when someone asks about your listing
                 </p>
               </div>
@@ -758,7 +769,7 @@ export function SettingsPage() {
                   !settings?.marketplace_new_inquiry_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_inquiry_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_inquiry_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -768,12 +779,12 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Purchase requests
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Alerts when someone wants to buy your item
                 </p>
               </div>
@@ -785,7 +796,7 @@ export function SettingsPage() {
                   !settings?.marketplace_purchase_request_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_purchase_request_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_purchase_request_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -795,12 +806,12 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Request accepted
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Updates when a seller accepts your request
                 </p>
               </div>
@@ -812,7 +823,7 @@ export function SettingsPage() {
                   !settings?.marketplace_request_accepted_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_accepted_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_accepted_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -822,12 +833,12 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Request declined
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Updates when a seller declines your request
                 </p>
               </div>
@@ -839,7 +850,7 @@ export function SettingsPage() {
                   !settings?.marketplace_request_declined_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_declined_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_declined_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -849,12 +860,12 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   New messages
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Alerts when you receive a marketplace message
                 </p>
               </div>
@@ -866,7 +877,7 @@ export function SettingsPage() {
                   !settings?.marketplace_new_message_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_message_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_message_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -876,12 +887,12 @@ export function SettingsPage() {
               </button>
             </div>
 
-            <div className="px-4 py-4 flex items-center justify-between">
+            <div className="py-4 flex items-center justify-between">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Transaction complete
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Confirmation when a transaction is completed
                 </p>
               </div>
@@ -893,7 +904,7 @@ export function SettingsPage() {
                   !settings?.marketplace_transaction_complete_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_transaction_complete_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_transaction_complete_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -907,17 +918,17 @@ export function SettingsPage() {
 
         {/* Item Reminders Section - US-014, US-015 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Item Reminders
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
             {/* Expiry reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-2 flex items-center justify-between border-b border-[#f5ebe0]/40 pb-4">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Expiry reminders
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Get notified before items expire
                 </p>
               </div>
@@ -929,7 +940,7 @@ export function SettingsPage() {
                   !settings?.reminder_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -941,9 +952,9 @@ export function SettingsPage() {
 
             {/* Expiry reminder timing dropdown - US-015 */}
             {settings?.reminder_enabled && (
-              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+              <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                 <div className="flex-1 pr-4">
-                  <label htmlFor="expiry-reminder-timing" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="expiry-reminder-timing" className="text-base font-medium text-[#4a3f35]">
                     Expiry reminder timing
                   </label>
                 </div>
@@ -952,7 +963,7 @@ export function SettingsPage() {
                   value={settings?.expiration_reminder_days ?? 7}
                   onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
                   disabled={isUpdating}
-                  className="block w-36 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="block w-36 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {EXPIRY_REMINDER_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -964,12 +975,12 @@ export function SettingsPage() {
             )}
 
             {/* Warranty reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+            <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Warranty reminders
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Alerts before warranty expires
                 </p>
               </div>
@@ -981,7 +992,7 @@ export function SettingsPage() {
                   !settings?.warranty_reminder_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.warranty_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.warranty_reminder_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -993,9 +1004,9 @@ export function SettingsPage() {
 
             {/* Warranty reminder timing dropdown - US-015 */}
             {settings?.warranty_reminder_enabled && (
-              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+              <div className="py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                 <div className="flex-1 pr-4">
-                  <label htmlFor="warranty-reminder-timing" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="warranty-reminder-timing" className="text-sm font-medium text-[#4a3f35]">
                     Warranty reminder timing
                   </label>
                 </div>
@@ -1004,7 +1015,7 @@ export function SettingsPage() {
                   value={settings?.warranty_reminder_days ?? 30}
                   onChange={(e) => handleSettingChange('warranty_reminder_days', parseInt(e.target.value, 10))}
                   disabled={isUpdating}
-                  className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="block w-40 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {WARRANTY_REMINDER_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -1016,12 +1027,12 @@ export function SettingsPage() {
             )}
 
             {/* Custom reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between">
+            <div className="py-4 flex items-center justify-between">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
+                <label className="text-base font-medium text-[#4a3f35]">
                   Custom reminders
                 </label>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-[#8d7b6d] mt-0.5">
                   Notifications for your scheduled reminders
                 </p>
               </div>
@@ -1033,7 +1044,7 @@ export function SettingsPage() {
                   !settings?.custom_reminder_enabled
                 )}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.custom_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.custom_reminder_enabled ? 'bg-[#d6ccc2]' : 'bg-gray-200'
                   }`}
               >
                 <span
@@ -1046,29 +1057,30 @@ export function SettingsPage() {
         </section>
 
         {/* Display Section - US-087 */}
+        {/* Display Section - US-087 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Display
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
             {/* Default View Toggle - Gallery / List */}
-            <div className="px-4 py-4">
+            <div className="py-2">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-900">
+                  <label className="text-base font-medium text-[#4a3f35]">
                     Default View
                   </label>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm text-[#8d7b6d] mt-0.5">
                     Choose how your inventory displays by default
                   </p>
                 </div>
-                <div className="flex bg-gray-100 rounded-lg p-1">
+                <div className="flex bg-[#f5ebe0]/40 rounded-lg p-1">
                   <button
                     onClick={() => handleSettingChange('default_view', 'gallery')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'gallery'
-                      ? 'bg-white text-teal-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-[#4a3f35] shadow-sm'
+                      : 'text-[#8d7b6d] hover:text-[#4a3f35]'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Gallery
@@ -1077,8 +1089,8 @@ export function SettingsPage() {
                     onClick={() => handleSettingChange('default_view', 'list')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'list'
-                      ? 'bg-white text-teal-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-[#4a3f35] shadow-sm'
+                      : 'text-[#8d7b6d] hover:text-[#4a3f35]'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     List
@@ -1091,10 +1103,10 @@ export function SettingsPage() {
 
         {/* Logout Section */}
         <section className="pb-24">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-2 soft-shadow border border-[#f5ebe0]/40 overflow-hidden">
             <button
               onClick={handleLogoutClick}
-              className="w-full px-4 py-4 text-left hover:bg-red-50 transition-colors flex items-center gap-3"
+              className="w-full px-6 py-6 text-left hover:bg-red-50 transition-colors flex items-center gap-3"
             >
               <svg
                 className="w-5 h-5 text-red-500"
