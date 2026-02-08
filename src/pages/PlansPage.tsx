@@ -82,9 +82,20 @@ function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkout
   return (
     <article className={`flex flex-col ${cardWrapperClass}`}>
       <div className="p-6 pb-5 flex-1 flex flex-col">
-        <div className="flex flex-nowrap items-baseline justify-between gap-2">
-          <h2 className={`min-w-0 text-xl font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{title}</h2>
-          {price && <span className={`shrink-0 whitespace-nowrap text-lg font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{price}</span>}
+        <div className="flex flex-col gap-1">
+          <h2 className={`text-xl font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{title}</h2>
+          {price && (() => {
+            const parts = price.split(' / ');
+            const amount = parts[0] ?? price;
+            const period = parts[1] ? ` / ${parts[1]}` : '';
+            const colorClass = isPro ? 'text-green-800' : 'text-gray-900';
+            return (
+              <span className={colorClass}>
+                <span className="text-2xl font-bold">{amount}</span>
+                {period && <span className="text-sm font-medium">{period}</span>}
+              </span>
+            );
+          })()}
         </div>
         <p className="text-sm mt-2 text-gray-500">{tagline}</p>
         <ul className="mt-4 space-y-4 flex-1">
@@ -229,6 +240,7 @@ export function PlansPage() {
                 <PlanCard
                   slug="free"
                   title="Free Plan"
+                  price="$0 / month"
                   tagline="Get started with core features."
                   features={FREE_FEATURES}
                   checkoutLoading={checkoutLoading}
