@@ -71,11 +71,22 @@ function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkout
     : 'rounded-[2.5rem] bg-white shadow-sm border border-[#f5ebe0] overflow-hidden opacity-95 transform-gpu transition-all duration-300 hover:opacity-100 hover:-translate-y-1 hover:shadow-xl hover:border-[#d6ccc2] hover:ring-1 hover:ring-[#e3ead3]/70 active:scale-[0.995]';
 
   return (
-    <article className={`flex flex-col ${cardWrapperClass} h-full`}>
-      {/* Featured Badge for Pro */}
-      {isPro && (
-        <div className="absolute top-0 right-0 bg-[#d6ccc2] text-[#4a3f35] text-xs font-bold px-4 py-1.5 rounded-bl-2xl">
-          MOST POPULAR
+    <article className={`flex flex-col ${cardWrapperClass}`}>
+      <div className="p-6 pb-5 flex-1 flex flex-col">
+        <div className="flex flex-col gap-1">
+          <h2 className={`text-xl font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{title}</h2>
+          {price && (() => {
+            const parts = price.split(' / ');
+            const amount = parts[0] ?? price;
+            const period = parts[1] ? ` / ${parts[1]}` : '';
+            const colorClass = isPro ? 'text-green-800' : 'text-gray-900';
+            return (
+              <span className={colorClass}>
+                <span className="text-2xl font-bold">{amount}</span>
+                {period && <span className="text-sm font-medium">{period}</span>}
+              </span>
+            );
+          })()}
         </div>
       )}
 
@@ -233,9 +244,11 @@ export function PlansPage() {
         </div>
       </div>
 
-      <div className="px-6 pb-20 sm:px-8">
-        <div className="mx-auto w-full max-w-6xl mt-8">
-          <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-10 items-start pb-12">
+      <div className="px-6 pb-10 sm:px-8 sm:pb-12">
+        {/* Spacer so gap below header is always visible */}
+        <div className="h-8 sm:h-10 shrink-0" aria-hidden />
+        <div className="mx-auto w-full max-w-7xl">
+          <div className="grid w-full grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-10 lg:grid-cols-3 lg:gap-12 items-stretch pb-12">
             {subscriptionLoading ? (
               <>
                 <SkeletonCard showImage={false} lines={5} className="rounded-[2.5rem] h-96 bg-white soft-shadow" />
@@ -247,6 +260,7 @@ export function PlansPage() {
                 <PlanCard
                   slug="free"
                   title="Free Plan"
+                  price="$0 / month"
                   tagline="Get started with core features."
                   features={FREE_FEATURES}
                   checkoutLoading={checkoutLoading}
@@ -265,8 +279,8 @@ export function PlansPage() {
                 <PlanCard
                   slug="pro"
                   title="Pro Plan"
-                  price="$9.99"
-                  tagline="Best for power users & sellers."
+                  price="$9.99 / month"
+                  tagline="For power users & frequent sellers."
                   features={PRO_FEATURES}
                   onSubscribe={handleSubscribe}
                   checkoutLoading={checkoutLoading}
@@ -275,6 +289,16 @@ export function PlansPage() {
               </>
             )}
           </div>
+        </div>
+
+        <div className="mx-auto mt-12 w-full max-w-7xl">
+          <Link
+            to="/settings"
+            className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+          >
+            <span className="text-base font-medium">Back to Settings</span>
+            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+          </Link>
         </div>
       </div>
     </div>

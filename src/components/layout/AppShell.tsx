@@ -165,7 +165,7 @@ export function AppShell({
       </header>
 
       {/* Main content area */}
-      <main className="flex-1 p-6 max-w-4xl mx-auto">
+      <main className="flex-1 p-6 max-w-6xl mx-auto">
         {children}
       </main>
 
