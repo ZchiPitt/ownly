@@ -46,12 +46,14 @@
   - Serve locally: `supabase functions serve analyze-image --env-file .env`.
   - Deploy one: `supabase functions deploy analyze-image`.
   - Deploy all: `for d in supabase/functions/*; do supabase functions deploy "$(basename "$d")"; done`.
-  - **Important:** Functions that handle user authentication must be deployed with `--no-verify-jwt` to bypass Supabase gateway JWT verification (the functions implement their own auth validation):
+  - **Important:** Functions that handle user authentication (or external webhooks) must be deployed with `--no-verify-jwt` to bypass Supabase gateway JWT verification (the functions implement their own auth validation):
     ```bash
     supabase functions deploy analyze-image --no-verify-jwt
     supabase functions deploy shopping-analyze --no-verify-jwt
     supabase functions deploy shopping-followup --no-verify-jwt
     supabase functions deploy convert-image --no-verify-jwt
+    supabase functions deploy stripe-webhook --no-verify-jwt
+    supabase functions deploy subscriptions-create-checkout --no-verify-jwt
     ```
 - Function secrets: `supabase secrets set KEY=VALUE` (scoped to the linked project).
 

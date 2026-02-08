@@ -33,7 +33,7 @@ const typeStyles: Record<ToastType, string> = {
 
 const typeIcons: Record<ToastType, string> = {
   success: '✓',
-  error: '✕',
+  error: '!',
   info: 'ⓘ',
   warning: '⚠',
 }

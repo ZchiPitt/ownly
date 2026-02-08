@@ -6,6 +6,7 @@
 export { SignupPage } from './SignupPage';
 export { LoginPage } from './LoginPage';
 export { SettingsPage } from './SettingsPage';
+export { PlansPage } from './PlansPage';
 export { ResetPasswordPage } from './ResetPasswordPage';
 export { ResetPasswordConfirmPage } from './ResetPasswordConfirmPage';
 export { AddItemPage } from './AddItemPage';
