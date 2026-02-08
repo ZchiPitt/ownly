@@ -140,9 +140,9 @@ export function ResetPasswordConfirmPage() {
   // Loading state while checking token
   if (tokenStatus === 'loading') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdf8f2]">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
-        <p className="mt-4 text-gray-600">Verifying reset link...</p>
+        <p className="mt-4 text-[#8d7b6d]">Verifying reset link...</p>
       </div>
     );
   }
@@ -150,7 +150,7 @@ export function ResetPasswordConfirmPage() {
   // Invalid/expired token state
   if (tokenStatus === 'invalid') {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-[#fdf8f2]">
         {/* Header with error icon */}
         <div className="flex-shrink-0 pt-12 pb-6 px-6">
           {/* Error icon */}
@@ -169,13 +169,13 @@ export function ResetPasswordConfirmPage() {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 text-center">
+          <h1 className="text-2xl font-bold text-[#4a3f35] text-center">
             Link Expired
           </h1>
-          <p className="mt-4 text-gray-600 text-center">
+          <p className="mt-4 text-[#8d7b6d] text-center">
             This password reset link has expired or is invalid.
           </p>
-          <p className="mt-2 text-sm text-gray-500 text-center">
+          <p className="mt-2 text-sm text-[#8d7b6d] text-center">
             Password reset links are valid for a limited time for security reasons.
           </p>
         </div>
@@ -191,7 +191,7 @@ export function ResetPasswordConfirmPage() {
             </Link>
             <Link
               to="/login"
-              className="block w-full py-3 px-4 rounded-lg font-semibold text-gray-700 text-center bg-gray-200 hover:bg-gray-300 active:bg-gray-400 transition-colors"
+              className="block w-full py-3 px-4 rounded-lg font-semibold text-[#6f5f52] text-center bg-[#efe6dc] hover:bg-gray-300 active:bg-gray-400 transition-colors"
             >
               Back to Log in
             </Link>
@@ -203,13 +203,13 @@ export function ResetPasswordConfirmPage() {
 
   // Valid token - show password reset form
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#fdf8f2]">
       {/* Header */}
       <div className="flex-shrink-0 pt-12 pb-6 px-6">
-        <h1 className="text-3xl font-bold text-gray-900 text-center">
+        <h1 className="text-3xl font-bold text-[#4a3f35] text-center">
           Set New Password
         </h1>
-        <p className="mt-2 text-gray-600 text-center">
+        <p className="mt-2 text-[#8d7b6d] text-center">
           Enter your new password below.
         </p>
       </div>
@@ -221,7 +221,7 @@ export function ResetPasswordConfirmPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-[#6f5f52] mb-1"
             >
               New Password
             </label>
@@ -235,7 +235,7 @@ export function ResetPasswordConfirmPage() {
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched({ ...touched, password: true })}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                 touched.password && passwordError
                   ? 'border-red-500'
                   : 'border-gray-300'
@@ -250,7 +250,7 @@ export function ResetPasswordConfirmPage() {
           <div>
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-[#6f5f52] mb-1"
             >
               Confirm Password
             </label>
@@ -263,7 +263,7 @@ export function ResetPasswordConfirmPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               onBlur={() => setTouched({ ...touched, confirmPassword: true })}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                 touched.confirmPassword && confirmPasswordError
                   ? 'border-red-500'
                   : 'border-gray-300'
@@ -316,11 +316,11 @@ export function ResetPasswordConfirmPage() {
         </form>
 
         {/* Password requirements hint */}
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-700 font-medium mb-2">
+        <div className="mt-6 p-4 bg-[#f3ece4] rounded-lg">
+          <p className="text-sm text-[#6f5f52] font-medium mb-2">
             Password requirements:
           </p>
-          <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+          <ul className="text-sm text-[#8d7b6d] space-y-1 list-disc list-inside">
             <li className={password.length >= MIN_PASSWORD_LENGTH ? 'text-green-600' : ''}>
               At least {MIN_PASSWORD_LENGTH} characters
             </li>
@@ -330,7 +330,7 @@ export function ResetPasswordConfirmPage() {
 
       {/* Footer */}
       <div className="flex-shrink-0 py-8 px-6">
-        <p className="text-center text-gray-600">
+        <p className="text-center text-[#8d7b6d]">
           <Link
             to="/login"
             className="text-blue-600 font-semibold hover:text-blue-700"

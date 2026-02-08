@@ -25,17 +25,17 @@ interface ToastProps {
 }
 
 const typeStyles: Record<ToastType, string> = {
-  success: 'bg-green-600 text-white',
-  error: 'bg-red-600 text-white',
-  info: 'bg-blue-600 text-white',
-  warning: 'bg-yellow-600 text-white',
+  success: 'bg-[#e3ead3] text-[#516241] border-[#d7e1c2]',
+  error: 'bg-[#f8e1d7] text-[#a04d2b] border-[#f0d0be]',
+  info: 'bg-[#f3ece4] text-[#6f5f52] border-[#e8dbcf]',
+  warning: 'bg-[#fcf6bd] text-[#826a2a] border-[#efe5a4]',
 }
 
 const typeIcons: Record<ToastType, string> = {
   success: '✓',
   error: '!',
-  info: 'ⓘ',
-  warning: '⚠',
+  info: 'i',
+  warning: '!',
 }
 
 export function ToastItem({ toast, onDismiss, index }: ToastProps) {
@@ -53,7 +53,7 @@ export function ToastItem({ toast, onDismiss, index }: ToastProps) {
   return (
     <div
       className={`
-        flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg
+        flex items-center gap-3 px-4 py-3 rounded-xl border soft-shadow
         transform transition-all duration-300 ease-out
         ${typeStyles[toast.type]}
         ${isExiting ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}
@@ -81,7 +81,7 @@ export function ToastItem({ toast, onDismiss, index }: ToastProps) {
         <button
           type="button"
           onClick={handleAction}
-          className="flex-shrink-0 px-3 py-1 text-xs font-semibold rounded-full bg-white/20 hover:bg-white/30 active:bg-white/40 transition-colors"
+          className="flex-shrink-0 px-3 py-1 text-xs font-semibold rounded-full bg-white/70 hover:bg-white transition-colors border border-white/60"
         >
           {toast.action.label}
         </button>
@@ -94,7 +94,7 @@ export function ToastItem({ toast, onDismiss, index }: ToastProps) {
           setIsExiting(true)
           setTimeout(onDismiss, 300)
         }}
-        className="flex-shrink-0 p-1 rounded hover:bg-white/20 active:bg-white/30 transition-colors"
+        className="flex-shrink-0 p-1 rounded hover:bg-white/70 transition-colors"
         aria-label="Dismiss"
       >
         <svg
@@ -173,7 +173,7 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Simp
 
   return (
     <div
-      className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg text-white text-center z-50 transition-opacity duration-300 ${
+      className={`fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-xl border soft-shadow text-center z-50 transition-opacity duration-300 ${
         typeStyles[type]
       } ${isVisible ? 'opacity-100' : 'opacity-0'}`}
     >

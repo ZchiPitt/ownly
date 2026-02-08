@@ -269,10 +269,10 @@ function getIconColorClasses(type: NotificationType): string {
     case 'warranty_expiring':
       return 'text-purple-600 bg-purple-100';
     case 'custom_reminder':
-      return 'text-teal-600 bg-teal-100';
+      return 'text-[#6f5f52] bg-teal-100';
     case 'system':
     default:
-      return 'text-gray-600 bg-gray-100';
+      return 'text-[#8d7b6d] bg-[#f3ece4]';
   }
 }
 
@@ -281,14 +281,14 @@ function getIconColorClasses(type: NotificationType): string {
  */
 function NotificationItemSkeleton() {
   return (
-    <div className="flex items-start gap-3 p-4 bg-white border-b border-gray-100">
+    <div className="flex items-start gap-3 p-4 bg-white border-b border-[#f5ebe0]/50">
       {/* Icon skeleton */}
-      <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse flex-shrink-0" />
+      <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse flex-shrink-0" />
       {/* Content skeleton */}
       <div className="flex-1 min-w-0">
-        <div className="w-3/4 h-4 bg-gray-200 rounded animate-pulse mb-2" />
-        <div className="w-full h-3 bg-gray-200 rounded animate-pulse mb-2" />
-        <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
+        <div className="w-3/4 h-4 bg-[#efe6dc] rounded animate-pulse mb-2" />
+        <div className="w-full h-3 bg-[#efe6dc] rounded animate-pulse mb-2" />
+        <div className="w-20 h-3 bg-[#efe6dc] rounded animate-pulse" />
       </div>
     </div>
   );
@@ -446,7 +446,7 @@ function NotificationItem({ notification, onClick, onDelete }: NotificationItemP
       {/* Notification content */}
       <div
         onClick={handleContentClick}
-        className={`relative flex items-start gap-3 p-4 text-left transition-transform border-b border-gray-100 cursor-pointer ${
+        className={`relative flex items-start gap-3 p-4 text-left transition-transform border-b border-[#f5ebe0]/50 cursor-pointer ${
           isUnread ? 'bg-blue-50/50' : 'bg-white'
         } ${!isSwiping ? 'transition-transform duration-200' : ''}`}
         style={{ transform: `translateX(${swipeOffset}px)` }}
@@ -464,7 +464,7 @@ function NotificationItem({ notification, onClick, onDelete }: NotificationItemP
             {/* Title */}
             <p
               className={`text-sm flex-1 ${
-                isUnread ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'
+                isUnread ? 'font-semibold text-[#4a3f35]' : 'font-medium text-[#6f5f52]'
               }`}
             >
               {notification.title}
@@ -478,13 +478,13 @@ function NotificationItem({ notification, onClick, onDelete }: NotificationItemP
 
           {/* Body preview */}
           {notification.body && (
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+            <p className="text-sm text-[#8d7b6d] mt-0.5 line-clamp-2">
               {notification.body}
             </p>
           )}
 
           {/* Relative time */}
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-xs text-[#b9a99b] mt-1">
             {getRelativeTime(notification.created_at)}
           </p>
         </div>
@@ -502,10 +502,10 @@ function EmptyState({ tab }: { tab: NotificationTab }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
       {/* Icon with muted styling */}
-      <div className="w-16 h-16 mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+      <div className="w-16 h-16 mb-4 bg-[#f3ece4] rounded-full flex items-center justify-center">
         {isMessages ? (
           <svg
-            className="w-8 h-8 text-gray-400"
+            className="w-8 h-8 text-[#b9a99b]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -519,7 +519,7 @@ function EmptyState({ tab }: { tab: NotificationTab }) {
           </svg>
         ) : (
           <svg
-            className="w-8 h-8 text-gray-400"
+            className="w-8 h-8 text-[#b9a99b]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -534,10 +534,10 @@ function EmptyState({ tab }: { tab: NotificationTab }) {
         )}
       </div>
 
-      <h2 className="text-lg font-medium text-gray-900 mb-1">
+      <h2 className="text-lg font-medium text-[#4a3f35] mb-1">
         {isMessages ? 'No messages yet' : 'No reminders yet'}
       </h2>
-      <p className="text-sm text-gray-500 max-w-xs">
+      <p className="text-sm text-[#8d7b6d] max-w-xs">
         {isMessages
           ? 'When you receive messages from buyers or sellers, they\'ll appear here.'
           : 'When you receive reminders about your items, they\'ll appear here.'}
@@ -805,15 +805,15 @@ export function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-full bg-gray-50">
+    <div className="min-h-full bg-[#fdf8f2]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
             {/* Back button */}
             <button
               onClick={handleBack}
-              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-100 transition-colors"
+              className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center text-[#8d7b6d] hover:bg-[#f3ece4] transition-colors"
               aria-label="Go back"
             >
               <svg
@@ -832,7 +832,7 @@ export function NotificationsPage() {
             </button>
 
             {/* Title */}
-            <h1 className="text-xl font-semibold text-gray-900">Notifications</h1>
+            <h1 className="text-xl font-semibold text-[#4a3f35]">Notifications</h1>
           </div>
 
           {/* Mark All Read link */}
@@ -847,13 +847,13 @@ export function NotificationsPage() {
         </div>
 
         {/* Tab Bar */}
-        <div className="flex border-t border-gray-100">
+        <div className="flex border-t border-[#f5ebe0]/50">
           <button
             onClick={() => handleTabChange('messages')}
             className={`flex-1 relative py-3 text-sm font-medium transition-colors ${
               activeTab === 'messages'
                 ? 'text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-[#8d7b6d] hover:text-[#6f5f52]'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
@@ -873,7 +873,7 @@ export function NotificationsPage() {
             className={`flex-1 relative py-3 text-sm font-medium transition-colors ${
               activeTab === 'reminders'
                 ? 'text-blue-600'
-                : 'text-gray-500 hover:text-gray-700'
+                : 'text-[#8d7b6d] hover:text-[#6f5f52]'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
@@ -899,32 +899,32 @@ export function NotificationsPage() {
         )}
 
         <div className="px-4 pt-4">
-          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+          <div className="bg-white border border-[#f5ebe0]/60 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-900">Pending Reviews</h2>
-              {isLoadingReviews && <span className="text-xs text-gray-500">Loading...</span>}
+              <h2 className="text-sm font-semibold text-[#4a3f35]">Pending Reviews</h2>
+              {isLoadingReviews && <span className="text-xs text-[#8d7b6d]">Loading...</span>}
             </div>
             {pendingReviews.length === 0 ? (
-              <p className="text-sm text-gray-500">You're all caught up.</p>
+              <p className="text-sm text-[#8d7b6d]">You're all caught up.</p>
             ) : (
               <div className="space-y-3">
                 {pendingReviews.map((review) => (
                   <div
                     key={review.id}
-                    className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3"
+                    className="border border-[#f5ebe0]/60 rounded-xl p-4 flex items-start justify-between gap-3"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-[#4a3f35]">
                         How was your experience with {review.other_user.display_name ?? 'this member'}?
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[#8d7b6d] mt-1">
                         {review.listing.item_name ?? 'Transaction'}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleOpenReview(review)}
-                      className="px-3 py-2 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                      className="px-3 py-2 text-xs font-semibold text-[#4a3f35] bg-[#e3ead3] border border-[#d7e1c2] rounded-lg hover:bg-teal-100 transition-colors"
                     >
                       Leave Review
                     </button>
@@ -962,10 +962,10 @@ export function NotificationsPage() {
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">
+            <h2 className="text-lg font-medium text-[#4a3f35] mb-1">
               Couldn't load notifications
             </h2>
-            <p className="text-sm text-gray-500">{error}</p>
+            <p className="text-sm text-[#8d7b6d]">{error}</p>
           </div>
         ) : filteredNotifications.length === 0 ? (
           // Empty state
@@ -980,8 +980,8 @@ export function NotificationsPage() {
               return (
                 <div key={group}>
                   {/* Section header */}
-                  <div className="sticky top-[116px] z-[5] px-4 py-2 bg-gray-100 border-b border-gray-200">
-                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  <div className="sticky top-[116px] z-[5] px-4 py-2 bg-[#f3ece4] border-b border-[#f5ebe0]/60">
+                    <h3 className="text-xs font-semibold text-[#8d7b6d] uppercase tracking-wider">
                       {DATE_GROUP_LABELS[group]}
                     </h3>
                   </div>

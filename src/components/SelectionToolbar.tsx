@@ -114,10 +114,10 @@ export function SelectionToolbar({
             <button
               onClick={handleSoldClick}
               disabled={!hasSelection || isProcessing}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-black text-sm transition-all ${
                 hasSelection && !isProcessing
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700 active:bg-emerald-800'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-[#dce7c8] text-[#4f6342] border border-[#cddcb1] hover:bg-[#d3e0bc] hover:border-[#bfd09e] active:bg-[#c7d6ae]'
+                  : 'bg-[#f3ece4] text-[#b9a99b] border border-[#ece2d8] cursor-not-allowed'
               }`}
             >
               {isProcessing ? (
@@ -137,10 +137,10 @@ export function SelectionToolbar({
             <button
               onClick={handleDeleteClick}
               disabled={!hasSelection || isProcessing}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-medium text-sm transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl font-black text-sm transition-all ${
                 hasSelection && !isProcessing
-                  ? 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800'
-                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  ? 'bg-[#f6ddd3] text-[#8e4b34] border border-[#edcabd] hover:bg-[#f2d3c6] hover:border-[#e6b8a8] active:bg-[#eac4b2]'
+                  : 'bg-[#f3ece4] text-[#b9a99b] border border-[#ece2d8] cursor-not-allowed'
               }`}
             >
               {isProcessing ? (

@@ -3,7 +3,6 @@
  */
 
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useExpiringItems } from '@/hooks/useExpiringItems';
 import { useRecentItems } from '@/hooks/useRecentItems';
@@ -14,37 +13,7 @@ import { HeroSection } from '@/components/dashboard/HeroSection';
 import { MarketplaceSection } from '@/components/dashboard/MarketplaceSection';
 import { AgentSection } from '@/components/dashboard/AgentSection';
 
-/**
- * Search bar component - clickable to navigate to search page
- */
-function SearchBar({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors text-left"
-    >
-      {/* Search icon */}
-      <svg
-        className="w-5 h-5 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-        />
-      </svg>
-      <span className="text-gray-500 text-sm">Search items, tags, locations...</span>
-    </button>
-  );
-}
-
 export function DashboardPage() {
-  const navigate = useNavigate();
-  // const navigate = useNavigate(); // Removed unused
   const { stats, refetch: refetchStats } = useDashboardStats();
   const { refetch: refetchExpiring } = useExpiringItems(7, 3);
   const { items: recentItems, isLoading: recentLoading, refetch: refetchRecent } = useRecentItems(5);
@@ -91,9 +60,6 @@ export function DashboardPage() {
         isPulling={isPulling}
         isRefreshing={isRefreshing}
       />
-
-      {/* Search Bar */}
-      <SearchBar onClick={() => navigate('/search')} />
 
       {/* Hero Section: View/Edit/Find my belongings */}
       <HeroSection

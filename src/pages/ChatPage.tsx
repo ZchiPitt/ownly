@@ -183,27 +183,27 @@ export function ChatPage() {
     || (user ? 'Chat' : 'Conversation');
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#fdf8f2] flex flex-col">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gray-200 overflow-hidden flex items-center justify-center">
+            <div className="w-10 h-10 rounded-lg bg-[#efe6dc] overflow-hidden flex items-center justify-center">
               {listingPhoto ? (
                 <img src={listingPhoto} alt={listingName} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xs text-gray-500">No photo</span>
+                <span className="text-xs text-[#8d7b6d]">No photo</span>
               )}
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">{listingName}</p>
-              <p className="text-xs text-gray-500">{headerSubtitle}</p>
+              <p className="text-sm font-semibold text-[#4a3f35]">{listingName}</p>
+              <p className="text-xs text-[#8d7b6d]">{headerSubtitle}</p>
             </div>
           </div>
         </div>
@@ -211,9 +211,9 @@ export function ChatPage() {
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {isLoading ? (
-          <div className="text-center text-gray-500">Loading messages...</div>
+          <div className="text-center text-[#8d7b6d]">Loading messages...</div>
         ) : messages.length === 0 ? (
-          <div className="text-center text-gray-500">No messages yet</div>
+          <div className="text-center text-[#8d7b6d]">No messages yet</div>
         ) : (
           messages.map((message) => (
             <div
@@ -224,14 +224,14 @@ export function ChatPage() {
                 <div
                   className={`px-4 py-2 rounded-2xl text-sm shadow-sm ${
                     message.is_mine
-                      ? 'bg-teal-600 text-white rounded-br-md'
-                      : 'bg-gray-200 text-gray-900 rounded-bl-md'
+                      ? 'bg-[#8d7b6d] text-white rounded-br-md'
+                      : 'bg-[#efe6dc] text-[#4a3f35] rounded-bl-md'
                   }`}
                 >
                   {message.content}
                 </div>
                 <div
-                  className={`text-[11px] mt-1 ${message.is_mine ? 'text-right text-teal-200' : 'text-left text-gray-400'}`}
+                  className={`text-[11px] mt-1 ${message.is_mine ? 'text-right text-teal-200' : 'text-left text-[#b9a99b]'}`}
                 >
                   {formatMessageTime(message.created_at)}
                 </div>
@@ -242,7 +242,7 @@ export function ChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-gray-200 bg-white px-4 py-3">
+      <div className="border-t border-[#f5ebe0]/60 bg-white px-4 py-3">
         <div className="flex items-end gap-3">
           <textarea
             value={draft}
@@ -250,18 +250,18 @@ export function ChatPage() {
             onKeyDown={handleKeyDown}
             placeholder="Type your message..."
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="flex-1 resize-none rounded-xl border border-[#f5ebe0]/60 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#d6ccc2]"
           />
           <button
             onClick={handleSend}
             disabled={!draft.trim() || isSending || !receiverId}
-            className="px-4 py-2 rounded-xl bg-teal-600 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-teal-700 transition-colors"
+            className="px-4 py-2 rounded-xl bg-[#8d7b6d] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#7c6b5d] transition-colors"
           >
             Send
           </button>
         </div>
         {!receiverId && (
-          <p className="text-xs text-gray-400 mt-2">
+          <p className="text-xs text-[#b9a99b] mt-2">
             You can start messaging once the other party is available.
           </p>
         )}

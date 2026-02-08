@@ -31,9 +31,9 @@ function MessageListItem({ conversation, onClick }: { conversation: Conversation
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 p-4 text-left bg-white hover:bg-gray-50 transition-colors border-b border-gray-100"
+      className="w-full flex items-center gap-3 p-4 text-left bg-white/90 hover:bg-white transition-all border border-[#f5ebe0]/60 rounded-2xl soft-shadow"
     >
-      <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <div className="w-12 h-12 rounded-full bg-[#f3ece4] flex items-center justify-center flex-shrink-0 overflow-hidden">
         {other_user.avatar_url ? (
           <img
             src={other_user.avatar_url}
@@ -41,7 +41,7 @@ function MessageListItem({ conversation, onClick }: { conversation: Conversation
             className="w-full h-full object-cover"
           />
         ) : (
-          <span className="text-sm font-semibold text-gray-600">
+          <span className="text-sm font-semibold text-[#6f5f52]">
             {other_user.display_name?.slice(0, 1).toUpperCase()}
           </span>
         )}
@@ -50,26 +50,26 @@ function MessageListItem({ conversation, onClick }: { conversation: Conversation
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 truncate">
+            <p className="text-sm font-black text-[#4a3f35] truncate">
               {other_user.display_name || 'User'}
             </p>
-            <p className="text-xs text-gray-500 truncate">
+            <p className="text-xs text-[#8d7b6d] truncate uppercase tracking-wide">
               {listing.item_name}
             </p>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-[#b9a99b]">
               {formatTimestamp(last_message.created_at)}
             </span>
             {unread_count > 0 && (
-              <span className="min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold text-white bg-teal-600 rounded-full text-center">
+              <span className="min-w-[20px] px-1.5 py-0.5 text-[10px] font-semibold text-[#4a3f35] bg-[#fbc4ab] rounded-full text-center">
                 {unread_count}
               </span>
             )}
           </div>
         </div>
 
-        <p className="text-sm text-gray-500 mt-1 truncate">
+        <p className="text-sm text-[#8d7b6d] mt-1 truncate">
           {last_message.is_mine ? 'You: ' : ''}{last_message.content}
         </p>
       </div>
@@ -103,28 +103,30 @@ export function MessagesPage() {
   }, [loadConversations]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+    <div className="min-h-screen bg-[#fdf8f2]">
+      <div className="glass border-b border-[#f5ebe0]/40 px-4 py-4 sticky top-0 z-10">
+        <div className="max-w-3xl mx-auto">
+          <h1 className="text-3xl font-black tracking-tight text-[#4a3f35]">Messages</h1>
+        </div>
       </div>
 
-      <div className="pb-20">
+      <div className="pb-20 max-w-3xl mx-auto px-4 pt-4">
         {isLoading ? (
-          <div className="p-6 text-center text-gray-500">Loading messages...</div>
+          <div className="p-6 text-center text-[#8d7b6d] bg-white/80 rounded-[1.5rem] border border-[#f5ebe0]/60 soft-shadow">Loading messages...</div>
         ) : conversations.length === 0 ? (
-          <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-            <div className="w-16 h-16 mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex flex-col items-center justify-center px-6 py-16 text-center bg-white/80 rounded-[2rem] border border-[#f5ebe0]/60 soft-shadow">
+            <div className="w-16 h-16 mb-4 bg-[#f3ece4] rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#b9a99b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.77 9.77 0 01-4-.8L3 20l1.2-4A7.76 7.76 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">No messages yet</h3>
-            <p className="text-sm text-gray-500 mt-2">
+            <h3 className="text-lg font-black text-[#4a3f35]">No messages yet</h3>
+            <p className="text-sm text-[#8d7b6d] mt-2">
               When you message a seller, your conversations will appear here.
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div className="space-y-3">
             {conversations.map((conversation) => (
               <MessageListItem
                 key={conversation.id}

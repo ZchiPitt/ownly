@@ -106,35 +106,35 @@ export function SellerProfilePage() {
   const recentReviews = useMemo(() => reviews.slice(0, 5), [reviews]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#fdf8f2]">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Seller Profile</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Seller Profile</h1>
           <div className="w-10" />
         </div>
       </div>
 
       <div className="p-6">
         {isLoading ? (
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center animate-pulse">
-            <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-4" />
-            <div className="h-4 w-40 bg-gray-200 rounded mx-auto mb-2" />
-            <div className="h-3 w-24 bg-gray-200 rounded mx-auto" />
+          <div className="bg-white border border-[#f5ebe0]/60 rounded-2xl p-6 text-center animate-pulse">
+            <div className="w-16 h-16 rounded-full bg-[#efe6dc] mx-auto mb-4" />
+            <div className="h-4 w-40 bg-[#efe6dc] rounded mx-auto mb-2" />
+            <div className="h-3 w-24 bg-[#efe6dc] rounded mx-auto" />
           </div>
         ) : loadError || !profile ? (
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
-            <p className="text-sm text-gray-600">{loadError ?? 'Seller not found.'}</p>
+          <div className="bg-white border border-[#f5ebe0]/60 rounded-2xl p-6 text-center">
+            <p className="text-sm text-[#8d7b6d]">{loadError ?? 'Seller not found.'}</p>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+            <div className="bg-white border border-[#f5ebe0]/60 rounded-2xl p-6">
               <div className="flex items-center gap-4">
                 {profile.avatar_url ? (
                   <img
@@ -143,24 +143,24 @@ export function SellerProfilePage() {
                     className="w-16 h-16 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-semibold">
+                  <div className="w-16 h-16 rounded-full bg-[#efe6dc] flex items-center justify-center text-[#8d7b6d] text-xl font-semibold">
                     {(profile.display_name ?? 'S').slice(0, 1).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1">
-                  <p className="text-lg font-semibold text-gray-900">
+                  <p className="text-lg font-semibold text-[#4a3f35]">
                     {profile.display_name ?? 'Seller'}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <StarRating rating={ratingValue} />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-[#6f5f52]">
                       {ratingLabel}
                     </span>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-[#8d7b6d]">
                       ({reviewCount} review{reviewCount === 1 ? '' : 's'})
                     </span>
                   </div>
-                  <div className="text-xs text-gray-500 mt-2">
+                  <div className="text-xs text-[#8d7b6d] mt-2">
                     {profile.location_city && <span>📍 {profile.location_city}</span>}
                     {profile.location_city && <span className="mx-1">·</span>}
                     <span>Member since {new Date(profile.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
@@ -168,38 +168,38 @@ export function SellerProfilePage() {
                 </div>
               </div>
               {profile.bio && (
-                <p className="text-sm text-gray-600 mt-4">{profile.bio}</p>
+                <p className="text-sm text-[#8d7b6d] mt-4">{profile.bio}</p>
               )}
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-2xl p-6">
+            <div className="bg-white border border-[#f5ebe0]/60 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-900">
+                <h2 className="text-sm font-semibold text-[#4a3f35]">
                   Reviews ({reviewCount})
                 </h2>
               </div>
               {recentReviews.length === 0 ? (
-                <p className="text-sm text-gray-500">No reviews yet.</p>
+                <p className="text-sm text-[#8d7b6d]">No reviews yet.</p>
               ) : (
                 <div className="space-y-3">
                   {recentReviews.map((review) => (
                     <div
                       key={review.id}
-                      className="border border-gray-200 rounded-xl p-4"
+                      className="border border-[#f5ebe0]/60 rounded-xl p-4"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-[#4a3f35]">
                             {review.reviewer?.display_name ?? 'Member'}
                           </p>
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-[#8d7b6d]">
                           {formatRelativeTime(review.created_at)}
                         </span>
                       </div>
                       {review.comment && (
-                        <p className="text-sm text-gray-600 mt-2">
+                        <p className="text-sm text-[#8d7b6d] mt-2">
                           &quot;{review.comment}&quot;
                         </p>
                       )}

@@ -199,13 +199,13 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#fdf8f2]">
       {/* Header */}
       <div className="flex-shrink-0 pt-12 pb-6 px-6">
-        <h1 className="text-3xl font-bold text-gray-900 text-center">
+        <h1 className="text-3xl font-bold text-[#4a3f35] text-center">
           Welcome Back
         </h1>
-        <p className="mt-2 text-gray-600 text-center">
+        <p className="mt-2 text-[#8d7b6d] text-center">
           Log in to manage your inventory
         </p>
       </div>
@@ -217,7 +217,7 @@ export function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-[#6f5f52] mb-1"
             >
               Email
             </label>
@@ -230,7 +230,7 @@ export function LoginPage() {
               onChange={handleInputChange('email')}
               onBlur={handleBlur('email')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.email && errors.email
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.email && errors.email
                   ? 'border-red-500'
                   : 'border-gray-300'
                 }`}
@@ -245,13 +245,13 @@ export function LoginPage() {
             <div className="flex items-center justify-between mb-1">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
+                className="block text-sm font-medium text-[#6f5f52]"
               >
                 Password
               </label>
               <Link
                 to="/reset-password"
-                className="text-sm text-teal-600 hover:text-teal-700"
+                className="text-sm text-[#6f5f52] hover:text-[#4a3f35]"
               >
                 Forgot password?
               </Link>
@@ -265,7 +265,7 @@ export function LoginPage() {
               onChange={handleInputChange('password')}
               onBlur={handleBlur('password')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${touched.password && errors.password
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.password && errors.password
                   ? 'border-red-500'
                   : 'border-gray-300'
                 }`}
@@ -287,7 +287,7 @@ export function LoginPage() {
             type="submit"
             disabled={!isFormValid || isSubmitting || isGoogleLoading}
             className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center ${isFormValid && !isSubmitting && !isGoogleLoading
-                ? 'bg-teal-600 hover:bg-teal-700 active:bg-teal-800'
+                ? 'bg-[#8d7b6d] hover:bg-[#7c6b5d] active:bg-teal-800'
                 : 'bg-gray-300 cursor-not-allowed'
               }`}
           >
@@ -325,7 +325,7 @@ export function LoginPage() {
         {/* Divider */}
         <div className="flex items-center my-6">
           <div className="flex-1 border-t border-gray-300"></div>
-          <span className="px-4 text-sm text-gray-500">or continue with</span>
+          <span className="px-4 text-sm text-[#8d7b6d]">or continue with</span>
           <div className="flex-1 border-t border-gray-300"></div>
         </div>
 
@@ -334,12 +334,12 @@ export function LoginPage() {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isSubmitting || isGoogleLoading}
-          className="w-full py-3 px-4 rounded-xl font-semibold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 px-4 rounded-xl font-semibold border border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGoogleLoading ? (
             <>
               <svg
-                className="animate-spin h-5 w-5 text-gray-500"
+                className="animate-spin h-5 w-5 text-[#8d7b6d]"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -389,11 +389,11 @@ export function LoginPage() {
 
       {/* Footer */}
       <div className="flex-shrink-0 py-8 px-6">
-        <p className="text-center text-gray-600">
+        <p className="text-center text-[#8d7b6d]">
           Don't have an account?{' '}
           <Link
             to="/signup"
-            className="text-teal-600 font-semibold hover:text-teal-700"
+            className="text-[#6f5f52] font-semibold hover:text-[#4a3f35]"
           >
             Sign up
           </Link>

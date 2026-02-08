@@ -93,15 +93,15 @@ function StatusBadge({ status }: { status: ListingStatus }) {
   const styles = (() => {
     switch (status) {
       case 'active':
-        return 'bg-green-100 text-green-700';
+        return 'bg-[#e3ead3] text-[#516241]';
       case 'sold':
-        return 'bg-blue-100 text-blue-700';
+        return 'bg-[#d6ccc2] text-[#5c4c3f]';
       case 'removed':
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-[#f3ece4] text-[#8d7b6d]';
       case 'reserved':
-        return 'bg-amber-100 text-amber-700';
+        return 'bg-[#fcf6bd] text-[#826a2a]';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-[#f3ece4] text-[#8d7b6d]';
     }
   })();
 
@@ -117,13 +117,13 @@ function StatusBadge({ status }: { status: ListingStatus }) {
 
 function ListingSkeleton() {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+    <div className="bg-white/90 border border-[#f5ebe0]/60 rounded-2xl p-4 animate-pulse soft-shadow">
       <div className="flex gap-4">
-        <div className="w-16 h-16 bg-gray-200 rounded-lg" />
+        <div className="w-16 h-16 bg-[#efe6dc] rounded-xl" />
         <div className="flex-1 space-y-2">
-          <div className="h-4 w-1/2 bg-gray-200 rounded" />
-          <div className="h-3 w-1/3 bg-gray-200 rounded" />
-          <div className="h-3 w-2/3 bg-gray-200 rounded" />
+          <div className="h-4 w-1/2 bg-[#efe6dc] rounded" />
+          <div className="h-3 w-1/3 bg-[#efe6dc] rounded" />
+          <div className="h-3 w-2/3 bg-[#efe6dc] rounded" />
         </div>
       </div>
     </div>
@@ -248,7 +248,7 @@ export function MyListingsPage() {
 
   return (
     <div
-      className="min-h-full bg-gray-50"
+      className="min-h-full bg-[#fdf8f2]"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -262,23 +262,25 @@ export function MyListingsPage() {
         />
 
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">My Listings</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage prices, status, and details</p>
+        <div className="glass border-b border-[#f5ebe0]/40 px-4 py-4">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl font-black tracking-tight text-[#4a3f35]">My Listings</h1>
+            <p className="text-sm text-[#8d7b6d] mt-1">Manage prices, status, and details</p>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="flex gap-2 px-4 py-3 overflow-x-auto">
+        <div className="bg-white/70 border-b border-[#f5ebe0]/50 backdrop-blur">
+          <div className="flex gap-2 px-4 py-3 overflow-x-auto max-w-3xl mx-auto">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-teal-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-[#d6ccc2] text-[#4a3f35]'
+                    : 'bg-[#f3ece4] text-[#8d7b6d] hover:bg-[#eadfd4]'
                 }`}
               >
                 {tab.label}
@@ -288,33 +290,33 @@ export function MyListingsPage() {
         </div>
 
         {/* Content */}
-        <div className="p-4 space-y-4">
-          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <div className="p-4 space-y-4 max-w-3xl mx-auto">
+          <div className="bg-white/90 border border-[#f5ebe0]/60 rounded-[1.75rem] p-4 soft-shadow">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-900">Pending Reviews</h2>
-              {isLoadingReviews && <span className="text-xs text-gray-500">Loading...</span>}
+              <h2 className="text-sm font-black uppercase tracking-[0.15em] text-[#4a3f35]">Pending Reviews</h2>
+              {isLoadingReviews && <span className="text-xs text-[#8d7b6d]">Loading...</span>}
             </div>
             {pendingReviews.length === 0 ? (
-              <p className="text-sm text-gray-500">You're all caught up.</p>
+              <p className="text-sm text-[#8d7b6d]">You're all caught up.</p>
             ) : (
               <div className="space-y-3">
                 {pendingReviews.map((review) => (
                   <div
                     key={review.id}
-                    className="border border-gray-200 rounded-xl p-4 flex items-start justify-between gap-3"
+                    className="border border-[#f5ebe0]/60 rounded-2xl p-4 flex items-start justify-between gap-3 bg-[#fdf8f2]/70"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-[#4a3f35]">
                         How was your experience with {review.other_user.display_name ?? 'this member'}?
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-[#8d7b6d] mt-1">
                         {review.listing.item_name ?? 'Transaction'}
                       </p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleOpenReview(review)}
-                      className="px-3 py-2 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                      className="px-3 py-2 text-xs font-semibold text-[#4a3f35] bg-[#e3ead3] border border-[#d7e1c2] rounded-xl hover:bg-[#d8e2c6] transition-colors"
                     >
                       Leave Review
                     </button>
@@ -331,12 +333,12 @@ export function MyListingsPage() {
               <ListingSkeleton />
             </>
           ) : listings.length === 0 ? (
-            <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
-              <h2 className="text-lg font-semibold text-gray-900">No listings yet.</h2>
-              <p className="text-sm text-gray-500 mt-1">List your first item!</p>
+            <div className="bg-white/90 border border-[#f5ebe0]/60 rounded-[1.75rem] p-8 text-center soft-shadow">
+              <h2 className="text-lg font-black text-[#4a3f35]">No listings yet.</h2>
+              <p className="text-sm text-[#8d7b6d] mt-1">List your first item!</p>
               <Link
                 to="/inventory"
-                className="inline-flex items-center justify-center mt-4 px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-medium hover:bg-teal-700"
+                className="inline-flex items-center justify-center mt-4 px-4 py-2 rounded-xl bg-[#d6ccc2] text-[#4a3f35] text-sm font-semibold hover:bg-[#c8b9ab]"
               >
                 Go to inventory
               </Link>
@@ -348,36 +350,36 @@ export function MyListingsPage() {
                   key={listing.id}
                   type="button"
                   onClick={() => handleListingClick(listing)}
-                  className="w-full text-left bg-white border border-gray-200 rounded-xl p-4 hover:border-gray-300 transition-colors"
+                  className="w-full text-left bg-white/90 border border-[#f5ebe0]/60 rounded-2xl p-4 hover:bg-white transition-all soft-shadow"
                 >
                   <div className="flex gap-4">
                     <img
                       src={listing.item.thumbnail_url || listing.item.photo_url}
                       alt={listing.item.name || 'Listing'}
-                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                      className="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-[#f3ece4]"
                     />
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <p className="text-sm text-gray-900 font-semibold">
+                          <p className="text-sm text-[#4a3f35] font-black">
                             {listing.item.name || 'Untitled item'}
                           </p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="text-sm text-[#6f5f52] mt-1">
                             {formatPrice(listing.price, listing.price_type)}
-                            <span className="text-gray-400"> · </span>
+                            <span className="text-[#b9a99b]"> · </span>
                             {getPriceTypeLabel(listing.price_type)}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <StatusBadge status={listing.status} />
                           {(pendingCounts[listing.id] ?? 0) > 0 && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-[#fcf6bd] text-[#826a2a]">
                               {pendingCounts[listing.id]} pending
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-[#8d7b6d] mt-2">
                         <div className="flex items-center gap-1">
                           <EyeIcon />
                           <span>{listing.view_count}</span>
@@ -395,7 +397,7 @@ export function MyListingsPage() {
           )}
 
           {loadError && (
-            <div className="text-sm text-red-600">{loadError}</div>
+            <div className="text-sm text-[#a04d2b] bg-[#f8e1d7] border border-[#f0d0be] rounded-xl px-3 py-2">{loadError}</div>
           )}
         </div>
       </div>

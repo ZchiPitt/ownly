@@ -308,7 +308,7 @@ export function ItemEditorPage() {
   // Show loading/redirect state if no state
   if (!state || !state.imageUrl) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fdf8f2] flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
       </div>
     );
@@ -318,12 +318,12 @@ export function ItemEditorPage() {
     <>
       <div className="fixed inset-0 z-[100] bg-white flex flex-col">
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-gray-200 bg-white">
+        <div className="flex-shrink-0 border-b border-[#f5ebe0]/60 bg-white">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={handleBack}
               disabled={isSaving}
-              className="p-2 -ml-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+              className="p-2 -ml-2 text-[#8d7b6d] hover:text-[#4a3f35] disabled:opacity-50"
               aria-label="Go back"
             >
               <svg
@@ -340,7 +340,7 @@ export function ItemEditorPage() {
                 />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-[#4a3f35]">
               {state.detectedItem ? 'Edit Item Details' : 'Add Item Details'}
             </h1>
             {/* Cancel queue button (when in queue mode) */}
@@ -361,15 +361,15 @@ export function ItemEditorPage() {
           {state.totalItems > 1 && (
             <div className="px-4 pb-3">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-[#6f5f52]">
                   Adding item {state.currentItemIndex} of {state.totalItems}
                 </span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-[#8d7b6d]">
                   {state.itemQueue.length} remaining
                 </span>
               </div>
               {/* Progress bar */}
-              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#efe6dc] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-blue-600 rounded-full transition-all duration-300"
                   style={{
@@ -387,7 +387,7 @@ export function ItemEditorPage() {
                         ? 'bg-green-500'
                         : i === state.currentItemIndex - 1
                           ? 'bg-blue-600'
-                          : 'bg-gray-200'
+                          : 'bg-[#efe6dc]'
                     }`}
                   />
                 ))}
@@ -415,7 +415,7 @@ export function ItemEditorPage() {
         </div>
 
         {/* Save Button - Sticky at bottom */}
-        <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200 bg-white safe-area-pb">
+        <div className="flex-shrink-0 px-4 py-4 border-t border-[#f5ebe0]/60 bg-white safe-area-pb">
           <button
             type="button"
             disabled={isSaving}
@@ -497,10 +497,10 @@ export function ItemEditorPage() {
           {/* Success message - varies by type */}
           {successType === 'queue-continue' ? (
             <>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#4a3f35] mb-2">
                 Item {savedItemsCount} Saved!
               </h2>
-              <p className="text-gray-500 text-center mb-6">
+              <p className="text-[#8d7b6d] text-center mb-6">
                 Loading next item...
               </p>
               {/* Progress indicator */}
@@ -513,7 +513,7 @@ export function ItemEditorPage() {
                         ? 'bg-green-500'
                         : i === savedItemsCount
                           ? 'bg-blue-500 animate-pulse'
-                          : 'bg-gray-200'
+                          : 'bg-[#efe6dc]'
                     }`}
                   />
                 ))}
@@ -521,17 +521,17 @@ export function ItemEditorPage() {
               {/* Cancel queue button */}
               <button
                 onClick={handleCancelQueue}
-                className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                className="text-sm text-[#8d7b6d] hover:text-[#6f5f52] transition-colors"
               >
                 Stop and go to inventory
               </button>
             </>
           ) : successType === 'queue-complete' ? (
             <>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#4a3f35] mb-2">
                 {savedItemsCount} Items Added!
               </h2>
-              <p className="text-gray-500 text-center mb-8">
+              <p className="text-[#8d7b6d] text-center mb-8">
                 All items have been added to your inventory successfully.
               </p>
               {/* Action buttons for queue complete */}
@@ -557,7 +557,7 @@ export function ItemEditorPage() {
                 </button>
                 <button
                   onClick={handleAddAnother}
-                  className="w-full py-3.5 px-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-gray-300 hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -576,16 +576,16 @@ export function ItemEditorPage() {
                 </button>
               </div>
               {/* Auto-dismiss timer */}
-              <p className="mt-6 text-sm text-gray-400">
+              <p className="mt-6 text-sm text-[#b9a99b]">
                 Redirecting to inventory in 5 seconds...
               </p>
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#4a3f35] mb-2">
                 Item Saved!
               </h2>
-              <p className="text-gray-500 text-center mb-8">
+              <p className="text-[#8d7b6d] text-center mb-8">
                 Your item has been added to your inventory.
               </p>
 
@@ -613,7 +613,7 @@ export function ItemEditorPage() {
 
                 <button
                   onClick={handleViewItem}
-                  className="w-full py-3.5 px-4 bg-white text-gray-700 font-medium rounded-xl border border-gray-300 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-gray-300 hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -639,7 +639,7 @@ export function ItemEditorPage() {
 
                 <button
                   onClick={handleGoToInventory}
-                  className="w-full py-3.5 px-4 text-gray-500 font-medium hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 text-[#8d7b6d] font-medium hover:text-[#6f5f52] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -659,7 +659,7 @@ export function ItemEditorPage() {
               </div>
 
               {/* Auto-dismiss timer */}
-              <p className="mt-6 text-sm text-gray-400">
+              <p className="mt-6 text-sm text-[#b9a99b]">
                 Redirecting to inventory in 5 seconds...
               </p>
             </>

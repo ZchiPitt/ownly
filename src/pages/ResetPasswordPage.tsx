@@ -118,13 +118,13 @@ export function ResetPasswordPage() {
   // Initial form view
   if (!isSubmitted) {
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-[#fdf8f2]">
         {/* Header */}
         <div className="flex-shrink-0 pt-12 pb-6 px-6">
-          <h1 className="text-3xl font-bold text-gray-900 text-center">
+          <h1 className="text-3xl font-bold text-[#4a3f35] text-center">
             Reset Password
           </h1>
-          <p className="mt-2 text-gray-600 text-center">
+          <p className="mt-2 text-[#8d7b6d] text-center">
             Enter your registered email address and we'll send you a link to reset your password.
           </p>
         </div>
@@ -136,7 +136,7 @@ export function ResetPasswordPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-sm font-medium text-[#6f5f52] mb-1"
               >
                 Email
               </label>
@@ -150,7 +150,7 @@ export function ResetPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => setTouched(true)}
                 disabled={isSubmitting}
-                className={`w-full px-4 py-3 rounded-lg border bg-white text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                   touched && emailError
                     ? 'border-red-500'
                     : 'border-gray-300'
@@ -205,7 +205,7 @@ export function ResetPasswordPage() {
 
         {/* Footer */}
         <div className="flex-shrink-0 py-8 px-6">
-          <p className="text-center text-gray-600">
+          <p className="text-center text-[#8d7b6d]">
             Remember your password?{' '}
             <Link
               to="/login"
@@ -230,7 +230,7 @@ export function ResetPasswordPage() {
 
   // Success view (after submission)
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-[#fdf8f2]">
       {/* Header with success icon */}
       <div className="flex-shrink-0 pt-12 pb-6 px-6">
         {/* Success checkmark icon */}
@@ -249,13 +249,13 @@ export function ResetPasswordPage() {
             />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 text-center">
+        <h1 className="text-3xl font-bold text-[#4a3f35] text-center">
           Check Your Email
         </h1>
-        <p className="mt-4 text-gray-600 text-center">
-          Reset email sent to <span className="font-medium text-gray-900">{maskedEmail}</span>
+        <p className="mt-4 text-[#8d7b6d] text-center">
+          Reset email sent to <span className="font-medium text-[#4a3f35]">{maskedEmail}</span>
         </p>
-        <p className="mt-2 text-sm text-gray-500 text-center">
+        <p className="mt-2 text-sm text-[#8d7b6d] text-center">
           If an account exists with this email, you'll receive a password reset link shortly.
         </p>
       </div>
@@ -263,7 +263,7 @@ export function ResetPasswordPage() {
       {/* Resend section */}
       <div className="flex-1 px-6 pt-4">
         <div className="text-center">
-          <p className="text-gray-600 mb-4">
+          <p className="text-[#8d7b6d] mb-4">
             Didn't receive the email?
           </p>
           <button
@@ -271,7 +271,7 @@ export function ResetPasswordPage() {
             disabled={cooldownRemaining > 0 || isSubmitting}
             className={`py-3 px-6 rounded-lg font-semibold transition-colors ${
               cooldownRemaining > 0 || isSubmitting
-                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? 'bg-[#efe6dc] text-[#8d7b6d] cursor-not-allowed'
                 : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
             }`}
           >
@@ -308,11 +308,11 @@ export function ResetPasswordPage() {
         </div>
 
         {/* Tips section */}
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-          <p className="text-sm text-gray-700 font-medium mb-2">
+        <div className="mt-8 p-4 bg-[#f3ece4] rounded-lg">
+          <p className="text-sm text-[#6f5f52] font-medium mb-2">
             Tips if you don't see the email:
           </p>
-          <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
+          <ul className="text-sm text-[#8d7b6d] space-y-1 list-disc list-inside">
             <li>Check your spam or junk folder</li>
             <li>Make sure you entered the correct email</li>
             <li>Wait a few minutes for the email to arrive</li>
@@ -322,7 +322,7 @@ export function ResetPasswordPage() {
 
       {/* Footer */}
       <div className="flex-shrink-0 py-8 px-6">
-        <p className="text-center text-gray-600">
+        <p className="text-center text-[#8d7b6d]">
           <Link
             to="/login"
             className="text-blue-600 font-semibold hover:text-blue-700"

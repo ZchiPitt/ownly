@@ -114,6 +114,16 @@ export function SettingsPage() {
   const [editingName, setEditingName] = useState(user?.user_metadata?.display_name || '');
   const [isSavingName, setIsSavingName] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const isMarketplaceNotificationsEnabled = settings
+    ? [
+      settings.marketplace_new_inquiry_enabled,
+      settings.marketplace_purchase_request_enabled,
+      settings.marketplace_request_accepted_enabled,
+      settings.marketplace_request_declined_enabled,
+      settings.marketplace_new_message_enabled,
+      settings.marketplace_transaction_complete_enabled,
+    ].some((value) => value === true)
+    : true;
 
   useEffect(() => {
     const loadUnreadCount = async () => {
@@ -215,6 +225,25 @@ export function SettingsPage() {
     }
   };
 
+  const handleMarketplaceNotificationsToggle = async (enabled: boolean) => {
+    if (isUpdating || isRequestingPush) return;
+
+    setIsUpdating(true);
+    const updateSuccess = await updateSettings({
+      marketplace_new_inquiry_enabled: enabled,
+      marketplace_purchase_request_enabled: enabled,
+      marketplace_request_accepted_enabled: enabled,
+      marketplace_request_declined_enabled: enabled,
+      marketplace_new_message_enabled: enabled,
+      marketplace_transaction_complete_enabled: enabled,
+    });
+    setIsUpdating(false);
+
+    if (!updateSuccess) {
+      error('Failed to update marketplace notifications');
+    }
+  };
+
   const handleCancelLogout = () => {
     setShowLogoutDialog(false);
   };
@@ -281,25 +310,25 @@ export function SettingsPage() {
   };
 
   return (
-    <div className="min-h-full">
+    <div className="min-h-full p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+      <div>
+        <h1 className="text-3xl font-black text-[#4a3f35] tracking-tight">Settings</h1>
       </div>
 
       {/* Settings Content */}
-      <div className="p-4 space-y-6">
+      <div className="space-y-6">
         {/* Account Section - US-088 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Account
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-2 soft-shadow border border-[#f5ebe0]/40 overflow-hidden">
             {/* User Profile Info */}
-            <div className="px-4 py-4 border-b border-gray-100">
+            <div className="px-4 py-6 border-b border-[#f5ebe0]/40">
               <div className="flex items-center space-x-4">
                 {/* User Avatar or Initials */}
-                <div className="h-14 w-14 rounded-full bg-teal-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                <div className="h-14 w-14 rounded-full bg-[#d6ccc2] flex items-center justify-center text-[#4a3f35] font-bold text-lg shadow-sm">
                   {user?.user_metadata?.display_name
                     ? user.user_metadata.display_name
                       .split(' ')
@@ -311,11 +340,11 @@ export function SettingsPage() {
                 </div>
                 <div className="flex-1">
                   {/* Display Name */}
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-base font-semibold text-[#4a3f35]">
                     {user?.user_metadata?.display_name || 'User'}
                   </h3>
                   {/* Email */}
-                  <p className="text-sm text-gray-500">{user?.email}</p>
+                  <p className="text-sm text-[#8d7b6d]">{user?.email}</p>
                 </div>
               </div>
             </div>
@@ -323,13 +352,13 @@ export function SettingsPage() {
             {/* Edit Profile Button */}
             <button
               onClick={handleEditProfileClick}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between border-b border-gray-100 last:border-b-0"
+              className="w-full px-4 py-4 text-left hover:bg-[#f8e1d7]/30 transition-colors flex items-center justify-between border-b border-[#f5ebe0]/40 last:border-b-0"
             >
               <div>
-                <p className="text-base font-medium text-gray-900">Edit Profile</p>
-                <p className="text-sm text-gray-500">Change your display name</p>
+                <p className="text-base font-medium text-[#4a3f35]">Edit Profile</p>
+                <p className="text-sm text-[#8d7b6d]">Change your display name</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#b9a99b]" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
@@ -337,124 +366,141 @@ export function SettingsPage() {
             {/* Change Password Link */}
             <button
               onClick={() => navigate('/reset-password')}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center justify-between"
+              className="w-full px-4 py-4 text-left hover:bg-[#f8e1d7]/30 transition-colors flex items-center justify-between"
             >
               <div>
-                <p className="text-base font-medium text-gray-900">Change Password</p>
-                <p className="text-sm text-gray-500">Reset your password</p>
+                <p className="text-base font-medium text-[#4a3f35]">Change Password</p>
+                <p className="text-sm text-[#8d7b6d]">Reset your password</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#b9a99b]" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
               </svg>
             </button>
 
-            {/* My Listings Link */}
+            {/* Subscription Link */}
             <Link
-              to="/my-listings"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              to="/plans"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
-                <TagIcon className="w-5 h-5 text-gray-500" />
-                <span className="text-base font-medium text-gray-900">My Listings</span>
+                <svg className="w-5 h-5 text-[#8d7b6d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z" />
+                </svg>
+                <div>
+                  <span className="text-base font-medium text-[#4a3f35]">Subscription</span>
+                  <p className="text-sm text-[#8d7b6d]">Manage plans and billing</p>
+                </div>
               </div>
-              <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+              <ChevronRightIcon className="w-5 h-5 text-[#b9a99b]" />
+            </Link>
+
+            {/* My Listings Link */}
+            <Link
+              to="/marketplace/my-listings"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
+            >
+              <div className="flex items-center gap-3">
+                <TagIcon className="w-5 h-5 text-[#8d7b6d]" />
+                <span className="text-base font-medium text-[#4a3f35]">My Listings</span>
+              </div>
+              <ChevronRightIcon className="w-5 h-5 text-[#b9a99b]" />
             </Link>
 
             {/* Saved Listings Link */}
             <Link
-              to="/saved-listings"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              to="/marketplace/saved"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
-                <HeartIcon className="w-5 h-5 text-gray-500" />
-                <span className="text-base font-medium text-gray-900">Saved Listings</span>
+                <HeartIcon className="w-5 h-5 text-[#8d7b6d]" />
+                <span className="text-base font-medium text-[#4a3f35]">Saved Listings</span>
               </div>
-              <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+              <ChevronRightIcon className="w-5 h-5 text-[#b9a99b]" />
             </Link>
 
             {/* Messages Link */}
             <Link
               to="/messages"
-              className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors border-t border-gray-100"
+              className="flex items-center justify-between px-4 py-4 hover:bg-[#f8e1d7]/30 transition-colors border-t border-[#f5ebe0]/40"
             >
               <div className="flex items-center gap-3">
-                <ChatBubbleIcon className="w-5 h-5 text-gray-500" />
-                <span className="text-base font-medium text-gray-900">Messages</span>
+                <ChatBubbleIcon className="w-5 h-5 text-[#8d7b6d]" />
+                <span className="text-base font-medium text-[#4a3f35]">Messages</span>
               </div>
               <div className="flex items-center gap-2">
                 {unreadCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-teal-600 text-white text-xs font-semibold">
+                  <span className="px-2 py-0.5 rounded-full bg-[#fbc4ab] text-[#4a3f35] text-xs font-black">
                     {unreadCount}
                   </span>
                 )}
-                <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+                <ChevronRightIcon className="w-5 h-5 text-[#b9a99b]" />
               </div>
             </Link>
           </div>
         </section>
-        {/* Subscription Section - US-089 */}
-        <section>           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">             Subscription           </h2>           <Link to="/plans" className="flex items-center justify-between gap-3 px-4 py-3 bg-white rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition-colors"           >             <div className="min-w-0 flex-1">               <span className="text-base font-medium text-gray-900">Plans</span>               <p className="text-sm text-gray-500 mt-0.5">Subscribe for more features</p>             </div>             <ChevronRightIcon className="w-5 h-5 shrink-0 text-gray-400" />           </Link>         </section>
-        {/* Reminders & Notifications Section - US-064 */}
+
+        {/* Notifications Section */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Reminders & Notifications
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
+            Notifications
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Loading state */}
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
+            
+            {/* Notification type: Reminders */}
+            <div className="px-4 py-4 border-b border-[#f5ebe0]/50 bg-[#eef3e6]">
+              <p className="text-[11px] font-black text-[#8d7b6d] uppercase tracking-[0.24em]">
+                Reminders
+              </p>
+            </div>
             {isLoadingSettings ? (
-              <div className="px-4 py-4 flex items-center justify-center">
+              <div className="px-4 py-4 flex items-center justify-center border-b border-[#f5ebe0]/40">
                 <div className="animate-pulse flex items-center gap-2">
-                  <div className="w-4 h-4 bg-gray-200 rounded-full" />
-                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                  <div className="w-4 h-4 bg-[#efe6dc] rounded-full" />
+                  <div className="h-4 w-32 bg-[#efe6dc] rounded" />
                 </div>
               </div>
             ) : (
               <>
-                {/* Master Toggle: Enable Reminders */}
-                <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                   <div className="flex-1">
-                    <label htmlFor="reminder-toggle" className="text-base font-medium text-gray-900">
+                    <label htmlFor="reminder-master-toggle" className="text-base font-medium text-[#4a3f35]">
                       Enable Reminders
                     </label>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Get notified about unused and expiring items
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">
+                      Turn on reminder notifications for your items
                     </p>
                   </div>
                   <button
-                    id="reminder-toggle"
+                    id="reminder-master-toggle"
                     role="switch"
                     aria-checked={settings?.reminder_enabled ?? true}
                     onClick={() => handleSettingChange('reminder_enabled', !settings?.reminder_enabled)}
                     disabled={isUpdating}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                      }`}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
-                        }`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'}`}
                     />
                   </button>
                 </div>
 
-                {/* Sub-options (shown when reminders enabled) */}
                 {settings?.reminder_enabled && (
-                  <div className="pl-8">
-                    {/* Unused Item Reminder Threshold */}
-                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                  <>
+                    <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                       <div className="flex-1 pr-4">
-                        <label htmlFor="unused-threshold" className="text-sm font-medium text-gray-900">
+                        <label htmlFor="unused-threshold-inline" className="text-base font-medium text-[#4a3f35]">
                           Unused Item Reminder
                         </label>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-[#8d7b6d] mt-0.5">
                           Remind about items not viewed for
                         </p>
                       </div>
                       <select
-                        id="unused-threshold"
+                        id="unused-threshold-inline"
                         value={settings?.reminder_threshold_days ?? 90}
                         onChange={(e) => handleSettingChange('reminder_threshold_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-32 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-32 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {UNUSED_THRESHOLD_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -463,23 +509,21 @@ export function SettingsPage() {
                         ))}
                       </select>
                     </div>
-
-                    {/* Expiration Reminder Days */}
-                    <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
+                    <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40">
                       <div className="flex-1 pr-4">
-                        <label htmlFor="expiration-reminder" className="text-sm font-medium text-gray-900">
+                        <label htmlFor="expiration-reminder-inline" className="text-base font-medium text-[#4a3f35]">
                           Expiration Reminder
                         </label>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm text-[#8d7b6d] mt-0.5">
                           Remind before items expire
                         </p>
                       </div>
                       <select
-                        id="expiration-reminder"
+                        id="expiration-reminder-inline"
                         value={settings?.expiration_reminder_days ?? 7}
                         onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
                         disabled={isUpdating}
-                        className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="block w-40 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {EXPIRATION_REMINDER_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>
@@ -488,471 +532,24 @@ export function SettingsPage() {
                         ))}
                       </select>
                     </div>
-
-                    {/* Push Notifications Toggle */}
-                    <div className="px-4 py-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <label htmlFor="push-toggle" className="text-sm font-medium text-gray-900">
-                            Push Notifications
-                          </label>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            Receive reminders on your device
-                          </p>
-                        </div>
-                        {isPushSupported ? (
-                          <button
-                            id="push-toggle"
-                            role="switch"
-                            aria-checked={settings?.push_notifications_enabled ?? false}
-                            onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
-                            disabled={isUpdating || isRequestingPush}
-                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.push_notifications_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                              }`}
-                          >
-                            {isRequestingPush ? (
-                              <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
-                                <svg
-                                  className="animate-spin h-3 w-3 text-teal-500"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  />
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  />
-                                </svg>
-                              </span>
-                            ) : (
-                              <span
-                                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.push_notifications_enabled ? 'translate-x-5' : 'translate-x-0'
-                                  }`}
-                              />
-                            )}
-                          </button>
-                        ) : (
-                          <span className="text-xs text-gray-400">Not supported</span>
-                        )}
-                      </div>
-
-                      {/* Notifications blocked message */}
-                      {isPushSupported && permissionState === 'denied' && (
-                        <div className="mt-2 p-2 bg-amber-50 rounded-md border border-amber-200">
-                          <p className="text-xs text-amber-800">
-                            Notifications blocked in browser settings.{' '}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                error('Go to browser settings > Site Settings > Notifications to enable');
-                              }}
-                              className="font-medium underline hover:no-underline"
-                            >
-                              How to enable
-                            </button>
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  </>
                 )}
               </>
             )}
-          </div>
-        </section>
 
-        {/* Push Notifications Section - US-013 */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Notifications
-          </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Master Toggle: Enable Push Notifications */}
-            <div className="px-4 py-4 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <label htmlFor="push-notifications-master" className="text-base font-medium text-gray-900">
-                    Enable Push Notifications
-                  </label>
-                  <p className="text-sm text-gray-500 mt-0.5">
-                    Receive alerts on your device for messages and reminders
-                  </p>
-                </div>
-                {isPushSupported ? (
-                  <button
-                    id="push-notifications-master"
-                    role="switch"
-                    aria-checked={settings?.push_notifications_enabled ?? false}
-                    onClick={() => handleSettingChange('push_notifications_enabled', !settings?.push_notifications_enabled)}
-                    disabled={isUpdating || isRequestingPush || permissionState === 'denied'}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      settings?.push_notifications_enabled && permissionState === 'granted' ? 'bg-teal-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    {isRequestingPush ? (
-                      <span className="pointer-events-none inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow">
-                        <svg
-                          className="animate-spin h-3 w-3 text-teal-500"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                      </span>
-                    ) : (
-                      <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          settings?.push_notifications_enabled && permissionState === 'granted' ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    )}
-                  </button>
-                ) : (
-                  <span className="text-sm text-gray-400">Not supported</span>
-                )}
-              </div>
-            </div>
-
-            {/* Notification Sound Toggle - shown when push notifications are enabled */}
-            {settings?.push_notifications_enabled && permissionState === 'granted' && (
-              <div className="px-4 py-4 border-b border-gray-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <label htmlFor="notification-sound-toggle" className="text-base font-medium text-gray-900">
-                      Notification Sound
-                    </label>
-                    <p className="text-sm text-gray-500 mt-0.5">
-                      Play sound and vibrate for notifications
-                    </p>
-                  </div>
-                  <button
-                    id="notification-sound-toggle"
-                    role="switch"
-                    aria-checked={settings?.notification_sound_enabled ?? true}
-                    onClick={() => handleSettingChange('notification_sound_enabled', !settings?.notification_sound_enabled)}
-                    disabled={isUpdating}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                      settings?.notification_sound_enabled ?? true ? 'bg-teal-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        settings?.notification_sound_enabled ?? true ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Permission Status Display */}
-            {isPushSupported && (
-              <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <div className="flex items-center gap-2">
-                  {permissionState === 'granted' && (
-                    <>
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-green-700">Notifications allowed</span>
-                    </>
-                  )}
-                  {permissionState === 'denied' && (
-                    <>
-                      <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-red-700">Notifications blocked</span>
-                    </>
-                  )}
-                  {permissionState === 'default' && (
-                    <>
-                      <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                      <span className="text-sm text-gray-600">Permission not yet requested</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Instructions for denied state */}
-            {isPushSupported && permissionState === 'denied' && (
-              <div className="px-4 py-4 bg-amber-50">
-                <div className="flex gap-3">
-                  <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-amber-800">
-                      Notifications are blocked in your browser
-                    </p>
-                    <p className="text-sm text-amber-700 mt-1">
-                      To enable notifications, you'll need to update your browser settings:
-                    </p>
-                    <ul className="text-sm text-amber-700 mt-2 space-y-1 list-disc list-inside">
-                      <li><strong>Chrome:</strong> Click the lock icon in the address bar → Site settings → Notifications → Allow</li>
-                      <li><strong>Safari:</strong> Safari menu → Settings → Websites → Notifications → Allow for this site</li>
-                      <li><strong>Firefox:</strong> Click the lock icon → Clear permissions → Reload page</li>
-                      <li><strong>Mobile:</strong> Go to device Settings → find this app → enable Notifications</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Not supported message */}
-            {!isPushSupported && (
-              <div className="px-4 py-3 bg-gray-50">
-                <p className="text-sm text-gray-500">
-                  Push notifications are not supported in this browser. Try using Chrome, Firefox, Safari, or Edge on a supported device.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* Marketplace Notifications Section - US-MKT-009 */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Marketplace Notifications
-          </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  New inquiries
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Get notified when someone asks about your listing
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_new_inquiry_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_new_inquiry_enabled',
-                  !settings?.marketplace_new_inquiry_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_inquiry_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_inquiry_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Purchase requests
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Alerts when someone wants to buy your item
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_purchase_request_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_purchase_request_enabled',
-                  !settings?.marketplace_purchase_request_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_purchase_request_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_purchase_request_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Request accepted
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Updates when a seller accepts your request
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_request_accepted_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_request_accepted_enabled',
-                  !settings?.marketplace_request_accepted_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_accepted_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_accepted_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Request declined
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Updates when a seller declines your request
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_request_declined_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_request_declined_enabled',
-                  !settings?.marketplace_request_declined_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_declined_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_declined_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  New messages
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Alerts when you receive a marketplace message
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_new_message_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_new_message_enabled',
-                  !settings?.marketplace_new_message_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_message_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_message_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            <div className="px-4 py-4 flex items-center justify-between">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Transaction complete
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Confirmation when a transaction is completed
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.marketplace_transaction_complete_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'marketplace_transaction_complete_enabled',
-                  !settings?.marketplace_transaction_complete_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_transaction_complete_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_transaction_complete_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Item Reminders Section - US-014, US-015 */}
-        <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Item Reminders
-          </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-            {/* Expiry reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Expiry reminders
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Get notified before items expire
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.reminder_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'reminder_enabled',
-                  !settings?.reminder_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.reminder_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            {/* Expiry reminder timing dropdown - US-015 */}
             {settings?.reminder_enabled && (
-              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
+              <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fcfefc]">
                 <div className="flex-1 pr-4">
-                  <label htmlFor="expiry-reminder-timing" className="text-sm font-medium text-gray-700">
+                  <label htmlFor="expiry-reminder-timing-inline" className="text-base font-medium text-[#4a3f35]">
                     Expiry reminder timing
                   </label>
                 </div>
                 <select
-                  id="expiry-reminder-timing"
+                  id="expiry-reminder-timing-inline"
                   value={settings?.expiration_reminder_days ?? 7}
                   onChange={(e) => handleSettingChange('expiration_reminder_days', parseInt(e.target.value, 10))}
                   disabled={isUpdating}
-                  className="block w-36 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="block w-36 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {EXPIRY_REMINDER_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -963,112 +560,230 @@ export function SettingsPage() {
               </div>
             )}
 
-            {/* Warranty reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between border-b border-gray-100">
-              <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Warranty reminders
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Alerts before warranty expires
-                </p>
-              </div>
-              <button
-                role="switch"
-                aria-checked={settings?.warranty_reminder_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'warranty_reminder_enabled',
-                  !settings?.warranty_reminder_enabled
-                )}
-                disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.warranty_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.warranty_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
-              </button>
-            </div>
-
-            {/* Warranty reminder timing dropdown - US-015 */}
-            {settings?.warranty_reminder_enabled && (
-              <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100 bg-gray-50">
-                <div className="flex-1 pr-4">
-                  <label htmlFor="warranty-reminder-timing" className="text-sm font-medium text-gray-700">
-                    Warranty reminder timing
-                  </label>
+            {settings?.reminder_enabled && (
+              <>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fcfefc]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">
+                      Warranty reminders
+                    </label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">
+                      Alerts before warranty expires
+                    </p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.warranty_reminder_enabled ?? true}
+                    onClick={() => handleSettingChange(
+                      'warranty_reminder_enabled',
+                      !settings?.warranty_reminder_enabled
+                    )}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.warranty_reminder_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'
+                      }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.warranty_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </button>
                 </div>
-                <select
-                  id="warranty-reminder-timing"
-                  value={settings?.warranty_reminder_days ?? 30}
-                  onChange={(e) => handleSettingChange('warranty_reminder_days', parseInt(e.target.value, 10))}
-                  disabled={isUpdating}
-                  className="block w-40 rounded-md border border-gray-300 bg-white py-2 px-3 text-sm text-gray-900 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-1 focus:ring-teal-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {WARRANTY_REMINDER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+
+                {settings?.warranty_reminder_enabled && (
+                  <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fcfefc]">
+                    <div className="flex-1 pr-4">
+                      <label htmlFor="warranty-reminder-timing-inline" className="text-sm font-medium text-[#4a3f35]">
+                        Warranty reminder timing
+                      </label>
+                    </div>
+                    <select
+                      id="warranty-reminder-timing-inline"
+                      value={settings?.warranty_reminder_days ?? 30}
+                      onChange={(e) => handleSettingChange('warranty_reminder_days', parseInt(e.target.value, 10))}
+                      disabled={isUpdating}
+                      className="block w-40 rounded-lg border border-[#f5ebe0] bg-white py-2 px-3 text-sm text-[#4a3f35] shadow-sm focus:border-[#d6ccc2] focus:outline-none focus:ring-1 focus:ring-[#d6ccc2] disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {WARRANTY_REMINDER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fcfefc]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">
+                      Custom reminders
+                    </label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">
+                      Notifications for your scheduled reminders
+                    </p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.custom_reminder_enabled ?? true}
+                    onClick={() => handleSettingChange(
+                      'custom_reminder_enabled',
+                      !settings?.custom_reminder_enabled
+                    )}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.custom_reminder_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'
+                      }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.custom_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                    />
+                  </button>
+                </div>
+              </>
             )}
 
-            {/* Custom reminders toggle */}
-            <div className="px-4 py-4 flex items-center justify-between">
+            {/* Notification type: Marketplace Notifications */}
+            <div className="px-4 py-4 border-b border-[#f5ebe0]/50 bg-[#fff1e8]">
+              <p className="text-[11px] font-black text-[#b57f66] uppercase tracking-[0.24em]">
+                Marketplace Notifications
+              </p>
+            </div>
+            <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
               <div className="flex-1">
-                <label className="text-base font-medium text-gray-900">
-                  Custom reminders
-                </label>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Notifications for your scheduled reminders
-                </p>
+                <label className="text-base font-medium text-[#4a3f35]">Enable Marketplace Notifications</label>
+                <p className="text-sm text-[#8d7b6d] mt-0.5">Turn on notifications for marketplace activity</p>
               </div>
               <button
                 role="switch"
-                aria-checked={settings?.custom_reminder_enabled ?? true}
-                onClick={() => handleSettingChange(
-                  'custom_reminder_enabled',
-                  !settings?.custom_reminder_enabled
-                )}
+                aria-checked={isMarketplaceNotificationsEnabled}
+                onClick={() => handleMarketplaceNotificationsToggle(!isMarketplaceNotificationsEnabled)}
                 disabled={isUpdating}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.custom_reminder_enabled ? 'bg-teal-600' : 'bg-gray-200'
-                  }`}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${isMarketplaceNotificationsEnabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
               >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.custom_reminder_enabled ? 'translate-x-5' : 'translate-x-0'
-                    }`}
-                />
+                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isMarketplaceNotificationsEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
               </button>
             </div>
+            {isMarketplaceNotificationsEnabled && (
+              <>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">New inquiries</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Get notified when someone asks about your listing</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_new_inquiry_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_new_inquiry_enabled', !settings?.marketplace_new_inquiry_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_inquiry_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_inquiry_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">Purchase requests</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Alerts when someone wants to buy your item</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_purchase_request_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_purchase_request_enabled', !settings?.marketplace_purchase_request_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_purchase_request_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_purchase_request_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">Request accepted</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Updates when a seller accepts your request</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_request_accepted_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_request_accepted_enabled', !settings?.marketplace_request_accepted_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_accepted_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_accepted_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">Request declined</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Updates when a seller declines your request</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_request_declined_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_request_declined_enabled', !settings?.marketplace_request_declined_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_request_declined_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_request_declined_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">New messages</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Alerts when you receive a marketplace message</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_new_message_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_new_message_enabled', !settings?.marketplace_new_message_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_new_message_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_new_message_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+                <div className="px-4 py-4 flex items-center justify-between border-b border-[#f5ebe0]/40 bg-[#fffaf6]">
+                  <div className="flex-1">
+                    <label className="text-base font-medium text-[#4a3f35]">Transaction complete</label>
+                    <p className="text-sm text-[#8d7b6d] mt-0.5">Confirmation when a transaction is completed</p>
+                  </div>
+                  <button
+                    role="switch"
+                    aria-checked={settings?.marketplace_transaction_complete_enabled ?? true}
+                    onClick={() => handleSettingChange('marketplace_transaction_complete_enabled', !settings?.marketplace_transaction_complete_enabled)}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${settings?.marketplace_transaction_complete_enabled ? 'bg-[#b8cda0]' : 'bg-[#d6ccc2]'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings?.marketplace_transaction_complete_enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </section>
 
         {/* Display Section - US-087 */}
+        {/* Display Section - US-087 */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <h2 className="text-xl font-black text-[#4a3f35] tracking-tight mb-4 px-2">
             Display
           </h2>
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-6 soft-shadow border border-[#f5ebe0]/40">
             {/* Default View Toggle - Gallery / List */}
-            <div className="px-4 py-4">
+            <div className="py-2">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <label className="text-sm font-medium text-gray-900">
+                  <label className="text-base font-medium text-[#4a3f35]">
                     Default View
                   </label>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-sm text-[#8d7b6d] mt-0.5">
                     Choose how your inventory displays by default
                   </p>
                 </div>
-                <div className="flex bg-gray-100 rounded-lg p-1">
+                <div className="flex bg-[#f5ebe0]/40 rounded-lg p-1">
                   <button
                     onClick={() => handleSettingChange('default_view', 'gallery')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'gallery'
-                      ? 'bg-white text-teal-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-[#4a3f35] shadow-sm'
+                      : 'text-[#8d7b6d] hover:text-[#4a3f35]'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Gallery
@@ -1077,8 +792,8 @@ export function SettingsPage() {
                     onClick={() => handleSettingChange('default_view', 'list')}
                     disabled={isUpdating}
                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${settings?.default_view === 'list'
-                      ? 'bg-white text-teal-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-white text-[#4a3f35] shadow-sm'
+                      : 'text-[#8d7b6d] hover:text-[#4a3f35]'
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     List
@@ -1091,10 +806,10 @@ export function SettingsPage() {
 
         {/* Logout Section */}
         <section className="pb-24">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-white rounded-[2.5rem] p-2 soft-shadow border border-[#f5ebe0]/40 overflow-hidden">
             <button
               onClick={handleLogoutClick}
-              className="w-full px-4 py-4 text-left hover:bg-red-50 transition-colors flex items-center gap-3"
+              className="w-full px-6 py-6 text-left hover:bg-red-50 transition-colors flex items-center gap-3"
             >
               <svg
                 className="w-5 h-5 text-red-500"
@@ -1126,10 +841,10 @@ export function SettingsPage() {
 
           {/* Dialog */}
           <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-2">
+            <h2 className="text-xl font-bold text-[#4a3f35] mb-2">
               Log out?
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-[#8d7b6d] mb-6">
               Are you sure you want to log out?
             </p>
 
@@ -1137,7 +852,7 @@ export function SettingsPage() {
               <button
                 onClick={handleCancelLogout}
                 disabled={isLoggingOut}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-[#6f5f52] font-medium hover:bg-[#fdf8f2] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
@@ -1183,17 +898,17 @@ export function SettingsPage() {
       {showEditProfile && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/50" onClick={handleCancelEditProfile} />
+          <div className="absolute inset-0 bg-[#4a3f35]/35 backdrop-blur-[1px]" onClick={handleCancelEditProfile} />
 
           {/* Dialog */}
-          <div className="relative bg-white rounded-xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="relative bg-[#fdf8f2] rounded-[2rem] soft-shadow border border-[#f5ebe0]/70 max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+            <h2 className="text-2xl font-black tracking-tight text-[#4a3f35] mb-5">
               Edit Profile
             </h2>
 
             {/* Display Name Input */}
-            <div className="mb-4">
-              <label htmlFor="display-name" className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="mb-5">
+              <label htmlFor="display-name" className="block text-sm font-black uppercase tracking-[0.12em] text-[#6f5f52] mb-2">
                 Display Name
               </label>
               <input
@@ -1203,21 +918,21 @@ export function SettingsPage() {
                 onChange={(e) => setEditingName(e.target.value)}
                 maxLength={50}
                 placeholder="Enter your display name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-4 py-3 border border-[#e8dbcf] rounded-xl bg-white/90 text-[#4a3f35] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] soft-shadow"
                 autoFocus
               />
-              <p className="text-xs text-gray-500 mt-1">Up to 50 characters</p>
+              <p className="text-xs text-[#8d7b6d] mt-1">Up to 50 characters</p>
             </div>
 
             {/* Email (read-only) */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-black uppercase tracking-[0.12em] text-[#6f5f52] mb-2">
                 Email Address
               </label>
-              <p className="px-3 py-2 bg-gray-50 rounded-md text-gray-900 border border-gray-200">
+              <p className="px-4 py-3 bg-[#f3ece4] rounded-xl text-[#6f5f52] border border-[#e8dbcf]">
                 {user?.email}
               </p>
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-[#8d7b6d] mt-1">Email cannot be changed</p>
             </div>
 
             {/* Buttons */}
@@ -1225,19 +940,19 @@ export function SettingsPage() {
               <button
                 onClick={handleCancelEditProfile}
                 disabled={isSavingName}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-[#d8cfc4] bg-white/80 text-[#4a3f35] font-semibold hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveEditProfile}
                 disabled={isSavingName || !editingName.trim() || editingName.trim().length > 50}
-                className="flex-1 py-2.5 px-4 rounded-lg bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#d6ccc2] text-[#4a3f35] font-semibold hover:bg-[#c8b9ab] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
               >
                 {isSavingName ? (
                   <>
                     <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-[#4a3f35]"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"

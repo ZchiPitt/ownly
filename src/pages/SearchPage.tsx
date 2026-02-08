@@ -245,25 +245,25 @@ function VoiceSearchOverlay({ isListening, transcript, onCancel }: VoiceSearchOv
       </div>
 
       {/* Listening text */}
-      <p className="text-xl font-medium text-gray-900 mb-4">
+      <p className="text-xl font-medium text-[#4a3f35] mb-4">
         Listening...
       </p>
 
       {/* Real-time transcription */}
       <div className="min-h-[48px] w-full max-w-sm">
         {transcript ? (
-          <p className="text-lg text-gray-700 text-center px-4 py-2 bg-gray-100 rounded-lg">
+          <p className="text-lg text-[#6f5f52] text-center px-4 py-2 bg-[#f3ece4] rounded-lg">
             {transcript}
           </p>
         ) : (
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-[#8d7b6d] text-center">
             Speak now...
           </p>
         )}
       </div>
 
       {/* Cancel hint */}
-      <p className="mt-8 text-sm text-gray-400">
+      <p className="mt-8 text-sm text-[#b9a99b]">
         Tap anywhere to cancel
       </p>
     </div>
@@ -393,24 +393,24 @@ function RecentSearchItem({ query, onClick, onRemove }: RecentSearchItemProps) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        className={`flex items-center px-4 py-3 bg-white cursor-pointer hover:bg-gray-50 transition-all duration-200 group ${swiped ? '-translate-x-20' : deltaX > 0 ? '' : ''
+        className={`flex items-center px-4 py-3 bg-white cursor-pointer hover:bg-[#fdf8f2] transition-all duration-200 group ${swiped ? '-translate-x-20' : deltaX > 0 ? '' : ''
           }`}
         style={{
           transform: deltaX > 0 ? `translateX(-${deltaX}px)` : swiped ? 'translateX(-80px)' : 'translateX(0)',
         }}
       >
         {/* Clock icon */}
-        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400">
+        <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-[#b9a99b]">
           <ClockIcon />
         </div>
 
         {/* Query text */}
-        <span className="flex-1 text-gray-900 truncate">{query}</span>
+        <span className="flex-1 text-[#4a3f35] truncate">{query}</span>
 
         {/* Delete button on hover (desktop) */}
         <button
           onClick={onRemove}
-          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-red-50 hidden md:flex"
+          className="flex-shrink-0 w-8 h-8 flex items-center justify-center text-[#b9a99b] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-red-50 hidden md:flex"
           aria-label="Remove from recent searches"
         >
           <ClearIcon />
@@ -442,16 +442,16 @@ function ClearConfirmDialog({ isOpen, onConfirm, onCancel }: ClearConfirmDialogP
 
       {/* Dialog */}
       <div className="relative bg-white rounded-2xl shadow-xl mx-4 w-full max-w-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
+        <h2 className="text-lg font-semibold text-[#4a3f35] mb-2">
           Clear all recent searches?
         </h2>
-        <p className="text-sm text-gray-600 mb-6">
+        <p className="text-sm text-[#8d7b6d] mb-6">
           This action cannot be undone.
         </p>
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors"
           >
             Cancel
           </button>
@@ -474,6 +474,7 @@ export function SearchPage() {
 
   // Get initial query from URL
   const initialQuery = searchParams.get('q') || '';
+  const shouldAutoStartVoice = searchParams.get('voice') === '1';
 
   // Recent searches hook
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches();
@@ -498,6 +499,7 @@ export function SearchPage() {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const noSpeechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoVoiceStartedRef = useRef(false);
 
   // State for showing clear all confirmation dialog
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -670,6 +672,18 @@ export function SearchPage() {
     }
   };
 
+  // Optionally auto-start voice search when navigating with ?voice=1
+  useEffect(() => {
+    if (!shouldAutoStartVoice || autoVoiceStartedRef.current || !speechSupported) return;
+    autoVoiceStartedRef.current = true;
+
+    const timer = setTimeout(() => {
+      handleMicrophoneClick();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [shouldAutoStartVoice, speechSupported, handleMicrophoneClick]);
+
   /**
    * Cancel voice search when overlay is tapped
    */
@@ -735,8 +749,8 @@ export function SearchPage() {
     if (!hasSearched || !query) return null;
 
     return (
-      <div className="px-4 py-2 bg-gray-50 border-b border-gray-200">
-        <p className="text-sm text-gray-600">
+      <div className="px-4 py-2 bg-[#fdf8f2] border-b border-[#f5ebe0]/60">
+        <p className="text-sm text-[#8d7b6d]">
           <span className="font-medium">{results.length}</span>
           {' '}result{results.length !== 1 ? 's' : ''} for "{query}"
         </p>
@@ -771,13 +785,13 @@ export function SearchPage() {
               />
             </svg>
           </div>
-          <p className="text-gray-900 font-medium mb-1">Search failed</p>
-          <p className="text-sm text-gray-500 text-center mb-4">
+          <p className="text-[#4a3f35] font-medium mb-1">Search failed</p>
+          <p className="text-sm text-[#8d7b6d] text-center mb-4">
             Something went wrong. Please try again.
           </p>
           <button
             onClick={() => setQuery(query)} // Trigger re-search
-            className="px-4 py-2 bg-teal-500 text-white rounded-lg font-medium hover:bg-teal-600 transition-colors"
+            className="px-4 py-2 bg-[#e3ead3]0 text-white rounded-lg font-medium hover:bg-[#8d7b6d] transition-colors"
           >
             Retry
           </button>
@@ -793,7 +807,7 @@ export function SearchPage() {
           <div className="py-4">
             {/* Header with Clear All */}
             <div className="flex items-center justify-between px-4 py-2">
-              <div className="flex items-center gap-2 text-gray-600">
+              <div className="flex items-center gap-2 text-[#8d7b6d]">
                 <ClockIcon />
                 <span className="font-medium text-sm">Recent Searches</span>
               </div>
@@ -822,7 +836,7 @@ export function SearchPage() {
 
       // No recent searches - show empty state
       return (
-        <div className="text-center text-gray-500 mt-12 px-4">
+        <div className="text-center text-[#8d7b6d] mt-12 px-4">
           <div className="flex justify-center mb-4">
             <ClockIcon />
           </div>
@@ -836,8 +850,8 @@ export function SearchPage() {
       return (
         <div className="flex flex-col items-center justify-center px-4 py-12">
           <NoResultsIcon />
-          <p className="text-gray-900 font-medium mt-4 mb-1">No items found</p>
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-[#4a3f35] font-medium mt-4 mb-1">No items found</p>
+          <p className="text-sm text-[#8d7b6d] text-center">
             Try different keywords or check your spelling
           </p>
         </div>
@@ -862,14 +876,14 @@ export function SearchPage() {
   };
 
   return (
-    <div className="min-h-full bg-gray-50">
+    <div className="min-h-full bg-[#fdf8f2]">
       {/* Sticky search header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60 px-4 py-3">
         <div className="flex items-center gap-3">
           {/* Back button */}
           <button
             onClick={handleBack}
-            className="flex-shrink-0 w-10 h-10 -ml-2 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-100"
+            className="flex-shrink-0 w-10 h-10 -ml-2 flex items-center justify-center text-[#8d7b6d] hover:text-[#4a3f35] transition-colors rounded-full hover:bg-[#f3ece4]"
             aria-label="Go back"
           >
             <BackIcon />
@@ -878,7 +892,7 @@ export function SearchPage() {
           {/* Search input container */}
           <div className="flex-1 relative">
             {/* Search icon */}
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9a99b] pointer-events-none">
               <SearchIcon />
             </div>
 
@@ -889,7 +903,7 @@ export function SearchPage() {
               value={query}
               onChange={handleQueryChange}
               placeholder="Search items, tags, locations..."
-              className="w-full h-10 pl-10 pr-20 bg-gray-100 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="w-full h-10 pl-10 pr-20 bg-[#f3ece4] rounded-full text-[#4a3f35] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
               aria-label="Search items"
             />
 
@@ -899,7 +913,7 @@ export function SearchPage() {
               {query && (
                 <button
                   onClick={handleClear}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-200"
+                  className="w-8 h-8 flex items-center justify-center text-[#b9a99b] hover:text-[#8d7b6d] transition-colors rounded-full hover:bg-[#efe6dc]"
                   aria-label="Clear search"
                 >
                   <ClearIcon />
@@ -910,7 +924,7 @@ export function SearchPage() {
               {speechSupported && (
                 <button
                   onClick={handleMicrophoneClick}
-                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors rounded-full hover:bg-gray-200"
+                  className="w-8 h-8 flex items-center justify-center text-[#b9a99b] hover:text-[#8d7b6d] transition-colors rounded-full hover:bg-[#efe6dc]"
                   aria-label="Voice search"
                 >
                   <MicrophoneIcon />

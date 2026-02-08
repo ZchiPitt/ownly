@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/hooks/useAuth';
 
 /**
  * Recent item data structure
@@ -25,11 +26,18 @@ export interface RecentItem {
  * @returns Object with items, loading state, error, and refetch function
  */
 export function useRecentItems(limit: number = 5) {
+  const { user } = useAuth();
   const [items, setItems] = useState<RecentItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchRecentItems = useCallback(async () => {
+    if (!user) {
+      setItems([]);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -48,6 +56,7 @@ export function useRecentItems(limit: number = 5) {
             color
           )
         `)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(limit)
@@ -85,7 +94,7 @@ export function useRecentItems(limit: number = 5) {
     } finally {
       setIsLoading(false);
     }
-  }, [limit]);
+  }, [limit, user]);
 
   useEffect(() => {
     fetchRecentItems();

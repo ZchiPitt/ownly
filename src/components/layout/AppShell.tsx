@@ -106,20 +106,46 @@ export function AppShell({
             <NavLink
               to="/dashboard"
               className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="Home"
+              title="Home"
             >
-              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 10.5 12 3.75l8.25 6.75" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 9.75V19.5a.75.75 0 0 0 .75.75h3.75V15a.75.75 0 0 1 .75-.75h0a.75.75 0 0 1 .75.75v5.25h3.75a.75.75 0 0 0 .75-.75V9.75" />
+              </svg>
+            </NavLink>
+            <NavLink
+              to="/inventory"
+              className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="My Inventory"
+              title="My Inventory"
+            >
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 7.5h15m-15 0L7.5 4.5h9l3 3m-15 0v12h15v-12" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 11.25h6M9 14.75h4.5" />
+              </svg>
             </NavLink>
             <NavLink
               to="/marketplace"
               className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="Marketplace"
+              title="Marketplace"
             >
-              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H22.25m-12.917-2.107 1.274-5.103a.75.75 0 0 0-.727-.932H3.193a.75.75 0 0 0-.727.932l1.274 5.103a4.5 4.5 0 0 0 8.748 0ZM11.25 15V6.75A2.25 2.25 0 0 0 9 4.5H6.75a2.25 2.25 0 0 0-2.25 2.25V15m11.25 0V6.75A2.25 2.25 0 0 1 18 4.5h2.25A2.25 2.25 0 0 1 22.5 6.75V15" /></svg>
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 7.5h16.5l-1.2 10.8a1.5 1.5 0 0 1-1.5 1.35H6.45a1.5 1.5 0 0 1-1.5-1.35L3.75 7.5Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 10.5V6.75a3.75 3.75 0 0 1 7.5 0v3.75" />
+              </svg>
             </NavLink>
             <NavLink
               to="/settings"
               className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="Settings"
+              title="Settings"
             >
-              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 6.75h15M4.5 12h15M4.5 17.25h15" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm10.5 5.25a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm-7.5 5.25a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+              </svg>
             </NavLink>
           </div>
         </div>
@@ -147,7 +173,7 @@ export function AppShell({
       {showAddButton && !location.pathname.startsWith('/settings') && (
         <div className="fixed bottom-10 right-10 z-[60] flex flex-col gap-6">
           <button
-            onClick={() => navigate('/search')}
+            onClick={() => navigate('/shopping')}
             className="w-20 h-20 bg-[#e3ead3] text-[#4a3f35] rounded-full soft-shadow flex items-center justify-center active:scale-90 transition-all shadow-2xl hover:bg-[#d0f4de] border-2 border-white/50"
             title="Talk to Ownly"
           >

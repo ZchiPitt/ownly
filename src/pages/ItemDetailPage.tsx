@@ -43,7 +43,7 @@
  * - Auto-dismiss toast after 5 seconds
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { TagChip } from '@/components/TagChip';
@@ -109,6 +109,8 @@ interface RawItemDetails {
     icon: string;
   } | null;
 }
+
+type RawItemBase = Omit<RawItemDetails, 'categories' | 'locations'>;
 
 /**
  * Transform raw Supabase data to ItemDetails format
@@ -489,9 +491,9 @@ function ExpirationBanner({ expirationDate }: { expirationDate: string }) {
  */
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="py-3 border-b border-gray-100 last:border-b-0">
-      <dt className="text-sm text-gray-500 mb-1">{label}</dt>
-      <dd className="text-gray-900 whitespace-pre-wrap">{value}</dd>
+    <div className="py-3 border-b border-[#f5ebe0]/50 last:border-b-0">
+      <dt className="text-sm text-[#8d7b6d] mb-1">{label}</dt>
+      <dd className="text-[#4a3f35] whitespace-pre-wrap">{value}</dd>
     </div>
   );
 }
@@ -547,17 +549,17 @@ function DetailsSection({
   }
 
   return (
-    <div className="bg-white border-t border-gray-200">
+    <div className="bg-white border-t border-[#f5ebe0]/60">
       {/* Header with expand/collapse toggle */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-[#fdf8f2] transition-colors"
         aria-expanded={isExpanded}
         aria-controls="details-content"
       >
-        <h3 className="text-base font-semibold text-gray-900">Details</h3>
+        <h3 className="text-base font-semibold text-[#4a3f35]">Details</h3>
         <ChevronDownIcon
-          className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
+          className={`w-5 h-5 text-[#8d7b6d] transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''
             }`}
         />
       </button>
@@ -597,8 +599,8 @@ function MetadataSection({
   const showModified = areDifferentDays(createdAt, updatedAt);
 
   return (
-    <div className="bg-gray-100 px-4 py-3 mt-4">
-      <div className="flex items-start gap-2 text-sm text-gray-500">
+    <div className="bg-[#f3ece4] px-4 py-3 mt-4">
+      <div className="flex items-start gap-2 text-sm text-[#8d7b6d]">
         <ClockIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
         <div className="space-y-1">
           {/* Added date/time */}
@@ -759,24 +761,24 @@ function PhotoViewer({
  */
 function ItemDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-safe-area-pb">
+    <div className="min-h-screen bg-[#fdf8f2] pb-safe-area-pb">
       {/* Header skeleton */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
-          <div className="w-24 h-6 rounded bg-gray-200 animate-pulse" />
-          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse" />
+          <div className="w-24 h-6 rounded bg-[#efe6dc] animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse" />
         </div>
       </div>
 
       {/* Hero image skeleton */}
-      <div className="w-full h-[300px] bg-gray-200 animate-pulse" />
+      <div className="w-full h-[300px] bg-[#efe6dc] animate-pulse" />
 
       {/* Content skeleton */}
       <div className="p-4 space-y-4">
-        <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-6 w-1/2 bg-gray-200 rounded animate-pulse" />
-        <div className="h-20 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-3/4 bg-[#efe6dc] rounded animate-pulse" />
+        <div className="h-6 w-1/2 bg-[#efe6dc] rounded animate-pulse" />
+        <div className="h-20 bg-[#efe6dc] rounded animate-pulse" />
       </div>
     </div>
   );
@@ -795,18 +797,18 @@ function ItemDetailError({
   onBack: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-[#fdf8f2] flex flex-col">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Item Details</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Item Details</h1>
           <div className="w-10" /> {/* Spacer */}
         </div>
       </div>
@@ -818,7 +820,7 @@ function ItemDetailError({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <p className="text-gray-600 text-center mb-6">{message}</p>
+        <p className="text-[#8d7b6d] text-center mb-6">{message}</p>
         <div className="flex gap-3">
           {onRetry && (
             <button
@@ -830,7 +832,7 @@ function ItemDetailError({
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
           >
             Back to Inventory
           </button>
@@ -848,6 +850,14 @@ export function ItemDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getListingByItemId } = useListings();
+  const normalizedItemId = useMemo(() => {
+    if (!id) return '';
+    try {
+      return decodeURIComponent(id).trim();
+    } catch {
+      return id.trim();
+    }
+  }, [id]);
 
   const [item, setItem] = useState<ItemDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -878,8 +888,12 @@ export function ItemDetailPage() {
 
   // Fetch item details
   const fetchItem = useCallback(async () => {
-    if (!id) {
+    if (!normalizedItemId) {
       setError('Item ID is missing');
+      setIsLoading(false);
+      return;
+    }
+    if (!user?.id) {
       setIsLoading(false);
       return;
     }
@@ -919,17 +933,16 @@ export function ItemDetailPage() {
           last_viewed_at,
           created_at,
           updated_at,
-          deleted_at,
-          categories (id, name, icon, color),
-          locations (id, name, path, icon)
+          deleted_at
         `)
-        .eq('id', id)
+        .eq('id', normalizedItemId)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
-        .returns<RawItemDetails[]>()
+        .returns<RawItemBase[]>()
         .single();
 
       if (fetchError) {
-        if (fetchError.code === 'PGRST116') {
+        if (fetchError.code === 'PGRST116' || fetchError.code === '22P02') {
           // No rows returned - item doesn't exist or is deleted
           setError('This item no longer exists');
         } else {
@@ -938,38 +951,36 @@ export function ItemDetailPage() {
         return;
       }
 
-      // Check if the item belongs to the current user
-      if (data.user_id !== user?.id) {
-        setError('You do not have permission to view this item');
-        return;
-      }
-
-      setItem(transformRawItem(data));
+      setItem(transformRawItem({
+        ...data,
+        categories: null,
+        locations: null,
+      }));
     } catch (err) {
       console.error('Error fetching item:', err);
       setError("Couldn't load item details");
     } finally {
       setIsLoading(false);
     }
-  }, [id, user?.id]);
+  }, [normalizedItemId, user?.id]);
 
   // Update last_viewed_at on page load (fire-and-forget)
   useEffect(() => {
-    if (!id || !user?.id) return;
+    if (!normalizedItemId || !user?.id) return;
 
     // Fire and forget - don't await
     // Cast is needed to work around Supabase TypeScript inference limitations
     (supabase
       .from('items') as ReturnType<typeof supabase.from>)
       .update({ last_viewed_at: new Date().toISOString() })
-      .eq('id', id)
+      .eq('id', normalizedItemId)
       .eq('user_id', user.id)
       .then(({ error }: { error: Error | null }) => {
         if (error) {
           console.error('Error updating last_viewed_at:', error);
         }
       });
-  }, [id, user?.id]);
+  }, [normalizedItemId, user?.id]);
 
   // Fetch item on mount
   useEffect(() => {
@@ -977,15 +988,15 @@ export function ItemDetailPage() {
   }, [fetchItem]);
 
   const fetchListing = useCallback(async () => {
-    if (!id || !user?.id) {
+    if (!normalizedItemId || !user?.id) {
       setExistingListing(null);
       return;
     }
     setIsListingLoading(true);
-    const listing = await getListingByItemId(id);
+    const listing = await getListingByItemId(normalizedItemId);
     setExistingListing(listing);
     setIsListingLoading(false);
-  }, [getListingByItemId, id, user?.id]);
+  }, [getListingByItemId, normalizedItemId, user?.id]);
 
   useEffect(() => {
     fetchListing();
@@ -1057,10 +1068,10 @@ export function ItemDetailPage() {
 
   // Handle edit navigation (US-055)
   const handleEdit = useCallback(() => {
-    if (id) {
-      navigate(`/item/${id}/edit`);
+    if (normalizedItemId) {
+      navigate(`/item/${normalizedItemId}/edit`);
     }
-  }, [navigate, id]);
+  }, [navigate, normalizedItemId]);
 
   // Handle delete confirmation (US-055)
   const handleDelete = useCallback(() => {
@@ -1118,7 +1129,7 @@ export function ItemDetailPage() {
    */
   const handleConfirmDelete = useCallback(async () => {
     console.log('[DELETE] handleConfirmDelete called - using RPC');
-    if (!id || !item || !user?.id || isDeleting) return;
+    if (!normalizedItemId || !item || !user?.id || isDeleting) return;
 
     setIsDeleting(true);
     setShowDeleteConfirm(false);
@@ -1127,7 +1138,7 @@ export function ItemDetailPage() {
       // Use RPC to call SECURITY DEFINER function
       // This bypasses RLS issues caused by the update_location_item_count_trigger
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any).rpc('soft_delete_item', { item_id: id });
+      const { error } = await (supabase as any).rpc('soft_delete_item', { item_id: normalizedItemId });
 
       if (error) {
         console.error('[DELETE] RPC error:', error);
@@ -1144,14 +1155,14 @@ export function ItemDetailPage() {
       }
 
       // Start the undo countdown after navigation
-      startUndoCountdown(id, item.name || 'Unnamed Item');
+      startUndoCountdown(normalizedItemId, item.name || 'Unnamed Item');
     } catch (err) {
       console.error('Error deleting item:', err);
       setToast({ message: 'Failed to delete item', type: 'error' });
     } finally {
       setIsDeleting(false);
     }
-  }, [id, item, user?.id, isDeleting, navigate, startUndoCountdown]);
+  }, [normalizedItemId, item, user?.id, isDeleting, navigate, startUndoCountdown]);
 
   /**
    * Undo delete (US-058)
@@ -1248,7 +1259,7 @@ export function ItemDetailPage() {
    * Toggles is_favorite and shows heart icon state change
    */
   const handleToggleFavorite = useCallback(async () => {
-    if (!id || !item || !user?.id || isUpdating) return;
+    if (!normalizedItemId || !item || !user?.id || isUpdating) return;
 
     setIsOverflowMenuOpen(false);
     setIsUpdating(true);
@@ -1259,7 +1270,7 @@ export function ItemDetailPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: updateError } = await (supabase.from('items') as any)
         .update({ is_favorite: newFavoriteStatus })
-        .eq('id', id)
+        .eq('id', normalizedItemId)
         .eq('user_id', user.id);
 
       if (updateError) {
@@ -1279,14 +1290,14 @@ export function ItemDetailPage() {
     } finally {
       setIsUpdating(false);
     }
-  }, [id, item, user?.id, isUpdating]);
+  }, [normalizedItemId, item, user?.id, isUpdating]);
 
   /**
    * Handle Keep Forever toggle (US-056)
    * Toggles keep_forever and shows toast explaining the effect
    */
   const handleToggleKeepForever = useCallback(async () => {
-    if (!id || !item || !user?.id || isUpdating) return;
+    if (!normalizedItemId || !item || !user?.id || isUpdating) return;
 
     setIsOverflowMenuOpen(false);
     setIsUpdating(true);
@@ -1297,7 +1308,7 @@ export function ItemDetailPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error: updateError } = await (supabase.from('items') as any)
         .update({ keep_forever: newKeepForeverStatus })
-        .eq('id', id)
+        .eq('id', normalizedItemId)
         .eq('user_id', user.id);
 
       if (updateError) {
@@ -1320,7 +1331,7 @@ export function ItemDetailPage() {
     } finally {
       setIsUpdating(false);
     }
-  }, [id, item, user?.id, isUpdating]);
+  }, [normalizedItemId, item, user?.id, isUpdating]);
 
   // Auto-hide toast after 3 seconds
   useEffect(() => {
@@ -1349,27 +1360,27 @@ export function ItemDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-safe-area-pb">
+    <div className="min-h-screen bg-[#fdf8f2] pb-safe-area-pb">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           {/* Back button */}
           <button
             onClick={handleBack}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
 
           {/* Title */}
-          <h1 className="text-lg font-semibold text-gray-900">Item Details</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Item Details</h1>
 
           {/* Overflow menu */}
           <div className="relative" ref={overflowMenuRef}>
             <button
               onClick={() => setIsOverflowMenuOpen(!isOverflowMenuOpen)}
-              className="p-2 -mr-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 -mr-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
               aria-label="More options"
               aria-expanded={isOverflowMenuOpen}
             >
@@ -1378,25 +1389,25 @@ export function ItemDetailPage() {
 
             {/* Dropdown menu (US-056) */}
             {isOverflowMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-[#f5ebe0]/60 py-1 z-20">
                 {/* Share option */}
                 <button
-                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                  className="w-full px-4 py-2.5 text-left text-[#6f5f52] hover:bg-[#f3ece4] flex items-center gap-3"
                   onClick={handleShare}
                 >
-                  <ShareIcon className="w-5 h-5 text-gray-500" />
+                  <ShareIcon className="w-5 h-5 text-[#8d7b6d]" />
                   <span>Share</span>
                 </button>
 
                 {/* Favorites toggle */}
                 <button
-                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${item.is_favorite ? 'text-red-500' : 'text-gray-700'
+                  className={`w-full px-4 py-2.5 text-left hover:bg-[#f3ece4] flex items-center gap-3 ${item.is_favorite ? 'text-red-500' : 'text-[#6f5f52]'
                     }`}
                   onClick={handleToggleFavorite}
                   disabled={isUpdating}
                 >
                   <HeartIcon
-                    className={`w-5 h-5 ${item.is_favorite ? 'text-red-500' : 'text-gray-500'}`}
+                    className={`w-5 h-5 ${item.is_favorite ? 'text-red-500' : 'text-[#8d7b6d]'}`}
                     filled={item.is_favorite}
                   />
                   <span>{item.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}</span>
@@ -1404,27 +1415,27 @@ export function ItemDetailPage() {
 
                 {/* Keep Forever toggle */}
                 <button
-                  className={`w-full px-4 py-2.5 text-left hover:bg-gray-100 flex items-center gap-3 ${item.keep_forever ? 'text-blue-600' : 'text-gray-700'
+                  className={`w-full px-4 py-2.5 text-left hover:bg-[#f3ece4] flex items-center gap-3 ${item.keep_forever ? 'text-blue-600' : 'text-[#6f5f52]'
                     }`}
                   onClick={handleToggleKeepForever}
                   disabled={isUpdating}
                 >
-                  <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-blue-600' : 'text-[#8d7b6d]'}`} />
                   <span>{item.keep_forever ? 'Unmark Keep Forever' : 'Mark as Keep Forever'}</span>
                 </button>
 
                 {/* Divider */}
-                <div className="my-1 border-t border-gray-200" />
+                <div className="my-1 border-t border-[#f5ebe0]/60" />
 
                 {/* Edit Item option */}
                 <button
-                  className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                  className="w-full px-4 py-2.5 text-left text-[#6f5f52] hover:bg-[#f3ece4] flex items-center gap-3"
                   onClick={() => {
                     setIsOverflowMenuOpen(false);
                     handleEdit();
                   }}
                 >
-                  <EditIcon className="w-5 h-5 text-gray-500" />
+                  <EditIcon className="w-5 h-5 text-[#8d7b6d]" />
                   <span>Edit Item</span>
                 </button>
 
@@ -1455,7 +1466,7 @@ export function ItemDetailPage() {
           <img
             src={item.thumbnail_url || item.photo_url}
             alt={item.name || 'Item photo'}
-            className="w-full max-h-[300px] object-contain bg-gray-100"
+            className="w-full max-h-[300px] object-contain bg-[#f3ece4]"
           />
         </button>
       </div>
@@ -1468,28 +1479,28 @@ export function ItemDetailPage() {
       {/* Shared Photo Indicator (US-FIX-005) */}
       {item.source_batch_id && (
         <div className="px-4 pt-4">
-          <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-            <p className="text-sm font-semibold text-gray-900">
+          <div className="rounded-xl border border-[#f5ebe0]/60 bg-[#fdf8f2] p-3">
+            <p className="text-sm font-semibold text-[#4a3f35]">
               This photo contains multiple items
             </p>
             <div className="mt-2">
-              <p className="text-xs text-gray-500 mb-2">Also in photo:</p>
+              <p className="text-xs text-[#8d7b6d] mb-2">Also in photo:</p>
               {isLoadingRelated ? (
-                <p className="text-xs text-gray-400">Loading related items...</p>
+                <p className="text-xs text-[#b9a99b]">Loading related items...</p>
               ) : relatedItems.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {relatedItems.map((related) => (
                     <button
                       key={related.id}
                       onClick={() => navigate(`/item/${related.id}`)}
-                      className="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-sm text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-100 transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-sm text-[#6f5f52] border border-[#f5ebe0]/60 hover:border-gray-300 hover:bg-[#f3ece4] transition-colors"
                     >
                       {related.name || 'Unnamed Item'}
                     </button>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400">No other items found.</p>
+                <p className="text-xs text-[#b9a99b]">No other items found.</p>
               )}
             </div>
           </div>
@@ -1500,7 +1511,7 @@ export function ItemDetailPage() {
       <div className="p-4">
         {/* Item name - large */}
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <h2 className="text-2xl font-bold text-gray-900">
+          <h2 className="text-2xl font-bold text-[#4a3f35]">
             {item.name || 'Unnamed Item'}
           </h2>
           {existingListing && (
@@ -1528,7 +1539,7 @@ export function ItemDetailPage() {
         {item.location && (
           <button
             onClick={() => navigate(`/inventory?location=${item.location!.id}`)}
-            className="flex items-center gap-2 text-gray-600 mb-4 hover:text-blue-600 transition-colors group"
+            className="flex items-center gap-2 text-[#8d7b6d] mb-4 hover:text-blue-600 transition-colors group"
             aria-label={`Filter by location: ${item.location.path}`}
           >
             <span className="flex-shrink-0">{item.location.icon}</span>
@@ -1564,7 +1575,7 @@ export function ItemDetailPage() {
             <button
               type="button"
               disabled
-              className="px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-400 font-semibold text-sm flex flex-col items-center justify-center min-w-[140px]"
+              className="px-4 py-2.5 rounded-xl border border-[#f5ebe0]/60 bg-[#fdf8f2] text-[#b9a99b] font-semibold text-sm flex flex-col items-center justify-center min-w-[140px]"
               aria-disabled="true"
             >
               <span>Edit Listing</span>
@@ -1614,30 +1625,30 @@ export function ItemDetailPage() {
 
             {/* Dialog content */}
             <div className="px-6 pb-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              <h3 className="text-lg font-semibold text-[#4a3f35] mb-2">
                 Delete this item?
               </h3>
-              <p className="text-gray-600 mb-1 font-medium">
+              <p className="text-[#8d7b6d] mb-1 font-medium">
                 {item.name || 'Unnamed Item'}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#8d7b6d]">
                 Permanently deleted after 30 days
               </p>
             </div>
 
             {/* Action buttons */}
-            <div className="flex border-t border-gray-200">
+            <div className="flex border-t border-[#f5ebe0]/60">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="flex-1 py-3 text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-gray-200 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-[#f5ebe0]/60 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isDeleting ? (
                   <>
@@ -1708,13 +1719,13 @@ export function ItemDetailPage() {
             </div>
             <div className="flex items-center gap-3">
               {/* Countdown indicator */}
-              <span className="text-sm text-gray-400 tabular-nums">
+              <span className="text-sm text-[#b9a99b] tabular-nums">
                 {undoToast.countdown}s
               </span>
               {/* Undo button */}
               <button
                 onClick={handleUndo}
-                className="px-3 py-1 bg-white text-gray-800 font-medium rounded hover:bg-gray-100 transition-colors"
+                className="px-3 py-1 bg-white text-gray-800 font-medium rounded hover:bg-[#f3ece4] transition-colors"
               >
                 Undo
               </button>

@@ -222,6 +222,7 @@ async function fetchActiveListingIds(itemIds: string[]): Promise<Set<string>> {
 export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
   const { user } = useAuth();
   const { sortBy = 'newest', categoryId, categoryIds, locationId, showExpiringSoon } = options;
+  const categoryIdsKey = categoryIds ? [...categoryIds].sort().join(',') : '';
 
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -232,7 +233,8 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
   const [totalCount, setTotalCount] = useState(0);
 
   // Track the last sort/filter options to detect changes
-  const lastOptionsRef = useRef({ sortBy, categoryId, categoryIds, locationId, showExpiringSoon });
+  const lastOptionsRef = useRef({ userId: user?.id ?? null, sortBy, categoryId, categoryIdsKey, locationId, showExpiringSoon });
+  const hasFetchedOnceRef = useRef(false);
 
   /**
    * Build the base query with filters applied
@@ -405,7 +407,8 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       setHasMore(inventoryItems.length >= PAGE_SIZE && inventoryItems.length < count);
 
       // Update the last options ref
-      lastOptionsRef.current = { sortBy, categoryId, categoryIds, locationId, showExpiringSoon };
+      lastOptionsRef.current = { userId: user.id, sortBy, categoryId, categoryIdsKey, locationId, showExpiringSoon };
+      hasFetchedOnceRef.current = true;
     } catch (err) {
       console.error('Error fetching inventory items:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch items');
@@ -413,7 +416,7 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [user, sortBy, categoryId, categoryIds, locationId, showExpiringSoon, buildQuery, fetchTotalCount]);
+  }, [user, sortBy, categoryId, categoryIdsKey, locationId, showExpiringSoon, buildQuery, fetchTotalCount]);
 
   /**
    * Load more items (next page)
@@ -461,23 +464,22 @@ export function useInventoryItems(options: UseInventoryItemsOptions = {}) {
     }
   }, [user, isLoadingMore, hasMore, isLoading, isRefreshing, items.length, totalCount, buildQuery]);
 
-  // Helper to compare category arrays
-  const categoryIdsString = categoryIds?.sort().join(',') ?? '';
-  const lastCategoryIdsString = lastOptionsRef.current.categoryIds?.sort().join(',') ?? '';
-
   // Initial fetch and refetch on option changes
   useEffect(() => {
+    if (!user) return;
+
     const optionsChanged =
+      lastOptionsRef.current.userId !== user.id ||
       lastOptionsRef.current.sortBy !== sortBy ||
       lastOptionsRef.current.categoryId !== categoryId ||
-      lastCategoryIdsString !== categoryIdsString ||
+      lastOptionsRef.current.categoryIdsKey !== categoryIdsKey ||
       lastOptionsRef.current.locationId !== locationId ||
       lastOptionsRef.current.showExpiringSoon !== showExpiringSoon;
 
-    if (optionsChanged || items.length === 0) {
+    if (!hasFetchedOnceRef.current || optionsChanged) {
       fetchItems();
     }
-  }, [fetchItems, sortBy, categoryId, categoryIdsString, lastCategoryIdsString, locationId, showExpiringSoon, items.length]);
+  }, [user, fetchItems, sortBy, categoryId, categoryIdsKey, locationId, showExpiringSoon]);
 
   const refetch = useCallback(() => fetchItems(false), [fetchItems]);
   const refresh = useCallback(() => fetchItems(true), [fetchItems]);
