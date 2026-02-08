@@ -474,6 +474,7 @@ export function SearchPage() {
 
   // Get initial query from URL
   const initialQuery = searchParams.get('q') || '';
+  const shouldAutoStartVoice = searchParams.get('voice') === '1';
 
   // Recent searches hook
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches();
@@ -498,6 +499,7 @@ export function SearchPage() {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
   const noSpeechTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoVoiceStartedRef = useRef(false);
 
   // State for showing clear all confirmation dialog
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -669,6 +671,18 @@ export function SearchPage() {
       stopVoiceSearch();
     }
   };
+
+  // Optionally auto-start voice search when navigating with ?voice=1
+  useEffect(() => {
+    if (!shouldAutoStartVoice || autoVoiceStartedRef.current || !speechSupported) return;
+    autoVoiceStartedRef.current = true;
+
+    const timer = setTimeout(() => {
+      handleMicrophoneClick();
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [shouldAutoStartVoice, speechSupported, handleMicrophoneClick]);
 
   /**
    * Cancel voice search when overlay is tapped
