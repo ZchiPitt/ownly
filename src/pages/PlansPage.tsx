@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/useToast';
 import { useUserSubscription } from '@/hooks/useUserSubscription';
@@ -41,6 +41,14 @@ function ChevronLeftIcon({ className = 'w-5 h-5' }: { className?: string }) {
 
 
 
+function ChevronRightIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
 function CheckIcon({ className = '' }: { className?: string }) {
   return (
     <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 ${className}`} aria-hidden>
@@ -72,24 +80,6 @@ function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkout
 
   return (
     <article className={`flex flex-col ${cardWrapperClass}`}>
-      <div className="p-6 pb-5 flex-1 flex flex-col">
-        <div className="flex flex-col gap-1">
-          <h2 className={`text-xl font-bold ${isPro ? 'text-green-800' : 'text-gray-900'}`}>{title}</h2>
-          {price && (() => {
-            const parts = price.split(' / ');
-            const amount = parts[0] ?? price;
-            const period = parts[1] ? ` / ${parts[1]}` : '';
-            const colorClass = isPro ? 'text-green-800' : 'text-gray-900';
-            return (
-              <span className={colorClass}>
-                <span className="text-2xl font-bold">{amount}</span>
-                {period && <span className="text-sm font-medium">{period}</span>}
-              </span>
-            );
-          })()}
-        </div>
-      )}
-
       <div className="p-8 pb-5 flex-1 flex flex-col">
         <div className="mb-2">
           {/* Title Color: Brown */}
