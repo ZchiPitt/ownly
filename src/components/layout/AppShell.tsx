@@ -173,7 +173,7 @@ export function AppShell({
       {showAddButton && !location.pathname.startsWith('/settings') && (
         <div className="fixed bottom-10 right-10 z-[60] flex flex-col gap-6">
           <button
-            onClick={() => navigate('/search')}
+            onClick={() => navigate('/shopping')}
             className="w-20 h-20 bg-[#e3ead3] text-[#4a3f35] rounded-full soft-shadow flex items-center justify-center active:scale-90 transition-all shadow-2xl hover:bg-[#d0f4de] border-2 border-white/50"
             title="Talk to Ownly"
           >

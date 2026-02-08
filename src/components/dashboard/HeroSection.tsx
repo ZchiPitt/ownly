@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import type { RecentItem } from '@/hooks/useRecentItems'
+import { useCategories } from '@/hooks/useCategories'
 
 interface HeroSectionProps {
     recentItems: RecentItem[]
@@ -9,31 +10,65 @@ interface HeroSectionProps {
 
 export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionProps) {
     const navigate = useNavigate()
+    const { categories } = useCategories()
+    const isValidItemId = (value: string) => /^[a-f0-9-]{16,}$/i.test(value)
+
+    const getCategoryIdForShortcut = (label: string) => {
+        const aliases: Record<string, string[]> = {
+            Clothes: ['clothes', 'clothing', 'apparel', 'wardrobe'],
+            Beauty: ['beauty', 'cosmetics', 'makeup', 'skincare', 'personal care', 'toiletries'],
+            Kitchen: ['kitchen', 'cookware', 'utensils', 'dining'],
+            Tools: ['tools', 'tool', 'hardware', 'workshop', 'home improvement', 'equipment'],
+        }
+
+        const keywords = aliases[label] ?? [label.toLowerCase()]
+        const matched = categories.find((category) => {
+            const name = category.name.toLowerCase()
+            return keywords.some((keyword) => name === keyword || name.includes(keyword))
+        })
+
+        return matched?.id ?? null
+    }
+
+    const handleShortcutClick = (label: string) => {
+        const categoryId = getCategoryIdForShortcut(label)
+        if (!categoryId) {
+            navigate('/inventory')
+            return
+        }
+
+        const params = new URLSearchParams()
+        params.set('categories', categoryId)
+        navigate(`/inventory?${params.toString()}`)
+    }
 
     const renderShortcutIcon = (label: string) => {
         switch (label) {
             case 'Clothes':
                 return (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 4.5 8.25 7.5 5.25 6l-1.5 3.75 3 1.5V19.5h10.5v-8.25l3-1.5L18.75 6l-3 1.5-1.5-3Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5h6l1.5 2.25 2.25-1.5 1.5 3-3 1.5V19.5H6.75V9.75l-3-1.5 1.5-3 2.25 1.5L9 4.5Z" />
                     </svg>
                 )
-            case 'Bedroom':
+            case 'Beauty':
                 return (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12.75h16.5v6.75M3.75 15.75V9.75A2.25 2.25 0 0 1 6 7.5h12a2.25 2.25 0 0 1 2.25 2.25v6M6.75 12.75V9.75h4.5a1.5 1.5 0 0 1 1.5 1.5v1.5m0 0h4.5v-3" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 4.5h4.5v2.25a2.25 2.25 0 1 1-4.5 0V4.5Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 9.75h6v2.25H9V9.75Zm.75 2.25h4.5v6h-4.5v-6Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18h7.5" />
                     </svg>
                 )
             case 'Kitchen':
                 return (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 3.75v8.25M10.5 3.75v8.25M7.5 7.5h3m-3 12.75v-8.25m9-8.25v16.5m0-16.5c1.657 0 3 1.343 3 3v3h-6v-3c0-1.657 1.343-3 3-3Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 4.5v7.5M10.5 4.5v7.5M7.5 8.25h3M9 12v7.5" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 4.5v15M15.75 4.5a2.25 2.25 0 0 1 2.25 2.25V9h-4.5V6.75A2.25 2.25 0 0 1 15.75 4.5Z" />
                     </svg>
                 )
             case 'Tools':
                 return (
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m14.25 5.25 4.5 4.5m-9.75.75 8.25 8.25a1.5 1.5 0 0 1-2.121 2.121L6.88 12.62m2.12-2.12L5.25 6.75m0 0 2.25-2.25 3.75 3.75-2.25 2.25Z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 6.75a3 3 0 0 1-4.243 4.243l-4.557 4.557a2.25 2.25 0 1 1-3.182-3.182l4.557-4.557A3 3 0 1 1 16.5 4.5l-1.5 1.5 3 3 1.5-1.5a2.989 2.989 0 0 1 .75-.75Z" />
                     </svg>
                 )
             default:
@@ -47,13 +82,33 @@ export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionP
 
     return (
         <div className="bg-white rounded-[3rem] p-8 soft-shadow border border-[#f5ebe0]/40 overflow-hidden relative">
-            <div className="flex items-center justify-between mb-6">
-                <div onClick={() => navigate('/inventory')} className="cursor-pointer group">
-                    <h2 className="text-3xl font-black text-[#4a3f35] tracking-tight group-hover:text-[#d6ccc2] transition-colors">Your Belongings</h2>
+            <div className="flex items-start justify-between gap-4 mb-6">
+                <div onClick={() => navigate('/inventory')} className="cursor-pointer group flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-[#fdf8f2] text-[#d6ccc2] group-hover:bg-[#e3ead3] group-hover:text-[#4a3f35] transition-all soft-shadow">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 7.5h15m-15 0L7.5 4.5h9l3 3m-15 0v12h15v-12" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 11.25h6M9 14.75h4.5" />
+                            </svg>
+                        </div>
+                        <h2 className="text-2xl font-black text-[#4a3f35] tracking-tight group-hover:text-[#d6ccc2] transition-colors">Your Belongings</h2>
+                    </div>
                     <div className="flex items-center gap-2.5 mt-1">
                         <span className="w-2 h-2 bg-[#e3ead3] rounded-full animate-pulse"></span>
-                        <p className="text-[10px] font-black text-[#8d7b6d] uppercase tracking-[0.25em]">{totalItems} Items Preserved</p>
+                        <p className="text-[11px] font-black text-[#8d7b6d] uppercase tracking-[0.25em]">{totalItems} Items Added</p>
                     </div>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            navigate('/search')
+                        }}
+                        className="mt-3 w-full bg-[#fdf8f2]/90 rounded-[1.25rem] px-4 py-3 flex items-center border border-[#f5ebe0]/60 soft-shadow text-left group transition-all hover:bg-white"
+                    >
+                        <svg className="w-4.5 h-4.5 text-[#d6ccc2] mr-3 group-hover:text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
+                        </svg>
+                        <span className="font-bold text-sm text-[#b9a99b] group-hover:text-[#4a3f35]">Search items, tags, locations...</span>
+                    </button>
                 </div>
                 <button
                     onClick={() => navigate('/inventory')}
@@ -85,7 +140,13 @@ export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionP
                         recentItems.slice(0, 2).map(item => (
                             <div
                                 key={item.id}
-                                onClick={() => navigate(`/item/${item.id}`)}
+                                onClick={() => {
+                                    if (!isValidItemId(item.id)) {
+                                        navigate('/inventory')
+                                        return
+                                    }
+                                    navigate(`/item/${encodeURIComponent(item.id)}`)
+                                }}
                                 className="bg-[#fdf8f2] rounded-[2rem] overflow-hidden border border-[#f5ebe0]/40 soft-shadow hover:shadow-md hover:-translate-y-1 transition-all cursor-pointer group"
                             >
                                 <div className="aspect-[4/3] bg-white relative overflow-hidden">
@@ -120,11 +181,11 @@ export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionP
                 <div className="grid grid-cols-4 gap-6 w-full text-center">
                     {[
                         { label: 'Clothes' },
-                        { label: 'Bedroom' },
+                        { label: 'Beauty' },
                         { label: 'Kitchen' },
                         { label: 'Tools' }
                     ].map((cat, i) => (
-                        <button key={i} onClick={() => navigate('/inventory')} className="flex flex-col items-center gap-2 group active:scale-95 transition-all">
+                        <button key={i} onClick={() => handleShortcutClick(cat.label)} className="flex flex-col items-center gap-2 group active:scale-95 transition-all">
                             <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:bg-[#f8e1d7] transition-colors border border-white/50">
                                 <div className="w-5 h-5 text-[#4a3f35]">
                                     {renderShortcutIcon(cat.label)}

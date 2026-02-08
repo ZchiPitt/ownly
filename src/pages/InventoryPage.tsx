@@ -440,13 +440,13 @@ export function InventoryPage() {
         <div className="flex items-center justify-between">
           {/* Title and count */}
           <div className="cursor-pointer group" onClick={() => navigate('/dashboard')}>
-            <h1 className="text-[11px] font-black text-gray-400 tracking-[0.3em] uppercase group-hover:text-[#4a3f35] transition-colors">
+            <h1 className="text-[11px] font-black text-[#b9a99b] tracking-[0.3em] uppercase group-hover:text-[#4a3f35] transition-colors">
               MY INVENTORY
             </h1>
             <div className="flex items-center gap-2.5 mt-2">
               <span className="w-2 h-2 bg-[#e3ead3] rounded-full animate-pulse" />
               <p className="text-[10px] font-black text-[#8d7b6d] uppercase tracking-[0.25em]">
-                {itemsLoading ? 'Loading...' : `${totalCount} Objects Preserved`}
+                {itemsLoading ? 'Loading...' : `${totalCount} ${totalCount === 1 ? 'Item' : 'Items'} Added`}
               </p>
             </div>
           </div>

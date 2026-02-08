@@ -25,10 +25,10 @@ const conditionLabels: Record<ItemCondition, string> = {
 
 const conditionStyles: Record<ItemCondition, string> = {
   new: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  like_new: 'bg-teal-50 text-teal-700 border-teal-200',
+  like_new: 'bg-[#e3ead3] text-[#4a3f35] border-[#d7e1c2]',
   good: 'bg-blue-50 text-blue-700 border-blue-200',
   fair: 'bg-amber-50 text-amber-700 border-amber-200',
-  poor: 'bg-gray-100 text-gray-600 border-gray-200',
+  poor: 'bg-[#f3ece4] text-[#8d7b6d] border-[#f5ebe0]/60',
 };
 
 function formatPrice(price: number | null, priceType: PriceType): string {
@@ -126,19 +126,19 @@ function PhotoViewer({ imageUrl, onClose }: { imageUrl: string; onClose: () => v
 
 function ListingDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50 pb-safe-area-pb">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#fdf8f2] pb-safe-area-pb">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
-          <div className="w-32 h-6 rounded bg-gray-200 animate-pulse" />
-          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse" />
+          <div className="w-32 h-6 rounded bg-[#efe6dc] animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse" />
         </div>
       </div>
-      <div className="w-full h-[300px] bg-gray-200 animate-pulse" />
+      <div className="w-full h-[300px] bg-[#efe6dc] animate-pulse" />
       <div className="p-4 space-y-4">
-        <div className="h-8 w-3/4 bg-gray-200 rounded animate-pulse" />
-        <div className="h-6 w-1/2 bg-gray-200 rounded animate-pulse" />
-        <div className="h-20 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-3/4 bg-[#efe6dc] rounded animate-pulse" />
+        <div className="h-6 w-1/2 bg-[#efe6dc] rounded animate-pulse" />
+        <div className="h-20 bg-[#efe6dc] rounded animate-pulse" />
       </div>
     </div>
   );
@@ -146,17 +146,17 @@ function ListingDetailSkeleton() {
 
 function ListingDetailError({ message, onBack, onRetry }: { message: string; onBack: () => void; onRetry?: () => void }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#fdf8f2] flex flex-col">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Listing Details</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Listing Details</h1>
           <div className="w-10" />
         </div>
       </div>
@@ -164,19 +164,19 @@ function ListingDetailError({ message, onBack, onRetry }: { message: string; onB
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
           <span className="text-2xl">!</span>
         </div>
-        <p className="text-gray-600 text-center mb-6">{message}</p>
+        <p className="text-[#8d7b6d] text-center mb-6">{message}</p>
         <div className="flex gap-3">
           {onRetry && (
             <button
               onClick={onRetry}
-              className="px-6 py-2 bg-teal-600 text-white font-medium rounded-lg hover:bg-teal-700 transition-colors"
+              className="px-6 py-2 bg-[#8d7b6d] text-white font-medium rounded-lg hover:bg-[#7c6b5d] transition-colors"
             >
               Try Again
             </button>
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
           >
             Back
           </button>
@@ -305,23 +305,23 @@ export function ListingDetailPage() {
   const ratingLabel = reviewCount > 0 ? rating.toFixed(1) : '0.0';
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-safe-area-pb">
+    <div className="min-h-screen bg-[#fdf8f2] pb-safe-area-pb">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Listing Details</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Listing Details</h1>
           <div className="flex items-center gap-2 -mr-2">
             <SaveButton listingId={listing.id} size="md" />
             <button
               onClick={handleShare}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+              className="p-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
               aria-label="Share listing"
             >
               <ShareIcon />
@@ -331,7 +331,7 @@ export function ListingDetailPage() {
       </div>
 
       {/* Hero image */}
-      <div className="relative w-full max-h-[300px] bg-gray-100 overflow-hidden">
+      <div className="relative w-full max-h-[300px] bg-[#f3ece4] overflow-hidden">
         {imageUrl ? (
           <button type="button" className="w-full" onClick={() => setIsPhotoOpen(true)}>
             <img
@@ -341,7 +341,7 @@ export function ListingDetailPage() {
             />
           </button>
         ) : (
-          <div className="w-full h-[300px] flex items-center justify-center text-gray-400">
+          <div className="w-full h-[300px] flex items-center justify-center text-[#b9a99b]">
             No photo available
           </div>
         )}
@@ -356,14 +356,14 @@ export function ListingDetailPage() {
         )}
 
         {isOwner && (
-          <div className="bg-teal-50 border border-teal-200 text-teal-800 px-4 py-3 rounded-xl flex items-center justify-between gap-3">
+          <div className="bg-[#e3ead3] border border-[#d7e1c2] text-[#4a3f35] px-4 py-3 rounded-xl flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold">This is your listing</p>
-              <p className="text-xs text-teal-700">Manage pricing or status changes.</p>
+              <p className="text-xs text-[#4a3f35]">Manage pricing or status changes.</p>
             </div>
             <button
               onClick={() => navigate('/marketplace/my-listings')}
-              className="px-3 py-2 text-sm font-semibold text-teal-700 bg-white border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+              className="px-3 py-2 text-sm font-semibold text-[#4a3f35] bg-white border border-[#d7e1c2] rounded-lg hover:bg-teal-100 transition-colors"
             >
               Edit
             </button>
@@ -372,9 +372,9 @@ export function ListingDetailPage() {
 
         {/* Info section */}
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">{displayName}</h2>
-          <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">
-            <span className="text-lg font-semibold text-teal-600">{priceLabel}</span>
+          <h2 className="text-2xl font-semibold text-[#4a3f35]">{displayName}</h2>
+          <div className="flex items-center gap-2 mt-2 text-sm text-[#8d7b6d]">
+            <span className="text-lg font-semibold text-[#6f5f52]">{priceLabel}</span>
             {priceTypeLabel !== 'Free' && <span>· {priceTypeLabel}</span>}
           </div>
           <div className="mt-2">
@@ -386,18 +386,18 @@ export function ListingDetailPage() {
 
         {/* Description */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Description</h3>
-          <p className="text-sm text-gray-600 whitespace-pre-line">
+          <h3 className="text-sm font-semibold text-[#4a3f35] mb-2">Description</h3>
+          <p className="text-sm text-[#8d7b6d] whitespace-pre-line">
             {listing.description?.trim() || 'No description provided.'}
           </p>
         </div>
 
         {/* Seller section */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Seller</h3>
+          <h3 className="text-sm font-semibold text-[#4a3f35] mb-3">Seller</h3>
           <button
             onClick={() => navigate(`/marketplace/seller/${listing.seller.id}`)}
-            className="w-full text-left bg-white border border-gray-200 rounded-2xl p-4 hover:shadow-sm transition-shadow"
+            className="w-full text-left bg-white border border-[#f5ebe0]/60 rounded-2xl p-4 hover:shadow-sm transition-shadow"
           >
             <div className="flex items-center gap-3">
               {listing.seller.avatar_url ? (
@@ -407,22 +407,22 @@ export function ListingDetailPage() {
                   className="w-12 h-12 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-semibold">
+                <div className="w-12 h-12 rounded-full bg-[#efe6dc] flex items-center justify-center text-[#8d7b6d] font-semibold">
                   {(listing.seller.display_name || 'S').slice(0, 1).toUpperCase()}
                 </div>
               )}
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-[#4a3f35]">
                     {listing.seller.display_name || 'Seller'}
                   </p>
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <div className="flex items-center gap-1 text-xs text-[#8d7b6d]">
                     <StarRating rating={rating} size="sm" />
                     <span>{ratingLabel}</span>
                     <span>({reviewCount} review{reviewCount === 1 ? '' : 's'})</span>
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-[#8d7b6d] mt-1">
                   {listing.seller.location_city && (
                     <span>📍 {listing.seller.location_city}</span>
                   )}
@@ -437,17 +437,17 @@ export function ListingDetailPage() {
 
       {/* Sticky actions */}
       {!isUnavailable && !isOwner && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 px-4 py-3 pb-safe z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-[#f5ebe0]/60 px-4 py-3 pb-safe z-20">
           <div className="flex gap-3">
             <button
               onClick={handleMessageSeller}
-              className="flex-1 px-4 py-3 border border-teal-600 text-teal-600 font-semibold rounded-xl hover:bg-teal-50 transition-colors"
+              className="flex-1 px-4 py-3 border border-teal-600 text-[#6f5f52] font-semibold rounded-xl hover:bg-[#e3ead3] transition-colors"
             >
               Message Seller
             </button>
             <button
               onClick={handlePrimaryAction}
-              className="flex-1 px-4 py-3 bg-teal-600 text-white font-semibold rounded-xl hover:bg-teal-700 transition-colors"
+              className="flex-1 px-4 py-3 bg-[#8d7b6d] text-white font-semibold rounded-xl hover:bg-[#7c6b5d] transition-colors"
             >
               {primaryActionLabel}
             </button>

@@ -239,27 +239,27 @@ function VoiceSearchOverlay({ isListening, transcript, onCancel }: VoiceSearchOv
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center px-6"
+      className="fixed inset-0 z-50 bg-[#fdf8f2]/95 backdrop-blur-sm flex flex-col items-center justify-center px-6"
       onClick={onCancel}
     >
       <div className="mb-8">
         <PulsingMicIcon />
       </div>
-      <p className="text-xl font-medium text-gray-900 mb-4">
+      <p className="text-xl font-black text-[#4a3f35] mb-4 tracking-tight">
         Listening...
       </p>
       <div className="min-h-[48px] w-full max-w-sm">
         {transcript ? (
-          <p className="text-lg text-gray-700 text-center px-4 py-2 bg-gray-100 rounded-lg">
+          <p className="text-lg text-[#4a3f35] text-center px-4 py-2 bg-white/90 rounded-2xl border border-[#f5ebe0]/60 soft-shadow">
             {transcript}
           </p>
         ) : (
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-[#8d7b6d] text-center uppercase tracking-wider">
             Speak now...
           </p>
         )}
       </div>
-      <p className="mt-8 text-sm text-gray-400">
+      <p className="mt-8 text-xs text-[#b9a99b] uppercase tracking-wider">
         Tap anywhere to cancel
       </p>
     </div>
@@ -270,7 +270,7 @@ function LoadingMoreSpinner() {
   return (
     <div className="flex items-center justify-center py-6">
       <svg
-        className="w-5 h-5 text-teal-600 animate-spin"
+        className="w-5 h-5 text-[#8d7b6d] animate-spin"
         fill="none"
         viewBox="0 0 24 24"
       >
@@ -288,17 +288,17 @@ function LoadingMoreSpinner() {
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <span className="ml-2 text-sm text-gray-600">Loading more...</span>
+      <span className="ml-2 text-sm text-[#8d7b6d]">Loading more...</span>
     </div>
   );
 }
 
 function EmptyState({ onClearFilters }: { onClearFilters: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+    <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/75 rounded-[2rem] border border-[#f5ebe0]/60 soft-shadow max-w-2xl mx-auto">
+      <div className="w-16 h-16 bg-[#f3ece4] rounded-full flex items-center justify-center mb-4">
         <svg
-          className="w-8 h-8 text-gray-400"
+          className="w-8 h-8 text-[#b9a99b]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -311,14 +311,14 @@ function EmptyState({ onClearFilters }: { onClearFilters: () => void }) {
           />
         </svg>
       </div>
-      <h2 className="text-lg font-semibold text-gray-900">No listings found</h2>
-      <p className="text-sm text-gray-500 text-center mt-1">
+      <h2 className="text-lg font-black text-[#4a3f35]">No listings found</h2>
+      <p className="text-sm text-[#8d7b6d] text-center mt-1">
         Try adjusting your filters or search.
       </p>
       <button
         type="button"
         onClick={onClearFilters}
-        className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+        className="mt-4 px-4 py-2 bg-[#f3ece4] text-[#6f5f52] text-sm font-semibold rounded-xl hover:bg-[#eadfd4] transition-colors"
       >
         Clear filters
       </button>
@@ -638,10 +638,10 @@ export function MarketplacePage() {
   const showRecentSearches = isSearchFocused && searchQuery.trim().length === 0 && recentSearches.length > 0;
 
   return (
-    <div className="min-h-full bg-gray-50 pb-20">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-4">
-        <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+    <div className="min-h-full bg-[#fdf8f2] pb-20">
+      <div className="sticky top-0 z-10 glass border-b border-[#f5ebe0]/40 px-4 py-4">
+        <div className="relative max-w-5xl mx-auto">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b9a99b]">
             <SearchIcon />
           </div>
           <input
@@ -651,14 +651,14 @@ export function MarketplacePage() {
             onFocus={() => setIsSearchFocused(true)}
             onBlur={() => setIsSearchFocused(false)}
             placeholder="Search marketplace..."
-            className="w-full pl-10 pr-20 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full pl-10 pr-20 py-2.5 text-sm border border-[#f5ebe0]/60 bg-white/85 text-[#4a3f35] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] soft-shadow"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {searchQuery.length > 0 && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                className="w-7 h-7 flex items-center justify-center text-[#b9a99b] hover:text-[#4a3f35] rounded-full hover:bg-[#f3ece4]"
                 aria-label="Clear search"
               >
                 <ClearIcon />
@@ -668,7 +668,7 @@ export function MarketplacePage() {
               <button
                 type="button"
                 onClick={handleMicrophoneClick}
-                className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                className="w-7 h-7 flex items-center justify-center text-[#b9a99b] hover:text-[#4a3f35] rounded-full hover:bg-[#e3ead3]"
                 aria-label="Voice search"
               >
                 <MicrophoneIcon />
@@ -676,9 +676,9 @@ export function MarketplacePage() {
             )}
           </div>
           {showRecentSearches && (
-            <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-gray-200 bg-white shadow-lg z-20 overflow-hidden">
-              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+            <div className="absolute left-0 right-0 top-full mt-2 rounded-xl border border-[#f5ebe0]/60 bg-white/95 soft-shadow z-20 overflow-hidden">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-[#f5ebe0]/50 bg-[#fdf8f2]">
+                <span className="text-[11px] font-black text-[#8d7b6d] uppercase tracking-wide">
                   Recent searches
                 </span>
                 <button
@@ -688,7 +688,7 @@ export function MarketplacePage() {
                     clearRecentSearches();
                     setRecentSearches([]);
                   }}
-                  className="text-xs font-medium text-teal-600 hover:text-teal-700"
+                  className="text-xs font-semibold text-[#8d7b6d] hover:text-[#4a3f35]"
                 >
                   Clear all
                 </button>
@@ -703,9 +703,9 @@ export function MarketplacePage() {
                         setSearchQuery(search);
                         setIsSearchFocused(false);
                       }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-[#6f5f52] hover:bg-[#fdf8f2]"
                     >
-                      <span className="text-gray-400">🕘</span>
+                      <span className="text-[#b9a99b]">🕘</span>
                       <span className="truncate">{search}</span>
                     </button>
                   </li>
@@ -715,25 +715,25 @@ export function MarketplacePage() {
           )}
         </div>
 
-        <div className="flex items-center justify-between gap-3 mt-3">
+        <div className="flex items-center justify-between gap-3 mt-3 max-w-5xl mx-auto">
           <button
             type="button"
             onClick={() => setShowFilters(true)}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm font-semibold text-[#6f5f52] bg-[#f3ece4] rounded-xl hover:bg-[#eadfd4] transition-colors"
           >
             <FilterIcon />
             Filters
           </button>
 
           <div className="flex items-center gap-2">
-            <label htmlFor="marketplace-sort" className="text-xs text-gray-500">
+            <label htmlFor="marketplace-sort" className="text-xs text-[#8d7b6d]">
               Sort
             </label>
             <select
               id="marketplace-sort"
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
-              className="text-sm border border-gray-200 rounded-lg px-2 py-2 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="text-sm border border-[#f5ebe0]/60 bg-white/90 text-[#4a3f35] rounded-xl px-2 py-2 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2]"
             >
               <option value="newest">Newest</option>
               <option value="price_asc">Price Low-High</option>
@@ -763,10 +763,10 @@ export function MarketplacePage() {
             ))}
           </div>
         ) : error && listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/75 rounded-[2rem] border border-[#f5ebe0]/60 soft-shadow max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-[#f8e1d7] rounded-full flex items-center justify-center mb-4">
               <svg
-                className="w-8 h-8 text-red-500"
+                className="w-8 h-8 text-[#a04d2b]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -779,34 +779,34 @@ export function MarketplacePage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-black text-[#4a3f35] mb-1">
               Couldn't load listings
             </h3>
-            <p className="text-sm text-gray-500 text-center mb-4">{error}</p>
+            <p className="text-sm text-[#8d7b6d] text-center mb-4">{error}</p>
             <button
               type="button"
               onClick={() => handleRefresh()}
-              className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 bg-[#f3ece4] text-[#6f5f52] text-sm font-semibold rounded-xl hover:bg-[#eadfd4] transition-colors"
             >
               Try Again
             </button>
           </div>
         ) : listings.length === 0 ? (
           hasSearchQuery ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/75 rounded-[2rem] border border-[#f5ebe0]/60 soft-shadow max-w-2xl mx-auto">
+              <div className="w-16 h-16 bg-[#f3ece4] rounded-full flex items-center justify-center mb-4 text-[#b9a99b]">
                 <SearchIcon />
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-black text-[#4a3f35]">
                 No items found for '{debouncedSearch}'
               </h2>
-              <p className="text-sm text-gray-500 text-center mt-1">
+              <p className="text-sm text-[#8d7b6d] text-center mt-1">
                 Try a different search term or clear your filters.
               </p>
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                className="mt-4 px-4 py-2 bg-[#f3ece4] text-[#6f5f52] text-sm font-semibold rounded-xl hover:bg-[#eadfd4] transition-colors"
               >
                 Clear search
               </button>

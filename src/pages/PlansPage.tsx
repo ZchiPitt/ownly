@@ -67,8 +67,8 @@ function PlanCard({ slug, title, price, tagline, features, onSubscribe, checkout
 
   // Ownly Styling: rounded-[2.5rem], soft shadow, white bg, thin cream border
   const cardWrapperClass = isPro
-    ? 'rounded-[2.5rem] bg-white shadow-xl ring-1 ring-[#d6ccc2]/50 scale-105 z-10 overflow-hidden relative'
-    : 'rounded-[2.5rem] bg-white shadow-sm border border-[#f5ebe0] overflow-hidden opacity-90 hover:opacity-100 hover:shadow-md transition-all';
+    ? 'rounded-[2.5rem] bg-white shadow-xl ring-1 ring-[#d6ccc2]/50 lg:scale-[1.03] z-10 overflow-hidden relative transform-gpu transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:ring-[#b8cda0]/60 hover:lg:scale-[1.05] active:scale-[1.01]'
+    : 'rounded-[2.5rem] bg-white shadow-sm border border-[#f5ebe0] overflow-hidden opacity-95 transform-gpu transition-all duration-300 hover:opacity-100 hover:-translate-y-1 hover:shadow-xl hover:border-[#d6ccc2] hover:ring-1 hover:ring-[#e3ead3]/70 active:scale-[0.995]';
 
   return (
     <article className={`flex flex-col ${cardWrapperClass} h-full`}>

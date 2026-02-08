@@ -14,16 +14,16 @@ import type { MarketplaceListing } from '@/hooks/useMarketplace';
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-rose-50 flex items-center justify-center mb-4">
-        <span className="text-2xl">♡</span>
+      <div className="w-16 h-16 rounded-full bg-[#f8e1d7] border border-white/60 soft-shadow flex items-center justify-center mb-4">
+        <span className="text-2xl text-[#8d7b6d]">♡</span>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">No saved items yet</h3>
-      <p className="text-sm text-gray-500 mb-6">
+      <h3 className="text-lg font-black text-[#4a3f35] mb-1">No saved items yet</h3>
+      <p className="text-sm text-[#8d7b6d] mb-6">
         Start browsing the marketplace and tap the heart to save items.
       </p>
       <Link
         to="/marketplace"
-        className="px-4 py-2 bg-teal-600 text-white text-sm font-semibold rounded-lg hover:bg-teal-700 transition-colors"
+        className="px-4 py-2 bg-[#d6ccc2] text-[#4a3f35] text-sm font-semibold rounded-xl hover:bg-[#c8b9ab] transition-colors"
       >
         Browse marketplace
       </Link>
@@ -81,14 +81,14 @@ export function SavedListingsPage() {
   }, []);
 
   return (
-    <div className="min-h-full bg-gray-50 pb-20">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-gray-900">Saved Listings</h1>
+    <div className="min-h-full bg-[#fdf8f2] pb-20">
+      <div className="sticky top-0 z-10 glass border-b border-[#f5ebe0]/40 px-4 py-4">
+        <div className="flex items-center justify-between max-w-5xl mx-auto">
+          <h1 className="text-2xl font-black tracking-tight text-[#4a3f35]">Saved Listings</h1>
           <button
             type="button"
             onClick={() => navigate('/marketplace')}
-            className="text-sm font-medium text-teal-600 hover:text-teal-700"
+            className="text-xs font-black uppercase tracking-wider text-[#8d7b6d] hover:text-[#4a3f35]"
           >
             Marketplace
           </button>
@@ -115,10 +115,10 @@ export function SavedListingsPage() {
             ))}
           </div>
         ) : loadError && listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/80 rounded-[2rem] border border-[#f5ebe0]/60 soft-shadow max-w-2xl mx-auto">
+            <div className="w-16 h-16 bg-[#f8e1d7] rounded-full flex items-center justify-center mb-4">
               <svg
-                className="w-8 h-8 text-red-500"
+                className="w-8 h-8 text-[#a04d2b]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -131,14 +131,14 @@ export function SavedListingsPage() {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            <h3 className="text-lg font-black text-[#4a3f35] mb-1">
               Couldn't load saved listings
             </h3>
-            <p className="text-sm text-gray-500 text-center mb-4">{loadError}</p>
+            <p className="text-sm text-[#8d7b6d] text-center mb-4">{loadError}</p>
             <button
               type="button"
               onClick={() => handleRefresh()}
-              className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+              className="px-4 py-2 bg-[#f3ece4] text-[#6f5f52] text-sm font-semibold rounded-xl hover:bg-[#eadfd4] transition-colors"
             >
               Try Again
             </button>
@@ -158,8 +158,8 @@ export function SavedListingsPage() {
                     onSaveToggle={(saved) => handleSaveToggle(listing.id, saved)}
                   />
                   {isUnavailable && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                      <span className="text-sm font-semibold text-gray-600">No longer available</span>
+                    <div className="absolute inset-0 bg-[#fdf8f2]/85 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-[#f5ebe0]/60">
+                      <span className="text-sm font-semibold text-[#8d7b6d]">No longer available</span>
                     </div>
                   )}
                 </div>

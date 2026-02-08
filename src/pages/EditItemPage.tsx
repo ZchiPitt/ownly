@@ -133,8 +133,8 @@ function QuantityStepper({
         disabled={value <= min}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
           value <= min
-            ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-gray-300 cursor-not-allowed'
+            : 'border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
         }`}
         aria-label="Decrease quantity"
       >
@@ -159,8 +159,8 @@ function QuantityStepper({
         disabled={value >= max}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
           value >= max
-            ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-gray-300 cursor-not-allowed'
+            : 'border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
         }`}
         aria-label="Increase quantity"
       >
@@ -225,7 +225,7 @@ function CategorySelector({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+      <label className="block text-sm font-medium text-[#6f5f52] mb-2">Category</label>
 
       <button
         type="button"
@@ -242,11 +242,11 @@ function CategorySelector({
               <span className="truncate">{selectedCategory.name}</span>
             </>
           ) : (
-            <span className="text-gray-400">Select a category</span>
+            <span className="text-[#b9a99b]">Select a category</span>
           )}
         </div>
         <svg
-          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
+          className={`w-5 h-5 text-[#b9a99b] flex-shrink-0 transition-transform ${
             isOpen ? 'rotate-180' : ''
           }`}
           fill="none"
@@ -258,9 +258,9 @@ function CategorySelector({
       </button>
 
       {isOpen && (
-        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-20 mt-1 w-full bg-white border border-[#f5ebe0]/60 rounded-xl shadow-lg max-h-64 overflow-y-auto">
           {isLoading ? (
-            <div className="px-4 py-3 text-gray-500 text-center">Loading...</div>
+            <div className="px-4 py-3 text-[#8d7b6d] text-center">Loading...</div>
           ) : (
             <>
               {/* No category option */}
@@ -268,7 +268,7 @@ function CategorySelector({
                 type="button"
                 onClick={() => handleSelect(null)}
                 className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
-                  !value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                  !value ? 'bg-blue-50 text-blue-700' : 'hover:bg-[#fdf8f2]'
                 }`}
               >
                 <span className="text-lg">🚫</span>
@@ -280,7 +280,7 @@ function CategorySelector({
                   type="button"
                   onClick={() => handleSelect(category)}
                   className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
-                    category.id === value ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'
+                    category.id === value ? 'bg-blue-50 text-blue-700' : 'hover:bg-[#fdf8f2]'
                   }`}
                 >
                   <span className="text-lg flex-shrink-0">{category.icon}</span>
@@ -309,23 +309,23 @@ function CategorySelector({
  */
 function EditItemSkeleton() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#fdf8f2]">
       {/* Header skeleton */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
-          <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
-          <div className="w-24 h-6 rounded bg-gray-200 animate-pulse" />
+          <div className="w-10 h-10 rounded-full bg-[#efe6dc] animate-pulse" />
+          <div className="w-24 h-6 rounded bg-[#efe6dc] animate-pulse" />
           <div className="w-16" />
         </div>
       </div>
 
       {/* Content skeleton */}
       <div className="p-4 space-y-6">
-        <div className="w-full aspect-video bg-gray-200 rounded-xl animate-pulse" />
+        <div className="w-full aspect-video bg-[#efe6dc] rounded-xl animate-pulse" />
         <div className="space-y-4">
-          <div className="h-12 bg-gray-200 rounded-xl animate-pulse" />
-          <div className="h-12 bg-gray-200 rounded-xl animate-pulse" />
-          <div className="h-24 bg-gray-200 rounded-xl animate-pulse" />
+          <div className="h-12 bg-[#efe6dc] rounded-xl animate-pulse" />
+          <div className="h-12 bg-[#efe6dc] rounded-xl animate-pulse" />
+          <div className="h-24 bg-[#efe6dc] rounded-xl animate-pulse" />
         </div>
       </div>
     </div>
@@ -345,17 +345,17 @@ function EditItemError({
   onBack: () => void;
 }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+    <div className="min-h-screen bg-[#fdf8f2] flex flex-col">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={onBack}
-            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors"
             aria-label="Go back"
           >
             <BackIcon />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">Edit Item</h1>
+          <h1 className="text-lg font-semibold text-[#4a3f35]">Edit Item</h1>
           <div className="w-10" />
         </div>
       </div>
@@ -371,7 +371,7 @@ function EditItemError({
             />
           </svg>
         </div>
-        <p className="text-gray-600 text-center mb-6">{message}</p>
+        <p className="text-[#8d7b6d] text-center mb-6">{message}</p>
         <div className="flex gap-3">
           {onRetry && (
             <button
@@ -383,7 +383,7 @@ function EditItemError({
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
           >
             Go Back
           </button>
@@ -413,22 +413,22 @@ function DiscardDialog({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-6 py-6 text-center">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Discard changes?</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-[#4a3f35] mb-2">Discard changes?</h3>
+          <p className="text-[#8d7b6d]">
             You have unsaved changes. Are you sure you want to leave?
           </p>
         </div>
 
-        <div className="flex border-t border-gray-200">
+        <div className="flex border-t border-[#f5ebe0]/60">
           <button
             onClick={onCancel}
-            className="flex-1 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors"
           >
             Keep Editing
           </button>
           <button
             onClick={onDiscard}
-            className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-gray-200"
+            className="flex-1 py-3 text-red-600 font-medium hover:bg-red-50 transition-colors border-l border-[#f5ebe0]/60"
           >
             Discard
           </button>
@@ -798,19 +798,19 @@ export function EditItemPage() {
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
+      <div className="min-h-screen bg-[#fdf8f2] flex flex-col pb-24">
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+        <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]/60">
           <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={handleBack}
               disabled={isSaving}
-              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50"
+              className="p-2 -ml-2 text-[#8d7b6d] hover:bg-[#f3ece4] rounded-full transition-colors disabled:opacity-50"
               aria-label="Go back"
             >
               <BackIcon />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">Edit Item</h1>
+            <h1 className="text-lg font-semibold text-[#4a3f35]">Edit Item</h1>
             <div className="w-10" />
           </div>
         </div>
@@ -822,7 +822,7 @@ export function EditItemPage() {
             <button
               type="button"
               onClick={() => setShowPhotoViewer(true)}
-              className="relative w-full aspect-video bg-gray-200 rounded-xl overflow-hidden group"
+              className="relative w-full aspect-video bg-[#efe6dc] rounded-xl overflow-hidden group"
               aria-label="View photo"
             >
               <img
@@ -832,7 +832,7 @@ export function EditItemPage() {
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                 <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-[#6f5f52]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -858,7 +858,7 @@ export function EditItemPage() {
           <div className="px-4 space-y-6">
             {/* Name Field */}
             <div>
-              <label htmlFor="item-name" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="item-name" className="block text-sm font-medium text-[#6f5f52] mb-2">
                 Item Name
               </label>
               <div className="relative">
@@ -871,7 +871,7 @@ export function EditItemPage() {
                   maxLength={200}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                   {formValues.name.length}/200
                 </span>
               </div>
@@ -879,7 +879,7 @@ export function EditItemPage() {
 
             {/* Quantity Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <label className="block text-sm font-medium text-[#6f5f52] mb-2">Quantity</label>
               <QuantityStepper
                 value={formValues.quantity}
                 onChange={(value) => updateField('quantity', value)}
@@ -890,7 +890,7 @@ export function EditItemPage() {
 
             {/* Description Field */}
             <div>
-              <label htmlFor="item-description" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="item-description" className="block text-sm font-medium text-[#6f5f52] mb-2">
                 Description
               </label>
               <div className="relative">
@@ -903,7 +903,7 @@ export function EditItemPage() {
                   rows={4}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white"
                 />
-                <span className="absolute right-3 bottom-3 text-xs text-gray-400">
+                <span className="absolute right-3 bottom-3 text-xs text-[#b9a99b]">
                   {formValues.description.length}/1000
                 </span>
               </div>
@@ -919,7 +919,7 @@ export function EditItemPage() {
 
             {/* Location Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#6f5f52] mb-2">
                 Location <span className="text-red-500">*</span>
               </label>
               <button
@@ -937,7 +937,7 @@ export function EditItemPage() {
                       <span className="truncate">{selectedLocationDisplay.path}</span>
                     </>
                   ) : (
-                    <span className="text-gray-400 flex items-center gap-2">
+                    <span className="text-[#b9a99b] flex items-center gap-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           strokeLinecap="round"
@@ -957,7 +957,7 @@ export function EditItemPage() {
                   )}
                 </div>
                 <svg
-                  className="w-5 h-5 text-gray-400 flex-shrink-0"
+                  className="w-5 h-5 text-[#b9a99b] flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -980,24 +980,24 @@ export function EditItemPage() {
             />
 
             {/* Additional Fields Section */}
-            <div className="border-t border-gray-200 pt-4">
+            <div className="border-t border-[#f5ebe0]/60 pt-4">
               <button
                 type="button"
                 onClick={() => setIsAdditionalFieldsExpanded(!isAdditionalFieldsExpanded)}
                 className="w-full flex items-center justify-between py-2 text-left"
               >
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-[#6f5f52]">
                   Additional Details
                   {(formValues.price !== null ||
                     formValues.purchaseDate ||
                     formValues.expirationDate ||
                     formValues.brand ||
                     formValues.model) && (
-                    <span className="ml-2 text-xs text-gray-400">(has values)</span>
+                    <span className="ml-2 text-xs text-[#b9a99b]">(has values)</span>
                   )}
                 </span>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform ${
+                  className={`w-5 h-5 text-[#b9a99b] transition-transform ${
                     isAdditionalFieldsExpanded ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -1012,7 +1012,7 @@ export function EditItemPage() {
                 <div className="mt-4 space-y-6">
                   {/* Price Field */}
                   <div>
-                    <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-price" className="block text-sm font-medium text-[#6f5f52] mb-2">
                       Price
                     </label>
                     <div className="flex gap-2">
@@ -1046,7 +1046,7 @@ export function EditItemPage() {
 
                   {/* Purchase Date */}
                   <div>
-                    <label htmlFor="item-purchase-date" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-purchase-date" className="block text-sm font-medium text-[#6f5f52] mb-2">
                       Purchase Date
                     </label>
                     <input
@@ -1063,7 +1063,7 @@ export function EditItemPage() {
                   <div>
                     <label
                       htmlFor="item-expiration-date"
-                      className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2"
+                      className="flex items-center gap-2 text-sm font-medium text-[#6f5f52] mb-2"
                     >
                       Expiration Date
                       {isExpirationDatePast && (
@@ -1095,7 +1095,7 @@ export function EditItemPage() {
 
                   {/* Brand */}
                   <div>
-                    <label htmlFor="item-brand" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-brand" className="block text-sm font-medium text-[#6f5f52] mb-2">
                       Brand
                     </label>
                     <div className="relative">
@@ -1108,7 +1108,7 @@ export function EditItemPage() {
                         maxLength={100}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                         {formValues.brand.length}/100
                       </span>
                     </div>
@@ -1116,7 +1116,7 @@ export function EditItemPage() {
 
                   {/* Model */}
                   <div>
-                    <label htmlFor="item-model" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-model" className="block text-sm font-medium text-[#6f5f52] mb-2">
                       Model
                     </label>
                     <div className="relative">
@@ -1129,7 +1129,7 @@ export function EditItemPage() {
                         maxLength={100}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                         {formValues.model.length}/100
                       </span>
                     </div>
@@ -1137,7 +1137,7 @@ export function EditItemPage() {
 
                   {/* Notes */}
                   <div>
-                    <label htmlFor="item-notes" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-notes" className="block text-sm font-medium text-[#6f5f52] mb-2">
                       Notes
                     </label>
                     <textarea
@@ -1156,10 +1156,10 @@ export function EditItemPage() {
         </div>
 
         {/* Sticky Bottom Action Bar */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 px-4 py-3 pb-safe z-20">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-[#f5ebe0]/60 px-4 py-3 pb-safe z-20">
           {/* Helper text when no changes */}
           {!hasChanges && !isSaving && (
-            <p className="text-xs text-gray-400 text-center mb-2">
+            <p className="text-xs text-[#b9a99b] text-center mb-2">
               修改内容后即可保存
             </p>
           )}
@@ -1168,7 +1168,7 @@ export function EditItemPage() {
             <button
               onClick={handleBack}
               disabled={isSaving}
-              className="flex-1 py-3 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 py-3 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -1179,8 +1179,8 @@ export function EditItemPage() {
               disabled={isSaving || !hasChanges}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 font-medium rounded-lg transition-colors ${
                 hasChanges
-                  ? 'bg-teal-600 text-white hover:bg-teal-700 active:bg-teal-800'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  ? 'bg-[#8d7b6d] text-white hover:bg-[#7c6b5d] active:bg-teal-800'
+                  : 'bg-[#efe6dc] text-[#b9a99b] cursor-not-allowed'
               }`}
             >
               {isSaving ? (
@@ -1213,7 +1213,7 @@ export function EditItemPage() {
         {showFloatingSave && hasChanges && !isSaving && (
           <button
             onClick={handleSave}
-            className="fixed bottom-24 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg flex items-center justify-center z-30 hover:bg-teal-700 active:bg-teal-800 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300"
+            className="fixed bottom-24 right-4 w-14 h-14 bg-[#8d7b6d] text-white rounded-full shadow-lg flex items-center justify-center z-30 hover:bg-[#7c6b5d] active:bg-teal-800 transition-all animate-in fade-in slide-in-from-bottom-4 duration-300"
             aria-label="Save changes"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1225,7 +1225,7 @@ export function EditItemPage() {
         {/* Floating Save FAB - saving state */}
         {showFloatingSave && isSaving && (
           <div
-            className="fixed bottom-24 right-4 w-14 h-14 bg-teal-600 text-white rounded-full shadow-lg flex items-center justify-center z-30"
+            className="fixed bottom-24 right-4 w-14 h-14 bg-[#8d7b6d] text-white rounded-full shadow-lg flex items-center justify-center z-30"
           >
             <svg className="w-6 h-6 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle

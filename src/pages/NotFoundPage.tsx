@@ -8,9 +8,9 @@ export const NotFoundPage = () => {
       <div className="text-center space-y-6">
         {/* 404 Icon */}
         <div className="flex justify-center">
-          <div className="bg-gray-100 rounded-full p-8">
+          <div className="bg-[#f3ece4] rounded-full p-8">
             <svg
-              className="w-16 h-16 text-gray-400"
+              className="w-16 h-16 text-[#b9a99b]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -27,9 +27,9 @@ export const NotFoundPage = () => {
 
         {/* Error message */}
         <div className="space-y-2">
-          <h1 className="text-5xl font-bold text-gray-900">404</h1>
-          <h2 className="text-2xl font-semibold text-gray-700">Page not found</h2>
-          <p className="text-gray-500 max-w-md mx-auto">
+          <h1 className="text-5xl font-bold text-[#4a3f35]">404</h1>
+          <h2 className="text-2xl font-semibold text-[#6f5f52]">Page not found</h2>
+          <p className="text-[#8d7b6d] max-w-md mx-auto">
             The page you're looking for doesn't exist or has been moved.
           </p>
         </div>
@@ -38,7 +38,7 @@ export const NotFoundPage = () => {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-[#6f5f52] hover:bg-[#fdf8f2] transition-colors"
           >
             Go Back
           </button>
@@ -51,8 +51,8 @@ export const NotFoundPage = () => {
         </div>
 
         {/* Helpful links */}
-        <div className="pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-500 mb-3">Or try these:</p>
+        <div className="pt-6 border-t border-[#f5ebe0]/60">
+          <p className="text-sm text-[#8d7b6d] mb-3">Or try these:</p>
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => navigate('/inventory')}
