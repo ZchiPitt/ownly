@@ -76,9 +76,7 @@ Analyze this image and identify all distinct items you can see. For each item, p
    Example: "tags": ["navy blue", "cotton", "casual", "medium"]
 4. Brand name if visible on the item
 5. Confidence score from 0.0 to 1.0 (how certain you are about the identification)
-6. For each item, also provide approximate bounding box as percentage of image:
-   "bbox": [x_percent, y_percent, width_percent, height_percent]
-   Example: "bbox": [10, 20, 30, 40] means item starts at 10% from left, 20% from top, spans 30% width and 40% height
+6. A 2D bounding box for the item in the image. Return the box as "box_2d": [y_min, x_min, y_max, x_max] where coordinates are integers from 0 to 1000 representing the position relative to image dimensions. Be precise - the box should tightly enclose just the item, not the entire image.
 
 Return your analysis as a JSON object with this exact structure:
 {
@@ -89,7 +87,7 @@ Return your analysis as a JSON object with this exact structure:
       "tags": ["tag1", "tag2", "tag3"],
       "brand": "brand name or null",
       "confidence": 0.95,
-      "bbox": [10, 20, 30, 40]
+      "box_2d": [200, 100, 600, 500]
     }
   ]
 }
@@ -101,6 +99,7 @@ Important rules:
 - Only include brand if you can actually read/see it
 - Set confidence lower if the item is partially obscured or unclear
 - Return an empty items array if no items can be identified
+- The box_2d MUST tightly enclose just the specific item, not the whole image. For example, if a basket is on the bottom shelf of a rack, the box should only cover the basket area.
 - Always return valid JSON`;
 
 const COLOR_WORDS = [
@@ -120,32 +119,50 @@ function hasColorTag(tags: string[]): boolean {
   return COLOR_WORDS.some((color) => firstTag.includes(color));
 }
 
-function sanitizeBbox(value: unknown): [number, number, number, number] {
+/**
+ * Convert Gemini native box_2d [y_min, x_min, y_max, x_max] (0-1000 scale)
+ * to our format [x%, y%, width%, height%] (0-100 scale)
+ */
+function convertBox2dToBbox(value: unknown): [number, number, number, number] {
   if (!Array.isArray(value) || value.length !== 4) {
+    console.warn('[analyze-image] Invalid box_2d format:', value);
     return DEFAULT_BBOX;
   }
 
   const numbers = value.map((entry) => Number(entry));
   if (numbers.some((entry) => !Number.isFinite(entry))) {
+    console.warn('[analyze-image] Non-finite box_2d values:', value);
     return DEFAULT_BBOX;
   }
 
-  let [x, y, width, height] = numbers;
-  if (width <= 0 || height <= 0) {
+  let [yMin, xMin, yMax, xMax] = numbers;
+
+  // Clamp to 0-1000 range
+  yMin = Math.max(0, Math.min(yMin, 1000));
+  xMin = Math.max(0, Math.min(xMin, 1000));
+  yMax = Math.max(0, Math.min(yMax, 1000));
+  xMax = Math.max(0, Math.min(xMax, 1000));
+
+  // Ensure min < max
+  if (xMax <= xMin || yMax <= yMin) {
+    console.warn('[analyze-image] Invalid box_2d dimensions:', { yMin, xMin, yMax, xMax });
     return DEFAULT_BBOX;
   }
 
-  // Clamp values to valid range instead of rejecting
-  x = Math.max(0, Math.min(x, 99));
-  y = Math.max(0, Math.min(y, 99));
-  width = Math.min(width, 100 - x);
-  height = Math.min(height, 100 - y);
+  // Convert to [x%, y%, width%, height%] in 0-100 scale
+  const x = (xMin / 1000) * 100;
+  const y = (yMin / 1000) * 100;
+  const width = ((xMax - xMin) / 1000) * 100;
+  const height = ((yMax - yMin) / 1000) * 100;
 
-  if (width <= 0 || height <= 0) {
-    return DEFAULT_BBOX;
-  }
+  console.log(`[analyze-image] box_2d [${yMin},${xMin},${yMax},${xMax}] -> bbox [${x.toFixed(1)},${y.toFixed(1)},${width.toFixed(1)},${height.toFixed(1)}]`);
 
-  return [x, y, width, height];
+  return [
+    Math.round(x * 10) / 10,
+    Math.round(y * 10) / 10,
+    Math.round(width * 10) / 10,
+    Math.round(height * 10) / 10,
+  ];
 }
 
 /**
@@ -246,7 +263,7 @@ async function analyzeWithGemini(
     ],
     generationConfig: {
       temperature: 0.3, // Lower temperature for consistent results
-      maxOutputTokens: 1000,
+      maxOutputTokens: 2000,
       responseMimeType: 'application/json', // Native JSON output
     },
   });
@@ -294,7 +311,7 @@ async function analyzeWithGemini(
           typeof item.confidence === 'number'
             ? Math.min(Math.max(item.confidence, 0), 1) // Clamp to 0-1
             : 0.5,
-        bbox: sanitizeBbox(item.bbox),
+        bbox: convertBox2dToBbox(item.box_2d),
       };
     }) as DetectedItem[];
   } catch {

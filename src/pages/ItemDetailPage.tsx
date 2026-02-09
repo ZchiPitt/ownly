@@ -1549,7 +1549,8 @@ export function ItemDetailPage() {
                 src={item.photo_url}
                 alt={item.name || 'Item photo'}
                 bbox={detectedBbox}
-                className="w-full max-h-[300px] bg-[#f3ece4]"
+                className="w-full bg-[#f3ece4]"
+                imgClassName="max-h-[300px]"
                 onClick={() => setIsPhotoViewerOpen(true)}
               />
             ) : (

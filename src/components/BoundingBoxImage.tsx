@@ -5,7 +5,9 @@ interface BoundingBoxImageProps {
   alt: string;
   /** Bounding box as [x%, y%, width%, height%] in 0-100 range */
   bbox?: [number, number, number, number] | null;
+  /** className for the outer wrapper (sizing, background, etc.) */
   className?: string;
+  /** className for the img element */
   imgClassName?: string;
   showOverlay?: boolean;
   boxColor?: string;
@@ -44,10 +46,7 @@ export function BoundingBoxImage({
       return;
     }
 
-    const container = containerRef.current;
     const img = imgRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
     const naturalWidth = img.naturalWidth;
     const naturalHeight = img.naturalHeight;
 
@@ -56,7 +55,12 @@ export function BoundingBoxImage({
       return;
     }
 
-    // Calculate rendered image dimensions within object-contain
+    // Use the img element's actual rendered size (clientWidth/clientHeight)
+    // and the container's size to compute the object-contain offset
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerRef.current.clientHeight;
+
+    // With object-contain, the image is scaled to fit within the element
     const scale = Math.min(
       containerWidth / naturalWidth,
       containerHeight / naturalHeight
@@ -92,7 +96,7 @@ export function BoundingBoxImage({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden ${className}`}
+      className={`relative ${className}`}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -101,7 +105,7 @@ export function BoundingBoxImage({
         ref={imgRef}
         src={src}
         alt={alt}
-        className={`w-full h-full object-contain ${imgClassName}`}
+        className={`w-full object-contain ${imgClassName}`}
         onLoad={handleImageLoad}
         draggable={false}
       />
