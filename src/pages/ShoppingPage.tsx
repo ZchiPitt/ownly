@@ -522,30 +522,6 @@ export function ShoppingPage() {
     }
   }, [addMessage, analyzeShoppingImage, requireOnline, session?.user?.id]);
 
-  /**
-   * Handle Take Photo button click
-   */
-  const handleTakePhoto = useCallback(() => {
-    // Check if device has camera support
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setToast({
-        message:
-          'Camera not supported on this device. Try choosing from gallery instead.',
-        type: 'warning',
-      });
-      return;
-    }
-
-    // Trigger camera input
-    cameraInputRef.current?.click();
-  }, []);
-
-  /**
-   * Handle Choose from Gallery button click
-   */
-  const handleChooseFromGallery = useCallback(() => {
-    galleryInputRef.current?.click();
-  }, []);
 
   /**
    * Go to inventory search page and auto-start voice search
@@ -707,99 +683,20 @@ export function ShoppingPage() {
   }, [handleSendMessage]);
 
   /**
-   * Start chat with a starter prompt (used by URL query and sample prompt clicks)
+   * Start chat with a starter prompt - pre-fills the input and lets the user edit/send
    */
-  const startChatWithPrompt = useCallback(async (prompt: string) => {
+  const startChatWithPrompt = useCallback((prompt: string) => {
     if (!prompt.trim()) return;
 
-    if (!requireOnline('send message')) {
-      setToast({
-        message: "You're offline. Connect to send messages.",
-        type: 'warning',
-      });
-      return;
-    }
-
-    if (!session?.access_token) {
-      addMessage(
-        'assistant',
-        'text',
-        'Please sign in to continue the conversation.'
-      );
-      return;
-    }
-
-    // Ensure user sees the chat view before response starts streaming in
+    // Switch to chat view and pre-fill the input for user to review/edit
     setViewState('chat');
-    addMessage('user', 'text', prompt);
-    setIsTyping(true);
+    setInputValue(prompt);
 
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/shopping-followup`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: prompt,
-          conversation_history: [],
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          const details = data.error?.details as { text_count?: number; text_limit?: number } | undefined;
-          if (details) {
-            updateUsage({
-              text_count: details.text_count ?? 50,
-              text_limit: details.text_limit ?? 50,
-            });
-          }
-          addMessage(
-            'assistant',
-            'text',
-            `You've used ${details?.text_count ?? 'all'} of your ${details?.text_limit ?? 50} daily questions. Try again tomorrow!`
-          );
-        } else if (response.status === 401) {
-          addMessage(
-            'assistant',
-            'text',
-            'Your session has expired. Please sign in again.'
-          );
-        } else {
-          addMessage(
-            'assistant',
-            'text',
-            data.error?.message || 'Something went wrong. Please try again.'
-          );
-        }
-        return;
-      }
-
-      const followupResponse = data as ShoppingFollowupResponse;
-      if (followupResponse.usage) {
-        updateUsage({
-          text_count: followupResponse.usage.text_count,
-          text_limit: followupResponse.usage.text_limit,
-        });
-      }
-
-      addMessage('assistant', 'text', followupResponse.response);
-    } catch (error) {
-      console.error('Error sending starter prompt:', error);
-      addMessage(
-        'assistant',
-        'text',
-        'Sorry, I had trouble responding. Please try again.'
-      );
-    } finally {
-      setIsTyping(false);
-    }
-  }, [addMessage, requireOnline, session?.access_token, updateUsage]);
+    // Focus the input field after the view transition
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, []);
 
   /**
    * Handle initial query from URL parameter (e.g., from Dashboard sample queries)
@@ -1405,13 +1302,6 @@ export function ShoppingPage() {
                     <span aria-hidden="true">🎤</span>
                     Voice search in my inventory
                   </button>
-                  <button
-                    onClick={() => void startChatWithPrompt('Talk to Ownly')}
-                    disabled={isProcessing}
-                    className="inline-flex items-center rounded-full border border-[#e7dbcc] bg-white/95 px-4 py-2 text-sm font-semibold text-[#7a6b5e] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#d8cab9] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Talk to Ownly
-                  </button>
                 </div>
               </div>
 
@@ -1433,88 +1323,8 @@ export function ShoppingPage() {
                   >
                     Does this match my closet?
                   </button>
-                  <button
-                    onClick={() => void startChatWithPrompt('Talk to Ownly')}
-                    disabled={isProcessing}
-                    className="inline-flex items-center rounded-full border border-[#d4dfc2] bg-white/95 px-4 py-2 text-sm font-semibold text-[#6f7e5e] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#c0cfaa] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Talk to Ownly
-                  </button>
                 </div>
 
-                <div className="space-y-3 mt-4 w-full">
-                  <button
-                    onClick={handleTakePhoto}
-                    disabled={isProcessing || photoLimitReached}
-                    className="w-full p-5 bg-white/95 rounded-2xl soft-shadow border border-[#f5ebe0]/60 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#f8e1d7] flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-6 h-6 text-[#4a3f35]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h3 className="text-base font-black text-[#4a3f35]">
-                          Take Photo
-                        </h3>
-                        <p className="text-sm text-[#8d7b6d]">
-                          Snap a photo of the item you're considering
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={handleChooseFromGallery}
-                    disabled={isProcessing || photoLimitReached}
-                    className="w-full p-5 bg-white/95 rounded-2xl soft-shadow border border-[#f5ebe0]/60 hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#fcf6bd] flex items-center justify-center flex-shrink-0">
-                        <svg
-                          className="w-6 h-6 text-[#4a3f35]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                      <div className="flex-1 text-left">
-                        <h3 className="text-base font-black text-[#4a3f35]">
-                          Choose from Gallery
-                        </h3>
-                        <p className="text-sm text-[#8d7b6d]">
-                          Select an existing photo from your device
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
               </div>
 
               <div className="rounded-2xl bg-[#eef5f7] border border-[#d7e6eb] p-4">
@@ -1535,13 +1345,6 @@ export function ShoppingPage() {
                   >
                     Pack for this weekend trip
                   </button>
-                  <button
-                    onClick={() => void startChatWithPrompt('Talk to Ownly')}
-                    disabled={isProcessing}
-                    className="inline-flex items-center rounded-full border border-[#cfdfe6] bg-white/95 px-4 py-2 text-sm font-semibold text-[#5e7682] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#bcd0da] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Talk to Ownly
-                  </button>
                 </div>
               </div>
 
@@ -1555,13 +1358,6 @@ export function ShoppingPage() {
                     className="inline-flex items-center rounded-full border border-[#e5d4d4] bg-white/95 px-4 py-2 text-sm font-semibold text-[#7d6666] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#d7c0c0] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     What I haven't used for more than 1 year
-                  </button>
-                  <button
-                    onClick={() => void startChatWithPrompt('Talk to Ownly')}
-                    disabled={isProcessing}
-                    className="inline-flex items-center rounded-full border border-[#e5d4d4] bg-white/95 px-4 py-2 text-sm font-semibold text-[#7d6666] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#d7c0c0] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Talk to Ownly
                   </button>
                 </div>
               </div>
