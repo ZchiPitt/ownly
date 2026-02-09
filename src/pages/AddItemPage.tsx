@@ -32,7 +32,10 @@ import {
 } from '@/lib/imageUtils';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import { useCategories } from '@/hooks/useCategories';
 import type { DetectedItem, AnalyzeImageResponse } from '@/types/api';
+import type { ItemAIMetadata } from '@/types';
+import { generateItemEmbedding } from '@/lib/embeddingUtils';
 
 interface ToastState {
   message: string;
@@ -120,6 +123,7 @@ function HeicErrorModal({
 export function AddItemPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { categories } = useCategories();
 
   // References to hidden file inputs
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -141,10 +145,9 @@ export function AddItemPage() {
   const [analysisSecondsElapsed, setAnalysisSecondsElapsed] = useState(0);
   const analysisAbortRef = useRef<AbortController | null>(null);
   const analysisTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  // Batch save state - passed to MultiItemSelection but no longer used for direct saves
-  // (all saves now go through the editor to ensure location is set)
-  const [isBatchSaving] = useState(false);
-  const [batchSaveProgress] = useState({ current: 0, total: 0 });
+  // Batch save state
+  const [isBatchSaving, setIsBatchSaving] = useState(false);
+  const [batchSaveProgress, setBatchSaveProgress] = useState({ current: 0, total: 0 });
   const [showSingleItemChoice, setShowSingleItemChoice] = useState(false);
   const [singleDetectedItem, setSingleDetectedItem] = useState<DetectedItem | null>(null);
   const [isQuickAdding, setIsQuickAdding] = useState(false);
@@ -1068,7 +1071,7 @@ export function AddItemPage() {
    * Navigates to Item Editor with first item and queues remaining items
    */
   const handleMultiItemProceed = useCallback(
-    (selectedItems: DetectedItem[], imageInfo: ImageInfo) => {
+    (selectedItems: DetectedItem[], imageInfo: ImageInfo, sharedLocationId?: string | null) => {
       if (selectedItems.length === 0) return;
 
       const sourceBatchId = selectedItems.length > 1 ? crypto.randomUUID() : null;
@@ -1090,23 +1093,102 @@ export function AddItemPage() {
           totalItems: selectedItems.length,
           currentItemIndex: 1,
           sourceBatchId,
+          sharedLocationId: sharedLocationId ?? null,
         },
       });
     },
     [navigate]
   );
 
-  const handleBatchSave = async (items: DetectedItem[]) => {
-    // Location is required for all items, so redirect to editor
-    // to add items one by one with location selection
-    if (!analysisResult) return;
+  const handleBatchSave = async (items: DetectedItem[], sharedLocationId?: string | null) => {
+    if (!analysisResult || !user) return;
 
-    handleMultiItemProceed(items, {
-      imageUrl: analysisResult.imageUrl,
-      thumbnailUrl: analysisResult.thumbnailUrl,
-      imagePath: analysisResult.imagePath,
-      thumbnailPath: analysisResult.thumbnailPath,
-    });
+    // If no location selected, fall back to editor flow
+    if (!sharedLocationId) {
+      setToast({ message: 'Please select a location first to use quick add', type: 'error' });
+      return;
+    }
+
+    setIsBatchSaving(true);
+    setBatchSaveProgress({ current: 0, total: items.length });
+
+    const sourceBatchId = items.length > 1 ? crypto.randomUUID() : null;
+    let savedCount = 0;
+
+    try {
+      for (const item of items) {
+        // Resolve category_suggestion to category_id
+        const categoryId = item.category_suggestion
+          ? categories.find(
+              (c) => c.name.toLowerCase() === item.category_suggestion!.toLowerCase()
+            )?.id ?? null
+          : null;
+
+        const thumbnailUrl = item.thumbnail_url || analysisResult.thumbnailUrl;
+
+        // Build AI metadata
+        const aiMetadata: ItemAIMetadata = {
+          detected_name: item.name || undefined,
+          detected_category: item.category_suggestion || undefined,
+          detected_tags: item.tags || undefined,
+          detected_brand: item.brand || undefined,
+          confidence_score: item.confidence || undefined,
+          detected_bbox: item.bbox || undefined,
+          analysis_provider: 'openai',
+          analysis_model: 'gpt-4o',
+          analyzed_at: new Date().toISOString(),
+        };
+
+        const insertData = {
+          user_id: user.id,
+          photo_url: analysisResult.imageUrl,
+          thumbnail_url: thumbnailUrl,
+          source_batch_id: sourceBatchId,
+          name: item.name || null,
+          description: null,
+          category_id: categoryId,
+          tags: item.tags || [],
+          location_id: sharedLocationId,
+          quantity: 1,
+          price: null,
+          currency: 'CNY',
+          purchase_date: null,
+          expiration_date: null,
+          brand: item.brand || null,
+          model: null,
+          notes: null,
+          is_favorite: false,
+          keep_forever: false,
+          ai_metadata: aiMetadata,
+          last_viewed_at: null,
+        };
+
+        const { data, error } = await (supabase
+          .from('items') as ReturnType<typeof supabase.from>)
+          .insert(insertData as Record<string, unknown>)
+          .select('id')
+          .single();
+
+        if (error) throw error;
+
+        // Generate embedding (non-blocking)
+        generateItemEmbedding(data.id);
+
+        savedCount++;
+        setBatchSaveProgress({ current: savedCount, total: items.length });
+      }
+
+      // All saved — navigate to inventory
+      navigate('/inventory', { replace: true });
+    } catch (error) {
+      console.error('Batch save error:', error);
+      setToast({
+        message: `Saved ${savedCount} of ${items.length} items. Error on remaining.`,
+        type: 'error',
+      });
+    } finally {
+      setIsBatchSaving(false);
+    }
   };
 
   // Render results view - multiple items detected using MultiItemSelection component

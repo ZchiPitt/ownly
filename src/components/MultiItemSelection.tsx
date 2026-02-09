@@ -17,6 +17,8 @@
 
 import { useState, useCallback } from 'react';
 import type { DetectedItem } from '@/types/api';
+import { LocationPickerModal } from '@/components/LocationPickerModal';
+import { useLocations } from '@/hooks/useLocations';
 
 /**
  * Props for the MultiItemSelection component
@@ -35,9 +37,9 @@ export interface MultiItemSelectionProps {
   /** Callback when user wants to go back */
   onBack: () => void;
   /** Callback when user proceeds with selected items */
-  onProceed: (selectedItems: DetectedItem[], imageInfo: ImageInfo) => void;
+  onProceed: (selectedItems: DetectedItem[], imageInfo: ImageInfo, sharedLocationId?: string | null) => void;
   /** Callback when user batch saves selected items */
-  onBatchSave?: (selectedItems: DetectedItem[]) => void;
+  onBatchSave?: (selectedItems: DetectedItem[], sharedLocationId?: string | null) => void;
   /** Whether batch save is in progress */
   isBatchSaving?: boolean;
   /** Batch save progress info */
@@ -84,6 +86,11 @@ export function MultiItemSelection({
     () => new Set(detectedItems.map((_, index) => index))
   );
 
+  // Shared location for all items
+  const [sharedLocationId, setSharedLocationId] = useState<string | null>(null);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const { locations } = useLocations();
+
   /**
    * Toggle selection of a single item
    */
@@ -123,9 +130,9 @@ export function MultiItemSelection({
         thumbnailUrl,
         imagePath,
         thumbnailPath,
-      });
+      }, sharedLocationId);
     }
-  }, [selectedIndices, detectedItems, onProceed, imageUrl, thumbnailUrl, imagePath, thumbnailPath]);
+  }, [selectedIndices, detectedItems, onProceed, imageUrl, thumbnailUrl, imagePath, thumbnailPath, sharedLocationId]);
 
   const selectedCount = selectedIndices.size;
   const allSelected = selectedCount === detectedItems.length;
@@ -300,6 +307,65 @@ export function MultiItemSelection({
         </div>
       </div>
 
+      {/* Location selector for all items */}
+      <div className="flex-shrink-0 px-4 pt-3 pb-1 border-t border-[#f5ebe0] bg-white">
+        <p className="text-xs text-[#8d7b6d] mb-2">Location for all items (optional)</p>
+        <button
+          onClick={() => setShowLocationPicker(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 border border-[#f5ebe0] rounded-xl bg-[#fdf8f2] hover:bg-[#f5ebe0]/60 transition-colors text-left"
+        >
+          <svg
+            className="w-5 h-5 text-[#8d7b6d] flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+            />
+          </svg>
+          <span className={`flex-1 text-sm truncate ${sharedLocationId ? 'text-[#4a3f35] font-medium' : 'text-[#b9a99b]'}`}>
+            {sharedLocationId
+              ? (locations.find((l) => l.id === sharedLocationId)?.path ||
+                 locations.find((l) => l.id === sharedLocationId)?.name ||
+                 'Selected location')
+              : 'Tap to set location for all items'}
+          </span>
+          {sharedLocationId ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setSharedLocationId(null);
+              }}
+              className="p-1 -m-1 text-[#d6ccc2] hover:text-[#8d7b6d]"
+              aria-label="Clear location"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          ) : (
+            <svg
+              className="w-4 h-4 text-[#d6ccc2] flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </button>
+      </div>
+
       {/* Bottom Action Bar - Review and add one by one (primary action) */}
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-t border-[#f5ebe0] bg-white">
         <button
@@ -337,9 +403,13 @@ export function MultiItemSelection({
       {selectedItems.length > 0 && onBatchSave && (
         <div className="px-4 pb-4 bg-white safe-area-pb">
           <button
-            onClick={() => onBatchSave(selectedItems)}
-            disabled={isBatchSaving}
-            className="w-full px-4 py-3 bg-[#e3ead3] rounded-2xl text-[#4a3f35] font-medium hover:bg-[#d6dfc4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            onClick={() => onBatchSave(selectedItems, sharedLocationId)}
+            disabled={isBatchSaving || !sharedLocationId}
+            className={`w-full px-4 py-3 rounded-2xl font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+              sharedLocationId
+                ? 'bg-[#e3ead3] text-[#4a3f35] hover:bg-[#d6dfc4] disabled:opacity-50'
+                : 'bg-[#f5ebe0] text-[#b9a99b]'
+            }`}
           >
             {isBatchSaving ? (
               <>
@@ -354,12 +424,24 @@ export function MultiItemSelection({
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Add All {selectedItems.length} items directly</span>
+                <span>
+                  {sharedLocationId
+                    ? `Add All ${selectedItems.length} items directly`
+                    : `Select a location to add all directly`}
+                </span>
               </>
             )}
           </button>
         </div>
       )}
+
+      {/* Location Picker Modal */}
+      <LocationPickerModal
+        isOpen={showLocationPicker}
+        onClose={() => setShowLocationPicker(false)}
+        selectedLocationId={sharedLocationId}
+        onSelect={setSharedLocationId}
+      />
     </div>
   );
 }

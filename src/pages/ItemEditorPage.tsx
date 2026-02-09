@@ -47,6 +47,7 @@ interface ItemEditorState {
   totalItems: number;
   currentItemIndex: number;
   sourceBatchId?: string | null;
+  sharedLocationId?: string | null;
 }
 
 /**
@@ -238,6 +239,7 @@ export function ItemEditorPage() {
               totalItems: state.totalItems,
               currentItemIndex: state.currentItemIndex + 1,
               sourceBatchId: state.sourceBatchId ?? null,
+              sharedLocationId: state.sharedLocationId ?? null,
             },
           });
         }, 1500);
@@ -423,7 +425,7 @@ export function ItemEditorPage() {
             totalItems={state.totalItems}
             onFormChange={handleFormChange}
             locationError={locationError}
-            defaultLocationId={recentLocationId}
+            defaultLocationId={state.sharedLocationId ?? recentLocationId}
           />
         </div>
 
