@@ -2,13 +2,15 @@
  * Supabase Edge Function: shopping-followup
  *
  * Handles follow-up questions in the Shopping Assistant chat.
- * Uses OpenAI GPT-4o-mini to respond to user questions with context
+ * Uses Google Gemini 2.5 Flash Lite to respond to user questions with context
  * from the conversation history and inventory data.
  *
- * @requires OPENAI_API_KEY environment variable
+ * @requires GOOGLE_AI_API_KEY environment variable
+ * @requires OPENAI_API_KEY environment variable (for embeddings)
  */
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { GoogleGenAI } from 'npm:@google/genai@1.37.0';
 import { corsHeaders } from '../_shared/cors.ts';
 
 // Types for conversation messages
@@ -735,7 +737,7 @@ async function fetchUserInventory(
 }
 
 /**
- * Generate a contextual response using OpenAI
+ * Generate a contextual response using Google Gemini
  */
 async function generateFollowupResponse(
   userMessage: string,
@@ -806,35 +808,20 @@ User's new question: ${userMessage}
 
 Provide a helpful, concise response.`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 300,
+  const ai = new GoogleGenAI({ apiKey });
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-lite',
+    contents: `${systemPrompt}\n\n${userPrompt}`,
+    config: {
+      maxOutputTokens: 300,
       temperature: 0.7,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(
-      `OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`
-    );
-  }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content?.trim();
+  const content = response.text?.trim();
 
   if (!content) {
-    throw new Error('No response content from OpenAI');
+    throw new Error('No response content from Gemini');
   }
 
   return content;
@@ -955,6 +942,7 @@ Deno.serve(async (req: Request) => {
   try {
     // Get environment variables
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const geminiApiKey = Deno.env.get('GOOGLE_AI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -963,6 +951,19 @@ Deno.serve(async (req: Request) => {
       const error: ApiError = {
         error: {
           message: 'OpenAI API key not configured',
+          code: 'CONFIGURATION_ERROR',
+        },
+      };
+      return new Response(JSON.stringify(error), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!geminiApiKey) {
+      const error: ApiError = {
+        error: {
+          message: 'Google AI API key not configured',
           code: 'CONFIGURATION_ERROR',
         },
       };
@@ -1102,7 +1103,7 @@ Deno.serve(async (req: Request) => {
         inventorySampleItems,
         intent,
         relevantItemsBlock,
-        openaiApiKey
+        geminiApiKey
       );
       aiResponse = relevantItemsBlock ? `${relevantItemsBlock}\n\n${generated}` : generated;
     }

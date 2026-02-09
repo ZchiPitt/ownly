@@ -48,7 +48,7 @@ export function DashboardPage() {
 
   return (
     <div
-      className="min-h-full p-4 space-y-6 max-w-2xl mx-auto"
+      className="min-h-full p-3 sm:p-4 space-y-4 sm:space-y-6 max-w-2xl mx-auto"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
