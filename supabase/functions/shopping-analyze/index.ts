@@ -1,7 +1,7 @@
 /**
  * Supabase Edge Function: shopping-analyze
  *
- * Analyzes shopping photos using Google Gemini 2.5 Flash Lite and compares
+ * Analyzes shopping photos using Google gemini-3-flash-preview and compares
  * against user's existing inventory using vector similarity search.
  * Uses OpenAI for embeddings (unchanged).
  * Includes rate limiting to manage API costs.
@@ -73,7 +73,7 @@ const SYSTEM_CATEGORIES = [
 ];
 
 /**
- * Gemini 2.5 Flash Lite Vision prompt for shopping item detection
+ * gemini-3-flash-preview Vision prompt for shopping item detection
  */
 const VISION_PROMPT = `You are a smart shopping assistant helping users avoid buying duplicates.
 
@@ -156,7 +156,7 @@ function detectMimeType(url: string): string {
 }
 
 /**
- * Call Gemini 2.5 Flash Lite Vision API for item detection
+ * Call gemini-3-flash-preview Vision API for item detection
  */
 async function detectItemWithGemini(
   imageUrl: string,
@@ -168,7 +168,7 @@ async function detectItemWithGemini(
   const mimeType = detectMimeType(imageUrl);
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-3-flash-preview',
     contents: [
       {
         role: 'user',
@@ -268,7 +268,7 @@ async function generateEmbedding(item: DetectedItem, apiKey: string): Promise<nu
 }
 
 /**
- * Generate shopping advice using Gemini 2.5 Flash Lite
+ * Generate shopping advice using gemini-3-flash-preview
  */
 async function generateAdviceWithGemini(
   detectedItem: DetectedItem,
@@ -279,7 +279,7 @@ async function generateAdviceWithGemini(
     const ai = new GoogleGenAI({ apiKey: apiKey });
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
+      model: 'gemini-3-flash-preview',
       contents: [
         {
           role: 'user',

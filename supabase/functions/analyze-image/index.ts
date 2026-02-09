@@ -1,7 +1,7 @@
 /**
  * Supabase Edge Function: analyze-image
  *
- * Analyzes images using Google Gemini 2.5 Flash Lite to detect items,
+ * Analyzes images using Google gemini-3-flash-preview to detect items,
  * suggest categories, extract tags, and identify brands.
  *
  * @requires GOOGLE_AI_API_KEY environment variable
@@ -62,7 +62,7 @@ const SYSTEM_CATEGORIES = [
 ];
 
 /**
- * Gemini 2.5 Flash Lite Vision prompt for item detection
+ * gemini-3-flash-preview Vision prompt for item detection
  */
 const VISION_PROMPT = `You are an expert inventory assistant analyzing photos of household items.
 
@@ -234,7 +234,7 @@ function detectMimeType(url: string): string {
 }
 
 /**
- * Call Gemini 2.5 Flash Lite Vision API
+ * Call gemini-3-flash-preview Vision API
  */
 async function analyzeWithGemini(
   imageData: { base64: string; mimeType: string },
@@ -246,7 +246,7 @@ async function analyzeWithGemini(
   console.log(`[analyze-image] Calling Gemini with mimeType: ${mimeType}, base64 length: ${imageBase64.length}`);
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-3-flash-preview',
     contents: [
       {
         role: 'user',
@@ -496,7 +496,7 @@ Deno.serve(async (req: Request) => {
     // Build response
     const response: AnalyzeImageResponse = {
       detected_items: detectedItems,
-      analysis_model: 'gemini-2.5-flash-lite',
+      analysis_model: 'gemini-3-flash-preview',
       analyzed_at: new Date().toISOString(),
     };
 

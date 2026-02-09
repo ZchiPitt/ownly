@@ -2,7 +2,7 @@
  * Supabase Edge Function: shopping-followup
  *
  * Handles follow-up questions in the Shopping Assistant chat.
- * Uses Google Gemini 2.5 Flash Lite to respond to user questions with context
+ * Uses Google gemini-3-flash-preview to respond to user questions with context
  * from the conversation history and inventory data.
  *
  * @requires GOOGLE_AI_API_KEY environment variable
@@ -810,7 +810,7 @@ Provide a helpful, concise response.`;
 
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash-lite',
+    model: 'gemini-3-flash-preview',
     contents: `${systemPrompt}\n\n${userPrompt}`,
     config: {
       maxOutputTokens: 300,
