@@ -1299,8 +1299,8 @@ export function ShoppingPage() {
                     disabled={isProcessing}
                     className="inline-flex items-center gap-2 rounded-full border border-[#e7dbcc] bg-white/95 px-4 py-2 text-sm font-semibold text-[#7a6b5e] shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#d8cab9] hover:text-[#4a3f35] hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span aria-hidden="true">🎤</span>
-                    Voice search in my inventory
+                    <span aria-hidden="true">🔍</span>
+                    Search in my inventory
                   </button>
                 </div>
               </div>

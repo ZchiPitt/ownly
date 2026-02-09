@@ -83,7 +83,10 @@ export function LandingPage() {
                     </div>
                 </div>
 
-                <p className="text-center text-xs font-black text-[#d6ccc2] uppercase tracking-[0.3em]">New to Ownly? Join the fold</p>
+                <p className="text-center text-xs font-black uppercase tracking-[0.3em]">
+                    <span className="text-[#d6ccc2]">New to Ownly? </span>
+                    <Link to="/signup" className="text-[#8d7b6d] hover:text-[#4a3f35] transition-colors underline underline-offset-2">Join the fold</Link>
+                </p>
             </div>
         </div>
     );
