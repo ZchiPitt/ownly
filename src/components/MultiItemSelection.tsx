@@ -63,7 +63,7 @@ function getConfidenceBadge(confidence: number): { text: string; className: stri
   } else if (confidence >= 0.6) {
     return { text: 'Medium', className: 'bg-yellow-100 text-yellow-700' };
   } else {
-    return { text: 'Low', className: 'bg-gray-100 text-gray-600' };
+    return { text: 'Low', className: 'bg-[#fdf8f2] text-[#8d7b6d]' };
   }
 }
 
@@ -134,10 +134,10 @@ export function MultiItemSelection({
   return (
     <div className="fixed inset-0 z-[60] bg-white flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-200">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 border-b border-[#f5ebe0]">
         <button
           onClick={onBack}
-          className="p-2 -ml-2 text-gray-600 hover:text-gray-900"
+          className="p-2 -ml-2 text-[#8d7b6d] hover:text-[#4a3f35]"
           aria-label="Go back"
         >
           <svg
@@ -154,12 +154,12 @@ export function MultiItemSelection({
             />
           </svg>
         </button>
-        <h2 className="text-lg font-semibold text-gray-900">Multiple Items Found</h2>
+        <h2 className="text-lg font-semibold text-[#4a3f35]">Multiple Items Found</h2>
         <div className="w-10" /> {/* Spacer for centering */}
       </div>
 
       {/* Original Photo Preview */}
-      <div className="flex-shrink-0 p-4 bg-gray-100">
+      <div className="flex-shrink-0 p-4 bg-[#fdf8f2]">
         <img
           src={imageUrl}
           alt="Captured items"
@@ -170,13 +170,13 @@ export function MultiItemSelection({
       {/* Items List */}
       <div className="flex-1 overflow-y-auto">
         {/* Description and Select All */}
-        <div className="px-4 py-3 flex items-center justify-between border-b border-gray-100">
-          <p className="text-sm text-gray-600">
+        <div className="px-4 py-3 flex items-center justify-between border-b border-[#f5ebe0]">
+          <p className="text-sm text-[#8d7b6d]">
             We found {detectedItems.length} items. Select which to add:
           </p>
           <button
             onClick={toggleSelectAll}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+            className="text-sm font-medium text-[#4a3f35] hover:text-[#3d332b]"
           >
             {allSelected ? 'Deselect All' : 'Select All'}
           </button>
@@ -193,15 +193,15 @@ export function MultiItemSelection({
                 key={index}
                 onClick={() => toggleSelection(index)}
                 className={`w-full flex items-start gap-3 p-4 rounded-xl border-2 transition-all text-left ${isSelected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-[#4a3f35] bg-[#e3ead3]/20'
+                    : 'border-[#f5ebe0] bg-white hover:border-[#d6ccc2]'
                   }`}
               >
                 {/* Checkbox */}
                 <div
                   className={`flex-shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-colors mt-0.5 ${isSelected
-                      ? 'bg-blue-600 border-blue-600'
-                      : 'border-gray-300 bg-white'
+                      ? 'bg-[#4a3f35] border-[#4a3f35]'
+                      : 'border-[#d6ccc2] bg-white'
                     }`}
                 >
                   {isSelected && (
@@ -225,12 +225,12 @@ export function MultiItemSelection({
                 <div className="flex-1 min-w-0">
                   {/* Item Name with AI sparkle */}
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium text-gray-900 truncate">
+                    <span className="font-medium text-[#4a3f35] truncate">
                       {item.name}
                     </span>
                     {/* AI sparkle indicator */}
                     <svg
-                      className="w-4 h-4 text-blue-500 flex-shrink-0"
+                      className="w-4 h-4 text-[#fbc4ab] flex-shrink-0"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -242,7 +242,7 @@ export function MultiItemSelection({
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {/* Category suggestion */}
                     {item.category_suggestion && (
-                      <span className="inline-flex items-center text-xs px-2 py-1 bg-gray-100 rounded-full text-gray-600">
+                      <span className="inline-flex items-center text-xs px-2 py-1 bg-[#fdf8f2] rounded-full text-[#8d7b6d]">
                         <svg
                           className="w-3 h-3 mr-1"
                           fill="none"
@@ -274,13 +274,13 @@ export function MultiItemSelection({
                       {item.tags.slice(0, 3).map((tag, tagIndex) => (
                         <span
                           key={tagIndex}
-                          className="inline-block text-xs px-2 py-0.5 bg-blue-50 text-blue-600 rounded"
+                          className="inline-block text-xs px-2 py-0.5 bg-[#fdf8f2] text-[#4a3f35] rounded"
                         >
                           #{tag}
                         </span>
                       ))}
                       {item.tags.length > 3 && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-[#d6ccc2]">
                           +{item.tags.length - 3} more
                         </span>
                       )}
@@ -289,7 +289,7 @@ export function MultiItemSelection({
 
                   {/* Brand if available */}
                   {item.brand && (
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-[#a89887] mt-1">
                       Brand: {item.brand}
                     </p>
                   )}
@@ -301,13 +301,13 @@ export function MultiItemSelection({
       </div>
 
       {/* Bottom Action Bar - Review and add one by one (primary action) */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-2 border-t border-gray-200 bg-white">
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 border-t border-[#f5ebe0] bg-white">
         <button
           onClick={handleProceed}
           disabled={selectedCount === 0}
-          className={`w-full py-3.5 px-4 font-medium rounded-xl transition-colors flex items-center justify-center gap-2 ${selectedCount > 0
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          className={`w-full py-3.5 px-4 font-medium rounded-2xl transition-colors flex items-center justify-center gap-2 ${selectedCount > 0
+              ? 'bg-[#4a3f35] text-white hover:bg-[#3d332b]'
+              : 'bg-[#f5ebe0] text-[#d6ccc2] cursor-not-allowed'
             }`}
         >
           {selectedCount > 0 ? (
@@ -339,7 +339,7 @@ export function MultiItemSelection({
           <button
             onClick={() => onBatchSave(selectedItems)}
             disabled={isBatchSaving}
-            className="w-full px-4 py-3 bg-teal-600 rounded-xl text-white font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 bg-[#e3ead3] rounded-2xl text-[#4a3f35] font-medium hover:bg-[#d6dfc4] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {isBatchSaving ? (
               <>

@@ -132,14 +132,14 @@ export function MarketplaceCard({
 export function MarketplaceCardSkeleton() {
   return (
     <div className="w-full bg-white rounded-2xl overflow-hidden shadow-sm">
-      <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+      <div className="w-full aspect-square bg-[#f5ebe0] animate-pulse" />
       <div className="p-3">
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mb-2" />
+        <div className="h-4 bg-[#f5ebe0] rounded animate-pulse w-3/4 mb-2" />
         <div className="flex items-center justify-between mb-2">
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-16" />
-          <div className="h-4 bg-gray-200 rounded-full animate-pulse w-14" />
+          <div className="h-4 bg-[#f5ebe0] rounded animate-pulse w-16" />
+          <div className="h-4 bg-[#f5ebe0] rounded-full animate-pulse w-14" />
         </div>
-        <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
+        <div className="h-3 bg-[#f5ebe0] rounded animate-pulse w-1/2" />
       </div>
     </div>
   );

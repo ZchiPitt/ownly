@@ -17,7 +17,7 @@ interface SkeletonBaseProps {
 function SkeletonBase({ className = '', style }: SkeletonBaseProps) {
   return (
     <div
-      className={`bg-gray-200 animate-pulse ${className}`}
+      className={`bg-[#f5ebe0] animate-pulse ${className}`}
       style={style}
     />
   );
@@ -297,7 +297,7 @@ export function SkeletonList({
         <div key={i}>
           <SkeletonListRow {...rowProps} />
           {showDividers && i < count - 1 && (
-            <div className="border-b border-gray-100" />
+            <div className="border-b border-[#f5ebe0]" />
           )}
         </div>
       ))}
@@ -365,9 +365,9 @@ export function SkeletonSection({
  */
 export function SkeletonItemDetail({ className = '' }: SkeletonBaseProps) {
   return (
-    <div className={`min-h-screen bg-gray-50 pb-safe-area-pb ${className}`}>
+    <div className={`min-h-screen bg-[#fdf8f2] pb-safe-area-pb ${className}`}>
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+      <div className="sticky top-0 z-10 bg-white border-b border-[#f5ebe0]">
         <div className="flex items-center justify-between px-4 py-3">
           <SkeletonCircle size={40} />
           <SkeletonLine width="6rem" height="1.5rem" />
@@ -413,7 +413,7 @@ export function SkeletonItemDetail({ className = '' }: SkeletonBaseProps) {
       </div>
 
       {/* Bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#fdf8f2] border-t border-[#f5ebe0] p-4 pb-safe-area-pb">
         <div className="flex gap-3">
           <SkeletonLine width="100%" height="2.75rem" className="rounded-lg" />
           <SkeletonLine width="100%" height="2.75rem" className="rounded-lg" />
@@ -429,7 +429,7 @@ export function SkeletonItemDetail({ className = '' }: SkeletonBaseProps) {
  */
 export function SkeletonSearchResult({ className = '' }: SkeletonBaseProps) {
   return (
-    <div className={`flex items-center gap-3 p-3 bg-white border-b border-gray-100 ${className}`}>
+    <div className={`flex items-center gap-3 p-3 bg-white border-b border-[#f5ebe0] ${className}`}>
       <SkeletonRect width={56} height={56} rounded="lg" className="flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <SkeletonLine width="75%" height="1rem" className="mb-2" />
@@ -507,7 +507,7 @@ export function SkeletonInventory({
   return (
     <div className={className}>
       {/* Header with title and view toggle */}
-      <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 bg-white border-b border-[#f5ebe0]">
         <div>
           <SkeletonLine width="8rem" height="1.5rem" className="mb-1" />
           <SkeletonLine width="4rem" height="0.875rem" />
@@ -519,7 +519,7 @@ export function SkeletonInventory({
       </div>
 
       {/* Filter bar */}
-      <div className="flex gap-2 p-3 bg-white border-b border-gray-100 overflow-x-auto">
+      <div className="flex gap-2 p-3 bg-white border-b border-[#f5ebe0] overflow-x-auto">
         <SkeletonLine width="5rem" height="2rem" className="rounded-full flex-shrink-0" />
         <SkeletonLine width="6rem" height="2rem" className="rounded-full flex-shrink-0" />
         <SkeletonLine width="5rem" height="2rem" className="rounded-full flex-shrink-0" />

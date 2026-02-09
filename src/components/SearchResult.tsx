@@ -45,7 +45,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
         return isMatch ? (
           <mark
             key={index}
-            className="bg-yellow-200 text-gray-900 rounded-sm px-0.5"
+            className="bg-yellow-200 text-[#4a3f35] rounded-sm px-0.5"
           >
             {part}
           </mark>
@@ -63,7 +63,7 @@ function HighlightText({ text, query }: { text: string; query: string }) {
 function ChevronRightIcon() {
   return (
     <svg
-      className="w-5 h-5 text-gray-400"
+      className="w-5 h-5 text-[#d6ccc2]"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -84,7 +84,7 @@ function ChevronRightIcon() {
 function LocationIcon() {
   return (
     <svg
-      className="w-4 h-4 text-gray-400 flex-shrink-0"
+      className="w-4 h-4 text-[#d6ccc2] flex-shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -119,12 +119,12 @@ export function SearchResult({ item, query }: SearchResultProps) {
   return (
     <button
       onClick={handleClick}
-      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0 text-left"
+      className="w-full flex items-center gap-3 p-3 bg-white hover:bg-[#fdf8f2] transition-colors border-b border-[#f5ebe0] last:border-b-0 text-left"
       aria-label={`View ${displayName}`}
     >
       {/* Thumbnail */}
       <div className="flex-shrink-0">
-        <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100">
+        <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#f5ebe0]">
           <img
             src={imageUrl}
             alt=""
@@ -137,7 +137,7 @@ export function SearchResult({ item, query }: SearchResultProps) {
       {/* Content */}
       <div className="flex-1 min-w-0">
         {/* Item name with highlighting */}
-        <h3 className="font-medium text-gray-900 truncate">
+        <h3 className="font-medium text-[#4a3f35] truncate">
           <HighlightText text={displayName} query={query} />
         </h3>
 
@@ -145,7 +145,7 @@ export function SearchResult({ item, query }: SearchResultProps) {
         {item.location_path && (
           <div className="flex items-center gap-1 mt-0.5">
             <LocationIcon />
-            <span className="text-sm text-gray-500 truncate">
+            <span className="text-sm text-[#a89887] truncate">
               <HighlightText text={item.location_path} query={query} />
             </span>
           </div>
@@ -185,7 +185,7 @@ export function SearchResult({ item, query }: SearchResultProps) {
               );
             })}
             {item.tags.length > displayTags.length && (
-              <span className="text-[10px] text-gray-400 px-1">
+              <span className="text-[10px] text-[#d6ccc2] px-1">
                 +{item.tags.length - displayTags.length}
               </span>
             )}
@@ -206,27 +206,27 @@ export function SearchResult({ item, query }: SearchResultProps) {
  */
 export function SearchResultSkeleton() {
   return (
-    <div className="flex items-center gap-3 p-3 bg-white border-b border-gray-100 animate-pulse">
+    <div className="flex items-center gap-3 p-3 bg-white border-b border-[#f5ebe0] animate-pulse">
       {/* Thumbnail skeleton */}
       <div className="flex-shrink-0">
-        <div className="w-14 h-14 rounded-lg bg-gray-200" />
+        <div className="w-14 h-14 rounded-lg bg-[#f5ebe0]" />
       </div>
 
       {/* Content skeleton */}
       <div className="flex-1 min-w-0">
         {/* Name skeleton */}
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
+        <div className="h-4 bg-[#f5ebe0] rounded w-3/4 mb-2" />
 
         {/* Location skeleton */}
-        <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+        <div className="h-3 bg-[#f5ebe0] rounded w-1/2 mb-2" />
 
         {/* Category badge skeleton */}
-        <div className="h-5 bg-gray-200 rounded-full w-20" />
+        <div className="h-5 bg-[#f5ebe0] rounded-full w-20" />
       </div>
 
       {/* Chevron skeleton */}
       <div className="flex-shrink-0">
-        <div className="w-5 h-5 rounded bg-gray-200" />
+        <div className="w-5 h-5 rounded bg-[#f5ebe0]" />
       </div>
     </div>
   );

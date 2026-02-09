@@ -26,7 +26,7 @@ const conditionLabels: Record<ItemCondition, string> = {
 const conditionStyles: Record<ItemCondition, string> = {
   new: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   like_new: 'bg-[#e3ead3] text-[#4a3f35] border-[#d7e1c2]',
-  good: 'bg-blue-50 text-blue-700 border-blue-200',
+  good: 'bg-[#fdf8f2] text-[#4a3f35] border-[#f5ebe0]',
   fair: 'bg-amber-50 text-amber-700 border-amber-200',
   poor: 'bg-[#f3ece4] text-[#8d7b6d] border-[#f5ebe0]/60',
 };
@@ -176,7 +176,7 @@ function ListingDetailError({ message, onBack, onRetry }: { message: string; onB
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
+            className="px-6 py-2 border border-[#f5ebe0] text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
           >
             Back
           </button>

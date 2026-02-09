@@ -284,10 +284,10 @@ export function PlansPage() {
         <div className="mx-auto mt-12 w-full max-w-7xl">
           <Link
             to="/settings"
-            className="flex items-center justify-between px-4 py-3 rounded-lg border border-gray-200 bg-white text-gray-900 hover:bg-gray-50"
+            className="flex items-center justify-between px-4 py-3 rounded-lg border border-[#f5ebe0] bg-white text-[#4a3f35] hover:bg-[#fdf8f2]"
           >
             <span className="text-base font-medium">Back to Settings</span>
-            <ChevronRightIcon className="w-5 h-5 text-gray-400" />
+            <ChevronRightIcon className="w-5 h-5 text-[#d6ccc2]" />
           </Link>
         </div>
       </div>

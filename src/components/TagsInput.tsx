@@ -213,10 +213,10 @@ function TagsInputContent({
 
   return (
     <div ref={containerRef}>
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
         Tags
         {isAIFilled && (
-          <span className="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
             <SparkleIcon className="w-3 h-3" />
             AI
           </span>
@@ -224,8 +224,8 @@ function TagsInputContent({
       </label>
 
       <div
-        className={`min-h-[48px] px-3 py-2 border rounded-xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors ${
-          isAIFilled ? 'border-blue-300 bg-blue-50/50' : 'border-gray-300 bg-white'
+        className={`min-h-[48px] px-3 py-2 border rounded-xl focus-within:ring-2 focus-within:ring-[#d6ccc2] focus-within:border-[#d6ccc2] transition-colors ${
+          isAIFilled ? 'border-[#d6ccc2] bg-[#fdf8f2]/50' : 'border-[#f5ebe0] bg-white'
         }`}
       >
         {/* Tags and input container */}
@@ -237,18 +237,18 @@ function TagsInputContent({
             const isAI = isAITag(tag);
             const chipStyle = isColor && colorHex ? { backgroundColor: getColorTint(colorHex) } : undefined;
             const dotBorderClass = colorHex && isLightColor(colorHex)
-              ? 'border border-gray-300'
+              ? 'border border-[#d6ccc2]'
               : 'border border-transparent';
             const chipClassName = `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm ${
               isAI
                 ? isColor
-                  ? 'text-gray-800 ring-1 ring-blue-200'
-                  : 'bg-blue-100 text-blue-700'
+                  ? 'text-[#4a3f35] ring-1 ring-[#d6ccc2]'
+                  : 'bg-[#f5ebe0] text-[#4a3f35]'
                 : isColor
-                  ? 'text-gray-800'
-                  : 'bg-gray-100 text-gray-700'
+                  ? 'text-[#4a3f35]'
+                  : 'bg-[#f5ebe0] text-[#4a3f35]'
             }`;
-            const removeHoverClass = isAI && !isColor ? 'hover:bg-blue-700' : 'hover:bg-gray-700';
+            const removeHoverClass = isAI && !isColor ? 'hover:bg-[#4a3f35]' : 'hover:bg-[#4a3f35]';
 
             return (
               <span
@@ -264,7 +264,7 @@ function TagsInputContent({
                     style={{ backgroundColor: colorHex }}
                   />
                 )}
-                {isAI && <SparkleIcon className="w-3 h-3 text-blue-500" />}
+                {isAI && <SparkleIcon className="w-3 h-3 text-[#8d7b6d]" />}
                 <span className="max-w-[150px] truncate">{tag}</span>
                 <button
                   type="button"
@@ -300,7 +300,7 @@ function TagsInputContent({
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}
               placeholder={value.length === 0 ? 'Add tags...' : ''}
-              className="flex-1 min-w-[100px] py-1 bg-transparent outline-none placeholder-gray-400"
+              className="flex-1 min-w-[100px] py-1 bg-transparent outline-none placeholder-[#d6ccc2]"
             />
           )}
         </div>
@@ -309,7 +309,7 @@ function TagsInputContent({
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
         <div className="relative">
-          <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+          <div className="absolute z-20 mt-1 w-full bg-white border border-[#f5ebe0] rounded-xl shadow-lg max-h-48 overflow-y-auto">
             {suggestions.map((suggestion, index) => (
               <button
                 key={suggestion}
@@ -317,8 +317,8 @@ function TagsInputContent({
                 onClick={() => handleSuggestionClick(suggestion)}
                 className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
                   index === highlightedIndex
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'hover:bg-gray-50'
+                    ? 'bg-[#fdf8f2] text-[#4a3f35]'
+                    : 'hover:bg-[#fdf8f2]'
                 }`}
               >
                 {suggestion}
@@ -330,10 +330,10 @@ function TagsInputContent({
 
       {/* Helper text */}
       <div className="mt-1.5 flex items-center justify-between">
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#d6ccc2]">
           Press Enter or comma to add tags
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#d6ccc2]">
           {value.length}/{MAX_TAGS}
         </p>
       </div>

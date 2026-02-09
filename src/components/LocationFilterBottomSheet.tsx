@@ -166,7 +166,7 @@ function LocationTreeItem({
     return (
       <>
         {before}
-        <mark className="bg-yellow-200 text-gray-900">{match}</mark>
+        <mark className="bg-yellow-200 text-[#4a3f35]">{match}</mark>
         {after}
       </>
     );
@@ -179,8 +179,8 @@ function LocationTreeItem({
         onClick={() => onSelect(node.id)}
         className={`w-full flex items-center gap-2 px-4 py-3 text-left transition-colors ${
           isSelected
-            ? 'bg-blue-50 border-l-4 border-blue-600'
-            : 'hover:bg-gray-50 border-l-4 border-transparent'
+            ? 'bg-[#fdf8f2] border-l-4 border-[#4a3f35]'
+            : 'hover:bg-[#fdf8f2] border-l-4 border-transparent'
         }`}
         style={{ paddingLeft: `${level * 20 + 16}px` }}
       >
@@ -192,7 +192,7 @@ function LocationTreeItem({
               e.stopPropagation();
               onToggleExpand(node.id);
             }}
-            className="p-1 -m-1 text-gray-400 hover:text-gray-600"
+            className="p-1 -m-1 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
             <svg
@@ -212,13 +212,13 @@ function LocationTreeItem({
         <span className="text-lg flex-shrink-0">{node.icon}</span>
 
         {/* Location name with search highlighting */}
-        <span className={`flex-1 truncate ${isSelected ? 'font-medium text-blue-700' : ''}`}>
+        <span className={`flex-1 truncate ${isSelected ? 'font-medium text-[#4a3f35]' : ''}`}>
           {highlightText(node.name)}
         </span>
 
         {/* Item count badge */}
         {node.item_count > 0 && (
-          <span className="flex-shrink-0 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+          <span className="flex-shrink-0 text-xs bg-[#f5ebe0] text-[#8d7b6d] px-2 py-0.5 rounded-full">
             {node.item_count}
           </span>
         )}
@@ -226,7 +226,7 @@ function LocationTreeItem({
         {/* Selected radio indicator */}
         <div
           className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-            isSelected ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+            isSelected ? 'border-[#4a3f35] bg-[#4a3f35]' : 'border-[#d6ccc2]'
           }`}
         >
           {isSelected && (
@@ -379,20 +379,20 @@ function LocationFilterContent({
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-[#4a3f35]/20 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-lg bg-white rounded-t-2xl animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[80vh]">
+      <div className="w-full max-w-lg bg-[#fdf8f2] rounded-t-[3rem] soft-shadow animate-in slide-in-from-bottom duration-300 flex flex-col max-h-[80vh] border-t border-white/50">
         {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        <div className="flex justify-center pt-5 pb-2 flex-shrink-0">
+          <div className="w-12 h-1.5 bg-[#4a3f35]/10 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">Filter by Location</h2>
+        <div className="flex items-center justify-between px-8 py-4 flex-shrink-0">
+          <h2 className="text-2xl font-black text-[#4a3f35] tracking-tight">Filter by Location</h2>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-10 h-10 flex items-center justify-center bg-white rounded-2xl text-[#d6ccc2] hover:text-[#4a3f35] soft-shadow transition-all active:scale-95"
             aria-label="Close"
           >
             <svg
@@ -412,10 +412,10 @@ function LocationFilterContent({
         </div>
 
         {/* Search input */}
-        <div className="px-4 py-3 border-b border-gray-100 flex-shrink-0">
+        <div className="px-4 py-3 border-b border-[#f5ebe0] flex-shrink-0">
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#d6ccc2]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -432,12 +432,12 @@ function LocationFilterContent({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search locations..."
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2 border border-[#f5ebe0] rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] bg-white"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-[#d6ccc2] hover:text-[#8d7b6d]"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -451,7 +451,7 @@ function LocationFilterContent({
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-[#4a3f35] animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -473,15 +473,15 @@ function LocationFilterContent({
               <button
                 type="button"
                 onClick={() => handleSelect(null)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-[#f5ebe0] ${
                   localSelectedId === null
-                    ? 'bg-blue-50 border-l-4 border-l-blue-600'
-                    : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    ? 'bg-[#fdf8f2] border-l-4 border-l-[#4a3f35]'
+                    : 'hover:bg-[#fdf8f2] border-l-4 border-l-transparent'
                 }`}
               >
                 <div className="w-4" /> {/* Spacer for alignment */}
                 <svg
-                  className="w-5 h-5 text-gray-400"
+                  className="w-5 h-5 text-[#d6ccc2]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -493,13 +493,13 @@ function LocationFilterContent({
                     d="M4 6h16M4 10h16M4 14h16M4 18h16"
                   />
                 </svg>
-                <span className={`flex-1 ${localSelectedId === null ? 'font-medium text-blue-700' : 'text-gray-600'}`}>
+                <span className={`flex-1 ${localSelectedId === null ? 'font-medium text-[#4a3f35]' : 'text-[#8d7b6d]'}`}>
                   All Locations
                 </span>
                 {/* Radio indicator */}
                 <div
                   className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    localSelectedId === null ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                    localSelectedId === null ? 'border-[#4a3f35] bg-[#4a3f35]' : 'border-[#d6ccc2]'
                   }`}
                 >
                   {localSelectedId === null && (
@@ -531,9 +531,9 @@ function LocationFilterContent({
                   ))}
                 </div>
               ) : searchQuery ? (
-                <div className="px-4 py-8 text-center text-gray-500">
+                <div className="px-4 py-8 text-center text-[#a89887]">
                   <svg
-                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                    className="w-12 h-12 mx-auto mb-3 text-[#d6ccc2]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -548,9 +548,9 @@ function LocationFilterContent({
                   <p className="text-sm">No locations match "{searchQuery}"</p>
                 </div>
               ) : (
-                <div className="px-4 py-8 text-center text-gray-500">
+                <div className="px-4 py-8 text-center text-[#a89887]">
                   <svg
-                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                    className="w-12 h-12 mx-auto mb-3 text-[#d6ccc2]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -569,7 +569,7 @@ function LocationFilterContent({
                     />
                   </svg>
                   <p className="text-sm">No locations yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Create locations from item editor</p>
+                  <p className="text-xs text-[#d6ccc2] mt-1">Create locations from item editor</p>
                 </div>
               )}
             </div>
@@ -577,23 +577,23 @@ function LocationFilterContent({
         </div>
 
         {/* Footer with Apply button */}
-        <div className="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
+        <div className="flex-shrink-0 px-8 py-6 bg-white/40 border-t border-[#f5ebe0]/60 rounded-t-[2rem]">
           {/* Selection indicator */}
           {selectedLocation && (
-            <p className="text-xs text-gray-500 mb-2 text-center">
+            <p className="text-xs text-[#a89887] mb-2 text-center">
               Filtering by: <span className="font-medium">{selectedLocation.path || selectedLocation.name}</span>
             </p>
           )}
           <button
             onClick={handleApply}
-            className="w-full py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full py-3.5 bg-[#4a3f35] text-white font-black rounded-2xl hover:bg-[#3d332b] transition-colors active:scale-[0.98]"
           >
             Apply Filter
           </button>
         </div>
 
         {/* Safe area padding for iPhone */}
-        <div className="h-6 bg-white flex-shrink-0" />
+        <div className="h-6 bg-[#fdf8f2] flex-shrink-0" />
       </div>
     </div>
   );

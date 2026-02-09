@@ -106,7 +106,7 @@ export function SaveButton({
   }, [error, isLoading, listingId, onToggle, saveListing, saved, success, unsaveListing, user]);
 
   const sizeClasses = size === 'md' ? 'w-10 h-10' : 'w-8 h-8';
-  const iconClasses = saved ? 'text-rose-500' : 'text-gray-400';
+  const iconClasses = saved ? 'text-rose-500' : 'text-[#d6ccc2]';
 
   return (
     <button

@@ -97,7 +97,7 @@ function HeicErrorModal({
           </button>
           <button
             onClick={onChooseDifferent}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
+            className="w-full px-4 py-3 border border-[#f5ebe0] rounded-lg text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -721,13 +721,13 @@ export function AddItemPage() {
           <button
             onClick={handleTakePhoto}
             disabled={isProcessing}
-            className="w-full p-6 bg-white rounded-xl shadow-sm border border-[#f5ebe0]/60 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-6 bg-white rounded-xl shadow-sm border border-[#f5ebe0]/60 hover:border-[#d6ccc2] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
               {/* Camera Icon */}
-              <div className="w-14 h-14 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#f5ebe0] flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-blue-600"
+                  className="w-7 h-7 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -777,13 +777,13 @@ export function AddItemPage() {
           <button
             onClick={handleChooseFromGallery}
             disabled={isProcessing}
-            className="w-full p-6 bg-white rounded-xl shadow-sm border border-[#f5ebe0]/60 hover:border-blue-300 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full p-6 bg-white rounded-xl shadow-sm border border-[#f5ebe0]/60 hover:border-[#d6ccc2] hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <div className="flex items-center gap-4">
               {/* Gallery Icon */}
-              <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#e3ead3] flex items-center justify-center flex-shrink-0">
                 <svg
-                  className="w-7 h-7 text-green-600"
+                  className="w-7 h-7 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -852,11 +852,11 @@ export function AddItemPage() {
         )}
 
         {/* Tips Section */}
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-          <h4 className="text-sm font-semibold text-blue-800 mb-2">
-            📸 Tips for best results
+        <div className="mt-8 p-4 bg-[#fdf8f2] rounded-lg">
+          <h4 className="text-sm font-semibold text-[#4a3f35] mb-2">
+            Tips for best results
           </h4>
-          <ul className="text-sm text-blue-700 space-y-1">
+          <ul className="text-sm text-[#8d7b6d] space-y-1">
             <li>• Ensure good lighting</li>
             <li>• Keep the item centered in the frame</li>
             <li>• Avoid blurry or dark photos</li>
@@ -957,7 +957,7 @@ export function AddItemPage() {
           {/* Continue button */}
           <button
             onClick={handleContinue}
-            className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="flex-1 py-3 px-4 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors flex items-center justify-center gap-2"
           >
             Continue
             <svg
@@ -1045,7 +1045,7 @@ export function AddItemPage() {
             </button>
             <button
               onClick={() => setAnalysisPhase('analyzing')}
-              className="flex-1 py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+              className="flex-1 py-3 px-4 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors"
             >
               Keep Waiting
             </button>
@@ -1175,7 +1175,7 @@ export function AddItemPage() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-2">
               <h2 className="text-xl font-semibold">{singleDetectedItem.name}</h2>
-              <svg className="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[#fbc4ab]" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5L12 2z" />
               </svg>
             </div>
@@ -1221,7 +1221,7 @@ export function AddItemPage() {
           <button
             onClick={handleEditDetails}
             disabled={isQuickAdding}
-            className="w-full px-4 py-3 border border-gray-300 rounded-xl text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors disabled:opacity-50"
+            className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors disabled:opacity-50"
           >
             Edit Details
           </button>
@@ -1305,7 +1305,7 @@ export function AddItemPage() {
                 });
               }
             }}
-            className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors"
+            className="w-full py-3 px-4 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors"
           >
             Add Manually
           </button>

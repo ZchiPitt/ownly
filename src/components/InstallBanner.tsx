@@ -61,7 +61,7 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
         isClosing ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
       }`}
     >
-      <div className="mx-auto max-w-md bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+      <div className="mx-auto max-w-md bg-[#fdf8f2] rounded-2xl shadow-2xl border border-[#f5ebe0] overflow-hidden">
         {/* Main content */}
         <div className="p-4 flex items-start gap-4">
           {/* App icon */}
@@ -75,10 +75,10 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
 
           {/* Text content */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-base">
+            <h3 className="font-semibold text-[#4a3f35] text-base">
               Add Ownly to Home Screen
             </h3>
-            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+            <p className="text-sm text-[#a89887] mt-0.5 line-clamp-2">
               Install this app for quick access to your inventory anytime
             </p>
           </div>
@@ -89,14 +89,14 @@ export function InstallBanner({ onInstalled }: InstallBannerProps) {
           <button
             onClick={handleDismiss}
             disabled={isInstalling}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-[#8d7b6d] bg-[#f5ebe0] rounded-xl hover:bg-[#efe5d8] transition-colors disabled:opacity-50"
           >
             Not Now
           </button>
           <button
             onClick={handleInstall}
             disabled={isInstalling}
-            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#4a3f35] rounded-xl hover:bg-[#3d332b] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isInstalling ? (
               <>

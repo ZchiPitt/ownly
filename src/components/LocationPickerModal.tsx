@@ -62,8 +62,8 @@ function LocationTreeItem({
         onClick={() => onSelect(node.id)}
         className={`w-full flex items-center gap-2 px-4 py-3 text-left transition-colors ${
           isSelected
-            ? 'bg-blue-50 border-l-4 border-blue-600'
-            : 'hover:bg-gray-50 border-l-4 border-transparent'
+            ? 'bg-[#e3ead3]/20 border-l-4 border-[#4a3f35]'
+            : 'hover:bg-[#fdf8f2] border-l-4 border-transparent'
         }`}
         style={{ paddingLeft: `${level * 20 + 16}px` }}
       >
@@ -75,7 +75,7 @@ function LocationTreeItem({
               e.stopPropagation();
               onToggleExpand(node.id);
             }}
-            className="p-1 -m-1 text-gray-400 hover:text-gray-600"
+            className="p-1 -m-1 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
             <svg
@@ -95,13 +95,13 @@ function LocationTreeItem({
         <span className="text-lg flex-shrink-0">{node.icon}</span>
 
         {/* Location name */}
-        <span className={`flex-1 truncate ${isSelected ? 'font-medium text-blue-700' : ''}`}>
+        <span className={`flex-1 truncate ${isSelected ? 'font-medium text-[#4a3f35]' : ''}`}>
           {node.name}
         </span>
 
         {/* Item count badge */}
         {node.item_count > 0 && (
-          <span className="flex-shrink-0 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+          <span className="flex-shrink-0 text-xs bg-[#fdf8f2] text-[#8d7b6d] px-2 py-0.5 rounded-full">
             {node.item_count}
           </span>
         )}
@@ -109,7 +109,7 @@ function LocationTreeItem({
         {/* Selected checkmark */}
         {isSelected && (
           <svg
-            className="w-5 h-5 text-blue-600 flex-shrink-0"
+            className="w-5 h-5 text-[#4a3f35] flex-shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -212,11 +212,11 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
   const selectedParent = parentId ? locations.find((l) => l.id === parentId) : null;
 
   return (
-    <div className="p-4 border-t border-gray-200 bg-gray-50">
+    <div className="p-4 border-t border-[#f5ebe0] bg-[#fdf8f2]">
       <div className="space-y-3">
         {/* Name input */}
         <div>
-          <label htmlFor="new-location-name" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="new-location-name" className="block text-sm font-medium text-[#4a3f35] mb-1">
             Location Name
           </label>
           <input
@@ -232,24 +232,24 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
             placeholder="e.g., Living Room Shelf"
             maxLength={100}
             disabled={isSaving}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            className="w-full px-3 py-2 border border-[#f5ebe0] rounded-lg focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none text-sm"
           />
           {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
-          <p className="mt-1 text-xs text-gray-400">{name.length}/100</p>
+          <p className="mt-1 text-xs text-[#d6ccc2]">{name.length}/100</p>
         </div>
 
         {/* Parent selector */}
         <div className="relative" ref={parentSelectorRef}>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-[#4a3f35] mb-1">
             Parent Location (optional)
           </label>
           <button
             type="button"
             onClick={() => setIsParentSelectorOpen(!isParentSelectorOpen)}
             disabled={isSaving}
-            className="w-full flex items-center justify-between px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-left hover:bg-gray-50 disabled:opacity-50"
+            className="w-full flex items-center justify-between px-3 py-2 border border-[#f5ebe0] rounded-lg bg-white text-sm text-left hover:bg-[#fdf8f2] disabled:opacity-50"
           >
-            <span className={selectedParent ? '' : 'text-gray-400'}>
+            <span className={selectedParent ? '' : 'text-[#d6ccc2]'}>
               {selectedParent ? (
                 <span className="flex items-center gap-2">
                   <span>{selectedParent.icon}</span>
@@ -260,7 +260,7 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
               )}
             </span>
             <svg
-              className={`w-4 h-4 text-gray-400 transition-transform ${isParentSelectorOpen ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 text-[#d6ccc2] transition-transform ${isParentSelectorOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -271,15 +271,15 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
 
           {/* Parent dropdown */}
           {isParentSelectorOpen && (
-            <div className="absolute z-30 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+            <div className="absolute z-30 mt-1 w-full bg-white border border-[#f5ebe0] rounded-lg shadow-lg max-h-48 overflow-y-auto">
               <button
                 type="button"
                 onClick={() => {
                   setParentId(null);
                   setIsParentSelectorOpen(false);
                 }}
-                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
-                  !parentId ? 'bg-blue-50 text-blue-700' : ''
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-[#fdf8f2] ${
+                  !parentId ? 'bg-[#e3ead3]/20 text-[#4a3f35]' : ''
                 }`}
               >
                 None (root level)
@@ -292,8 +292,8 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
                     setParentId(loc.id);
                     setIsParentSelectorOpen(false);
                   }}
-                  className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 ${
-                    parentId === loc.id ? 'bg-blue-50 text-blue-700' : ''
+                  className={`w-full px-3 py-2 text-left text-sm hover:bg-[#fdf8f2] flex items-center gap-2 ${
+                    parentId === loc.id ? 'bg-[#e3ead3]/20 text-[#4a3f35]' : ''
                   }`}
                 >
                   <span>{loc.icon}</span>
@@ -312,8 +312,8 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
             disabled={isSaving || !name.trim()}
             className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               isSaving || !name.trim()
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700'
+                ? 'bg-[#fdf8f2] text-[#d6ccc2] cursor-not-allowed'
+                : 'bg-[#4a3f35] text-white hover:bg-[#3d332b]'
             }`}
           >
             {isSaving ? (
@@ -343,7 +343,7 @@ function AddLocationForm({ locations, onSave, onCancel, isSaving }: AddLocationF
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-[#4a3f35] hover:bg-[#fdf8f2] rounded-lg transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -464,12 +464,12 @@ function LocationPickerContent({
       {/* Modal */}
       <div className="relative w-full sm:max-w-lg bg-white sm:rounded-xl rounded-t-xl shadow-xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">Select Location</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5ebe0] flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[#4a3f35]">Select Location</h2>
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 -m-2 text-gray-400 hover:text-gray-600"
+            className="p-2 -m-2 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -482,7 +482,7 @@ function LocationPickerContent({
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="w-8 h-8 text-[#4a3f35] animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle
                   className="opacity-25"
                   cx="12"
@@ -504,15 +504,15 @@ function LocationPickerContent({
               <button
                 type="button"
                 onClick={() => handleSelect(null)}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-gray-100 ${
+                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-b border-[#fdf8f2] ${
                   selectedLocationId === null
-                    ? 'bg-blue-50 border-l-4 border-l-blue-600'
-                    : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                    ? 'bg-[#e3ead3]/20 border-l-4 border-l-[#4a3f35]'
+                    : 'hover:bg-[#fdf8f2] border-l-4 border-l-transparent'
                 }`}
               >
                 <div className="w-4" /> {/* Spacer for alignment */}
                 <svg
-                  className="w-5 h-5 text-gray-400"
+                  className="w-5 h-5 text-[#d6ccc2]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -524,12 +524,12 @@ function LocationPickerContent({
                     d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                   />
                 </svg>
-                <span className={`flex-1 ${selectedLocationId === null ? 'font-medium text-blue-700' : 'text-gray-600'}`}>
+                <span className={`flex-1 ${selectedLocationId === null ? 'font-medium text-[#4a3f35]' : 'text-[#8d7b6d]'}`}>
                   No location assigned
                 </span>
                 {selectedLocationId === null && (
                   <svg
-                    className="w-5 h-5 text-blue-600 flex-shrink-0"
+                    className="w-5 h-5 text-[#4a3f35] flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -558,9 +558,9 @@ function LocationPickerContent({
                   ))}
                 </div>
               ) : (
-                <div className="px-4 py-8 text-center text-gray-500">
+                <div className="px-4 py-8 text-center text-[#a89887]">
                   <svg
-                    className="w-12 h-12 mx-auto mb-3 text-gray-300"
+                    className="w-12 h-12 mx-auto mb-3 text-[#f5ebe0]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -579,7 +579,7 @@ function LocationPickerContent({
                     />
                   </svg>
                   <p className="text-sm">No locations yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Add your first location below</p>
+                  <p className="text-xs text-[#d6ccc2] mt-1">Add your first location below</p>
                 </div>
               )}
             </div>
@@ -595,11 +595,11 @@ function LocationPickerContent({
             isSaving={isSaving}
           />
         ) : (
-          <div className="flex-shrink-0 p-4 border-t border-gray-200">
+          <div className="flex-shrink-0 p-4 border-t border-[#f5ebe0]">
             <button
               type="button"
               onClick={() => setIsAddingLocation(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-blue-600 font-medium rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 text-[#4a3f35] font-medium rounded-lg border border-[#f5ebe0] hover:bg-[#e3ead3]/20 transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

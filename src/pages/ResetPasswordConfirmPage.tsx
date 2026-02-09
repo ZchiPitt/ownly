@@ -141,7 +141,7 @@ export function ResetPasswordConfirmPage() {
   if (tokenStatus === 'loading') {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fdf8f2]">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-[#4a3f35] border-t-transparent" />
         <p className="mt-4 text-[#8d7b6d]">Verifying reset link...</p>
       </div>
     );
@@ -185,13 +185,13 @@ export function ResetPasswordConfirmPage() {
           <div className="space-y-4">
             <Link
               to="/reset-password"
-              className="block w-full py-3 px-4 rounded-lg font-semibold text-white text-center bg-blue-600 hover:bg-blue-700 active:bg-blue-800 transition-colors"
+              className="block w-full py-3 px-4 rounded-lg font-semibold text-white text-center bg-[#4a3f35] hover:bg-[#3d332b] active:bg-[#332a22] transition-colors"
             >
               Request New Link
             </Link>
             <Link
               to="/login"
-              className="block w-full py-3 px-4 rounded-lg font-semibold text-[#6f5f52] text-center bg-[#efe6dc] hover:bg-gray-300 active:bg-gray-400 transition-colors"
+              className="block w-full py-3 px-4 rounded-lg font-semibold text-[#6f5f52] text-center bg-[#efe6dc] hover:bg-[#f5ebe0] active:bg-[#e8dfd5] transition-colors"
             >
               Back to Log in
             </Link>
@@ -235,10 +235,10 @@ export function ResetPasswordConfirmPage() {
               onChange={(e) => setPassword(e.target.value)}
               onBlur={() => setTouched({ ...touched, password: true })}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                 touched.password && passwordError
                   ? 'border-red-500'
-                  : 'border-gray-300'
+                  : 'border-[#f5ebe0]'
               }`}
             />
             {touched.password && passwordError && (
@@ -263,10 +263,10 @@ export function ResetPasswordConfirmPage() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               onBlur={() => setTouched({ ...touched, confirmPassword: true })}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
+              className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                 touched.confirmPassword && confirmPasswordError
                   ? 'border-red-500'
-                  : 'border-gray-300'
+                  : 'border-[#f5ebe0]'
               }`}
             />
             {touched.confirmPassword && confirmPasswordError && (
@@ -280,8 +280,8 @@ export function ResetPasswordConfirmPage() {
             disabled={!isFormValid || isSubmitting}
             className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors flex items-center justify-center ${
               isFormValid && !isSubmitting
-                ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-                : 'bg-gray-300 cursor-not-allowed'
+                ? 'bg-[#4a3f35] hover:bg-[#3d332b] active:bg-[#332a22]'
+                : 'bg-[#e8dfd5] text-[#b9a99b] cursor-not-allowed'
             }`}
           >
             {isSubmitting ? (
@@ -333,7 +333,7 @@ export function ResetPasswordConfirmPage() {
         <p className="text-center text-[#8d7b6d]">
           <Link
             to="/login"
-            className="text-blue-600 font-semibold hover:text-blue-700"
+            className="text-[#6f5f52] font-semibold hover:text-[#4a3f35]"
           >
             ← Back to Log in
           </Link>

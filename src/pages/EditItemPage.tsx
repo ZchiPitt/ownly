@@ -133,8 +133,8 @@ function QuantityStepper({
         disabled={value <= min}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
           value <= min
-            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
+            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-[#d6ccc2] cursor-not-allowed'
+            : 'border-[#f5ebe0] bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
         }`}
         aria-label="Decrease quantity"
       >
@@ -149,7 +149,7 @@ function QuantityStepper({
         onChange={handleInputChange}
         min={min}
         max={max}
-        className="w-16 h-10 text-center text-lg font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-16 h-10 text-center text-lg font-medium border border-[#f5ebe0] rounded-lg focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         aria-label="Quantity"
       />
 
@@ -159,8 +159,8 @@ function QuantityStepper({
         disabled={value >= max}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${
           value >= max
-            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
+            ? 'border-[#f5ebe0]/60 bg-[#fdf8f2] text-[#d6ccc2] cursor-not-allowed'
+            : 'border-[#f5ebe0] bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4]'
         }`}
         aria-label="Increase quantity"
       >
@@ -231,7 +231,7 @@ function CategorySelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left border-gray-300 bg-white ${
+        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none transition-colors text-left border-[#f5ebe0] bg-white ${
           isLoading ? 'opacity-50 cursor-not-allowed' : ''
         }`}
       >
@@ -268,7 +268,7 @@ function CategorySelector({
                 type="button"
                 onClick={() => handleSelect(null)}
                 className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
-                  !value ? 'bg-blue-50 text-blue-700' : 'hover:bg-[#fdf8f2]'
+                  !value ? 'bg-[#fdf8f2] text-[#4a3f35]' : 'hover:bg-[#fdf8f2]'
                 }`}
               >
                 <span className="text-lg">🚫</span>
@@ -280,13 +280,13 @@ function CategorySelector({
                   type="button"
                   onClick={() => handleSelect(category)}
                   className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${
-                    category.id === value ? 'bg-blue-50 text-blue-700' : 'hover:bg-[#fdf8f2]'
+                    category.id === value ? 'bg-[#fdf8f2] text-[#4a3f35]' : 'hover:bg-[#fdf8f2]'
                   }`}
                 >
                   <span className="text-lg flex-shrink-0">{category.icon}</span>
                   <span className="flex-1 truncate">{category.name}</span>
                   {category.id === value && (
-                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 text-[#4a3f35] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
                         d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -376,14 +376,14 @@ function EditItemError({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-[#4a3f35] text-white font-medium rounded-2xl hover:bg-[#3d332b] transition-colors"
             >
               Try Again
             </button>
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
+            className="px-6 py-2 border border-[#f5ebe0] text-[#6f5f52] font-medium rounded-2xl hover:bg-[#fdf8f2] transition-colors"
           >
             Go Back
           </button>
@@ -869,7 +869,7 @@ export function EditItemPage() {
                   onChange={(e) => updateField('name', e.target.value.slice(0, 200))}
                   placeholder="e.g., Blue Coffee Mug"
                   maxLength={200}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                  className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                   {formValues.name.length}/200
@@ -901,7 +901,7 @@ export function EditItemPage() {
                   placeholder="Add notes about this item..."
                   maxLength={1000}
                   rows={4}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white"
+                  className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none resize-none bg-white"
                 />
                 <span className="absolute right-3 bottom-3 text-xs text-[#b9a99b]">
                   {formValues.description.length}/1000
@@ -926,9 +926,9 @@ export function EditItemPage() {
                 type="button"
                 onClick={() => setIsLocationPickerOpen(true)}
                 disabled={locationsLoading}
-                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-left ${
+                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none transition-colors text-left ${
                   locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
-                } ${locationError ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}`}
+                } ${locationError ? 'border-red-500 bg-red-50' : 'border-[#f5ebe0] bg-white'}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
@@ -1027,12 +1027,12 @@ export function EditItemPage() {
                         placeholder="0.00"
                         min="0"
                         step="0.01"
-                        className="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="flex-1 px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <select
                         value={formValues.currency}
                         onChange={(e) => updateField('currency', e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                         aria-label="Currency"
                       >
                         {CURRENCIES.map((c) => (
@@ -1055,7 +1055,7 @@ export function EditItemPage() {
                       value={formValues.purchaseDate ?? ''}
                       onChange={(e) => updateField('purchaseDate', e.target.value || null)}
                       max={todayString}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                      className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                     />
                   </div>
 
@@ -1084,8 +1084,8 @@ export function EditItemPage() {
                       type="date"
                       value={formValues.expirationDate ?? ''}
                       onChange={(e) => updateField('expirationDate', e.target.value || null)}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${
-                        isExpirationDatePast ? 'border-amber-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white ${
+                        isExpirationDatePast ? 'border-amber-300' : 'border-[#f5ebe0]'
                       }`}
                     />
                     {isExpirationDatePast && (
@@ -1106,7 +1106,7 @@ export function EditItemPage() {
                         onChange={(e) => updateField('brand', e.target.value.slice(0, 100))}
                         placeholder="e.g., Apple, Samsung, Nike"
                         maxLength={100}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                         {formValues.brand.length}/100
@@ -1127,7 +1127,7 @@ export function EditItemPage() {
                         onChange={(e) => updateField('model', e.target.value.slice(0, 100))}
                         placeholder="e.g., iPhone 15 Pro"
                         maxLength={100}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                       />
                       <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#b9a99b]">
                         {formValues.model.length}/100
@@ -1146,7 +1146,7 @@ export function EditItemPage() {
                       onChange={(e) => updateField('notes', e.target.value)}
                       placeholder="Additional notes..."
                       rows={3}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none bg-white"
+                      className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none resize-none bg-white"
                     />
                   </div>
                 </div>

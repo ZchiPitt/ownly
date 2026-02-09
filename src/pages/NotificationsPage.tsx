@@ -263,7 +263,7 @@ function getIconColorClasses(type: NotificationType): string {
 
   switch (type) {
     case 'unused_item':
-      return 'text-blue-600 bg-blue-100';
+      return 'text-[#4a3f35] bg-[#f5ebe0]';
     case 'expiring_item':
       return 'text-amber-600 bg-amber-100';
     case 'warranty_expiring':
@@ -447,7 +447,7 @@ function NotificationItem({ notification, onClick, onDelete }: NotificationItemP
       <div
         onClick={handleContentClick}
         className={`relative flex items-start gap-3 p-4 text-left transition-transform border-b border-[#f5ebe0]/50 cursor-pointer ${
-          isUnread ? 'bg-blue-50/50' : 'bg-white'
+          isUnread ? 'bg-[#fdf8f2]' : 'bg-white'
         } ${!isSwiping ? 'transition-transform duration-200' : ''}`}
         style={{ transform: `translateX(${swipeOffset}px)` }}
       >
@@ -472,7 +472,7 @@ function NotificationItem({ notification, onClick, onDelete }: NotificationItemP
 
             {/* Unread indicator */}
             {isUnread && (
-              <div className="w-2 h-2 rounded-full bg-blue-600 flex-shrink-0 mt-1.5" />
+              <div className="w-2 h-2 rounded-full bg-[#4a3f35] flex-shrink-0 mt-1.5" />
             )}
           </div>
 
@@ -839,7 +839,7 @@ export function NotificationsPage() {
           {(messagesUnreadCount > 0 || remindersUnreadCount > 0) && (
             <button
               onClick={markAllAsRead}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-[#4a3f35] hover:text-[#3d332b]"
             >
               Mark All Read
             </button>
@@ -852,40 +852,40 @@ export function NotificationsPage() {
             onClick={() => handleTabChange('messages')}
             className={`flex-1 relative py-3 text-sm font-medium transition-colors ${
               activeTab === 'messages'
-                ? 'text-blue-600'
+                ? 'text-[#4a3f35]'
                 : 'text-[#8d7b6d] hover:text-[#6f5f52]'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
               Messages
               {messagesUnreadCount > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold text-white bg-blue-600 rounded-full">
+                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold text-white bg-[#4a3f35] rounded-full">
                   {messagesUnreadCount > 99 ? '99+' : messagesUnreadCount}
                 </span>
               )}
             </span>
             {activeTab === 'messages' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4a3f35]" />
             )}
           </button>
           <button
             onClick={() => handleTabChange('reminders')}
             className={`flex-1 relative py-3 text-sm font-medium transition-colors ${
               activeTab === 'reminders'
-                ? 'text-blue-600'
+                ? 'text-[#4a3f35]'
                 : 'text-[#8d7b6d] hover:text-[#6f5f52]'
             }`}
           >
             <span className="flex items-center justify-center gap-2">
               Reminders
               {remindersUnreadCount > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold text-white bg-blue-600 rounded-full">
+                <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold text-white bg-[#4a3f35] rounded-full">
                   {remindersUnreadCount > 99 ? '99+' : remindersUnreadCount}
                 </span>
               )}
             </span>
             {activeTab === 'reminders' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#4a3f35]" />
             )}
           </button>
         </div>

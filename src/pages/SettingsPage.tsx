@@ -852,7 +852,7 @@ export function SettingsPage() {
               <button
                 onClick={handleCancelLogout}
                 disabled={isLoggingOut}
-                className="flex-1 py-2.5 px-4 rounded-lg border border-gray-300 text-[#6f5f52] font-medium hover:bg-[#fdf8f2] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-lg border border-[#f5ebe0] text-[#6f5f52] font-medium hover:bg-[#fdf8f2] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Cancel
               </button>

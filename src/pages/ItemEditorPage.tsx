@@ -309,7 +309,7 @@ export function ItemEditorPage() {
   if (!state || !state.imageUrl) {
     return (
       <div className="min-h-screen bg-[#fdf8f2] flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-[#4a3f35] border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -371,7 +371,7 @@ export function ItemEditorPage() {
               {/* Progress bar */}
               <div className="h-1.5 bg-[#efe6dc] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  className="h-full bg-[#4a3f35] rounded-full transition-all duration-300"
                   style={{
                     width: `${((state.currentItemIndex - 1) / state.totalItems) * 100}%`,
                   }}
@@ -386,7 +386,7 @@ export function ItemEditorPage() {
                       i < state.currentItemIndex - 1
                         ? 'bg-green-500'
                         : i === state.currentItemIndex - 1
-                          ? 'bg-blue-600'
+                          ? 'bg-[#4a3f35]'
                           : 'bg-[#efe6dc]'
                     }`}
                   />
@@ -419,7 +419,7 @@ export function ItemEditorPage() {
           <button
             type="button"
             disabled={isSaving}
-            className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3.5 px-4 bg-[#4a3f35] text-white font-medium rounded-2xl hover:bg-[#3d332b] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleSave}
           >
             {isSaving ? (
@@ -512,7 +512,7 @@ export function ItemEditorPage() {
                       i < savedItemsCount
                         ? 'bg-green-500'
                         : i === savedItemsCount
-                          ? 'bg-blue-500 animate-pulse'
+                          ? 'bg-[#4a3f35] animate-pulse'
                           : 'bg-[#efe6dc]'
                     }`}
                   />
@@ -538,7 +538,7 @@ export function ItemEditorPage() {
               <div className="w-full max-w-sm space-y-3">
                 <button
                   onClick={handleGoToInventory}
-                  className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-[#4a3f35] text-white font-medium rounded-2xl hover:bg-[#3d332b] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -557,7 +557,7 @@ export function ItemEditorPage() {
                 </button>
                 <button
                   onClick={handleAddAnother}
-                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-gray-300 hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-[#f5ebe0] hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -593,7 +593,7 @@ export function ItemEditorPage() {
               <div className="w-full max-w-sm space-y-3">
                 <button
                   onClick={handleAddAnother}
-                  className="w-full py-3.5 px-4 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-[#4a3f35] text-white font-medium rounded-2xl hover:bg-[#3d332b] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"
@@ -613,7 +613,7 @@ export function ItemEditorPage() {
 
                 <button
                   onClick={handleViewItem}
-                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-gray-300 hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3.5 px-4 bg-white text-[#6f5f52] font-medium rounded-xl border border-[#f5ebe0] hover:bg-[#fdf8f2] transition-colors flex items-center justify-center gap-2"
                 >
                   <svg
                     className="w-5 h-5"

@@ -148,8 +148,8 @@ function QuantityStepper({
         onClick={handleDecrement}
         disabled={value <= min}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${value <= min
-            ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+            ? 'border-[#f5ebe0] bg-[#fdf8f2] text-[#d6ccc2] cursor-not-allowed'
+            : 'border-[#f5ebe0] bg-white text-[#4a3f35] hover:bg-[#fdf8f2] active:bg-[#f5ebe0]'
           }`}
         aria-label="Decrease quantity"
       >
@@ -165,7 +165,7 @@ function QuantityStepper({
         onChange={handleInputChange}
         min={min}
         max={max}
-        className="w-16 h-10 text-center text-lg font-medium border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-16 h-10 text-center text-lg font-medium border border-[#f5ebe0] rounded-lg focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
         aria-label="Quantity"
       />
 
@@ -175,8 +175,8 @@ function QuantityStepper({
         onClick={handleIncrement}
         disabled={value >= max}
         className={`w-10 h-10 flex items-center justify-center rounded-lg border transition-colors ${value >= max
-            ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed'
-            : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100'
+            ? 'border-[#f5ebe0] bg-[#fdf8f2] text-[#d6ccc2] cursor-not-allowed'
+            : 'border-[#f5ebe0] bg-white text-[#4a3f35] hover:bg-[#fdf8f2] active:bg-[#f5ebe0]'
           }`}
         aria-label="Increase quantity"
       >
@@ -336,10 +336,10 @@ function CategorySelector({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+      <label className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
         Category
         {isAIFilled && (
-          <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
             <SparkleIcon className="w-3 h-3" />
             AI
           </span>
@@ -351,9 +351,9 @@ function CategorySelector({
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={isLoading}
-        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors text-left ${isAIFilled
-            ? 'border-teal-300 bg-teal-50/50'
-            : 'border-gray-300 bg-white'
+        className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none transition-colors text-left ${isAIFilled
+            ? 'border-[#d6ccc2] bg-[#f5ebe0]/50'
+            : 'border-[#f5ebe0] bg-white'
           } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -362,15 +362,15 @@ function CategorySelector({
               <span className="text-lg flex-shrink-0">{selectedCategory.icon}</span>
               <span className="truncate">{selectedCategory.name}</span>
               {isAIFilled && selectedCategory.id === aiSuggestedCategory?.id && (
-                <span className="flex-shrink-0 text-xs text-teal-600">(AI suggested)</span>
+                <span className="flex-shrink-0 text-xs text-[#4a3f35]">(AI suggested)</span>
               )}
             </>
           ) : (
-            <span className="text-gray-400">Select a category</span>
+            <span className="text-[#d6ccc2]">Select a category</span>
           )}
         </div>
         <svg
-          className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
+          className={`w-5 h-5 text-[#d6ccc2] flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''
             }`}
           fill="none"
           stroke="currentColor"
@@ -382,9 +382,9 @@ function CategorySelector({
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-20 mt-1 w-full bg-white border border-[#f5ebe0] rounded-xl shadow-lg max-h-64 overflow-y-auto">
           {isLoading ? (
-            <div className="px-4 py-3 text-gray-500 text-center">Loading categories...</div>
+            <div className="px-4 py-3 text-[#a89887] text-center">Loading categories...</div>
           ) : (
             <>
               {/* Category options */}
@@ -405,27 +405,27 @@ function CategorySelector({
                   <div key={category.id}>
                     {/* Section divider */}
                     {(isFirstUserCategory || isFirstSystemCategory) && (
-                      <div className="border-t border-gray-100 my-1" />
+                      <div className="border-t border-[#f5ebe0] my-1" />
                     )}
                     <button
                       type="button"
                       onClick={() => handleSelect(category)}
                       className={`w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors ${isSelected
-                          ? 'bg-teal-50 text-teal-700'
-                          : 'hover:bg-gray-50'
+                          ? 'bg-[#f5ebe0] text-[#4a3f35]'
+                          : 'hover:bg-[#fdf8f2]'
                         }`}
                     >
                       <span className="text-lg flex-shrink-0">{category.icon}</span>
                       <span className="flex-1 truncate">{category.name}</span>
                       {isAISuggested && (
-                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                        <span className="flex-shrink-0 inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
                           <SparkleIcon className="w-3 h-3" />
                           AI
                         </span>
                       )}
                       {isSelected && (
                         <svg
-                          className="w-5 h-5 text-teal-600 flex-shrink-0"
+                          className="w-5 h-5 text-[#4a3f35] flex-shrink-0"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -442,7 +442,7 @@ function CategorySelector({
               })}
 
               {/* Create new category option */}
-              <div className="border-t border-gray-100 mt-1">
+              <div className="border-t border-[#f5ebe0] mt-1">
                 {isCreating ? (
                   <div className="p-3">
                     <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ function CategorySelector({
                         onKeyDown={handleCreateKeyPress}
                         placeholder="Category name"
                         maxLength={50}
-                        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                        className="flex-1 px-3 py-2 text-sm border border-[#f5ebe0] rounded-lg focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none"
                         disabled={isSaving}
                       />
                       <button
@@ -465,8 +465,8 @@ function CategorySelector({
                         onClick={handleCreateCategory}
                         disabled={isSaving || !newCategoryName.trim()}
                         className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${isSaving || !newCategoryName.trim()
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                            : 'bg-teal-600 text-white hover:bg-teal-700'
+                            ? 'bg-[#f5ebe0] text-[#d6ccc2] cursor-not-allowed'
+                            : 'bg-[#4a3f35] text-white hover:bg-[#3d332b]'
                           }`}
                       >
                         {isSaving ? (
@@ -501,7 +501,7 @@ function CategorySelector({
                           setCreateError(null);
                         }}
                         disabled={isSaving}
-                        className="p-2 text-gray-400 hover:text-gray-600"
+                        className="p-2 text-[#d6ccc2] hover:text-[#8d7b6d]"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -516,7 +516,7 @@ function CategorySelector({
                     {createError && (
                       <p className="mt-1 text-xs text-red-600">{createError}</p>
                     )}
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-[#d6ccc2]">
                       {newCategoryName.length}/50
                     </p>
                   </div>
@@ -524,7 +524,7 @@ function CategorySelector({
                   <button
                     type="button"
                     onClick={() => setIsCreating(true)}
-                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-teal-600 hover:bg-teal-50 transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-left text-[#4a3f35] hover:bg-[#f5ebe0] transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -871,19 +871,19 @@ export function ItemEditor({
 
   return (
     <>
-      <div className="flex flex-col h-full bg-gray-50">
+      <div className="flex flex-col h-full bg-[#fdf8f2]">
         {/* Progress indicator for multi-item queue */}
         {totalItems > 1 && (
-          <div className="flex-shrink-0 px-4 py-2 bg-blue-50 border-b border-blue-100">
+          <div className="flex-shrink-0 px-4 py-2 bg-[#fdf8f2] border-b border-[#f5ebe0]">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-700">
+              <span className="text-sm font-medium text-[#4a3f35]">
                 Adding item {currentItemIndex} of {totalItems}
               </span>
               <div className="flex gap-1">
                 {Array.from({ length: totalItems }, (_, i) => (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full transition-colors ${i < currentItemIndex ? 'bg-blue-600' : 'bg-blue-200'
+                    className={`w-2 h-2 rounded-full transition-colors ${i < currentItemIndex ? 'bg-[#4a3f35]' : 'bg-[#f5ebe0]'
                       }`}
                   />
                 ))}
@@ -895,13 +895,13 @@ export function ItemEditor({
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto pb-6">
           {/* Compact Header: Thumbnail + Name */}
-          <div className="p-4 bg-white border-b border-gray-100">
+          <div className="p-4 bg-white border-b border-[#f5ebe0]">
             <div className="flex gap-4">
               {/* Small Thumbnail */}
               <button
                 type="button"
                 onClick={handleThumbnailClick}
-                className="relative flex-shrink-0 w-24 h-24 bg-gray-200 rounded-xl overflow-hidden group"
+                className="relative flex-shrink-0 w-24 h-24 bg-[#f5ebe0] rounded-xl overflow-hidden group"
                 aria-label="View full image"
               >
                 <img
@@ -912,7 +912,7 @@ export function ItemEditor({
                 {/* Expand icon overlay */}
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                   <div className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-[#4a3f35]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                     </svg>
                   </div>
@@ -921,10 +921,10 @@ export function ItemEditor({
 
               {/* Name Field - Next to thumbnail */}
               <div className="flex-1 min-w-0">
-                <label htmlFor="item-name" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+                <label htmlFor="item-name" className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-1.5">
                   Item Name
                   {aiFilledFields.name && (
-                    <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-1.5 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-1.5 py-0.5 rounded-full">
                       <SparkleIcon className="w-3 h-3" />
                       AI
                     </span>
@@ -937,12 +937,12 @@ export function ItemEditor({
                   onChange={handleNameChange}
                   placeholder="e.g., Blue Coffee Mug"
                   maxLength={200}
-                  className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors ${aiFilledFields.name
-                      ? 'border-blue-300 bg-blue-50/50'
-                      : 'border-gray-300 bg-white'
+                  className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none transition-colors ${aiFilledFields.name
+                      ? 'border-[#d6ccc2] bg-[#fdf8f2]/50'
+                      : 'border-[#f5ebe0] bg-white'
                     }`}
                 />
-                <span className="text-xs text-gray-400 mt-1 block text-right">
+                <span className="text-xs text-[#d6ccc2] mt-1 block text-right">
                   {name.length}/200
                 </span>
               </div>
@@ -954,7 +954,7 @@ export function ItemEditor({
 
             {/* Quantity Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-[#4a3f35] mb-2">
                 Quantity
               </label>
               <QuantityStepper
@@ -967,10 +967,10 @@ export function ItemEditor({
 
             {/* Description Field */}
             <div>
-              <label htmlFor="item-description" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="item-description" className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
                 Description
                 {aiFilledFields.description && (
-                  <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
                     <SparkleIcon className="w-3 h-3" />
                     AI
                   </span>
@@ -984,13 +984,13 @@ export function ItemEditor({
                   placeholder="Add notes about this item..."
                   maxLength={1000}
                   rows={4}
-                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-colors ${aiFilledFields.description
-                      ? 'border-blue-300 bg-blue-50/50'
-                      : 'border-gray-300 bg-white'
+                  className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none resize-none transition-colors ${aiFilledFields.description
+                      ? 'border-[#d6ccc2] bg-[#fdf8f2]/50'
+                      : 'border-[#f5ebe0] bg-white'
                     }`}
                 />
                 {/* Character count */}
-                <span className="absolute right-3 bottom-3 text-xs text-gray-400">
+                <span className="absolute right-3 bottom-3 text-xs text-[#d6ccc2]">
                   {description.length}/1000
                 </span>
               </div>
@@ -1007,10 +1007,10 @@ export function ItemEditor({
 
             {/* Location Field */}
             <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
                 Location <span className="text-red-500">*</span>
                 {aiFilledFields.location && (
-                  <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                  <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
                     <SparkleIcon className="w-3 h-3" />
                     AI
                   </span>
@@ -1020,12 +1020,12 @@ export function ItemEditor({
                 type="button"
                 onClick={openLocationPicker}
                 disabled={locationsLoading}
-                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-full flex items-center justify-between px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none transition-colors text-left ${locationsLoading ? 'opacity-50 cursor-not-allowed' : ''
                   } ${locationError
                     ? 'border-red-500 bg-red-50'
                     : aiFilledFields.location
-                      ? 'border-teal-300 bg-teal-50/50'
-                      : 'border-gray-300 bg-white'}`}
+                      ? 'border-[#d6ccc2] bg-[#f5ebe0]/50'
+                      : 'border-[#f5ebe0] bg-white'}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {selectedLocationDisplay ? (
@@ -1033,11 +1033,11 @@ export function ItemEditor({
                       <span className="text-lg flex-shrink-0">{selectedLocationDisplay.icon}</span>
                       <span className="truncate">{selectedLocationDisplay.path}</span>
                       {aiFilledFields.location && locationId === defaultLocationId && (
-                        <span className="flex-shrink-0 text-xs text-teal-600">(AI suggested)</span>
+                        <span className="flex-shrink-0 text-xs text-[#4a3f35]">(AI suggested)</span>
                       )}
                     </>
                   ) : (
-                    <span className="text-gray-400 flex items-center gap-2">
+                    <span className="text-[#d6ccc2] flex items-center gap-2">
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -1062,7 +1062,7 @@ export function ItemEditor({
                   )}
                 </div>
                 <svg
-                  className="w-5 h-5 text-gray-400 flex-shrink-0"
+                  className="w-5 h-5 text-[#d6ccc2] flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1073,7 +1073,7 @@ export function ItemEditor({
               {locationError ? (
                 <p className="mt-1 text-xs text-red-600">{locationError}</p>
               ) : (
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#d6ccc2]">
                   Where is this item stored?
                 </p>
               )}
@@ -1089,20 +1089,20 @@ export function ItemEditor({
             />
 
             {/* Additional Fields Section (collapsible) */}
-            <div className="border-t border-gray-200 pt-4">
+            <div className="border-t border-[#f5ebe0] pt-4">
               <button
                 type="button"
                 onClick={toggleAdditionalFields}
                 className="w-full flex items-center justify-between py-2 text-left"
               >
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-[#4a3f35]">
                   Additional Details
                   {(price !== null || purchaseDate || expirationDate || brand || model) && (
-                    <span className="ml-2 text-xs text-gray-400">(has values)</span>
+                    <span className="ml-2 text-xs text-[#d6ccc2]">(has values)</span>
                   )}
                 </span>
                 <svg
-                  className={`w-5 h-5 text-gray-400 transition-transform ${isAdditionalFieldsExpanded ? 'rotate-180' : ''
+                  className={`w-5 h-5 text-[#d6ccc2] transition-transform ${isAdditionalFieldsExpanded ? 'rotate-180' : ''
                     }`}
                   fill="none"
                   stroke="currentColor"
@@ -1117,7 +1117,7 @@ export function ItemEditor({
                 <div className="mt-4 space-y-6">
                   {/* Price Field with Currency Selector */}
                   <div>
-                    <label htmlFor="item-price" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-price" className="block text-sm font-medium text-[#4a3f35] mb-2">
                       Price
                     </label>
                     <div className="flex gap-2">
@@ -1130,13 +1130,13 @@ export function ItemEditor({
                           placeholder="0.00"
                           min="0"
                           step="0.01"
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                       <select
                         value={currency}
                         onChange={handleCurrencyChange}
-                        className="px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                         aria-label="Currency"
                       >
                         {CURRENCIES.map((c) => (
@@ -1150,7 +1150,7 @@ export function ItemEditor({
 
                   {/* Purchase Date Field */}
                   <div>
-                    <label htmlFor="item-purchase-date" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-purchase-date" className="block text-sm font-medium text-[#4a3f35] mb-2">
                       Purchase Date
                     </label>
                     <input
@@ -1159,16 +1159,16 @@ export function ItemEditor({
                       value={purchaseDate ?? ''}
                       onChange={handlePurchaseDateChange}
                       max={todayString}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                      className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                     />
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-[#d6ccc2]">
                       When did you purchase this item?
                     </p>
                   </div>
 
                   {/* Expiration Date Field */}
                   <div>
-                    <label htmlFor="item-expiration-date" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-expiration-date" className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
                       Expiration Date
                       {isExpirationDatePast && (
                         <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
@@ -1188,7 +1188,7 @@ export function ItemEditor({
                       type="date"
                       value={expirationDate ?? ''}
                       onChange={handleExpirationDateChange}
-                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white ${isExpirationDatePast ? 'border-amber-300' : 'border-gray-300'
+                      className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white ${isExpirationDatePast ? 'border-amber-300' : 'border-[#f5ebe0]'
                         }`}
                     />
                     {isExpirationDatePast && (
@@ -1200,10 +1200,10 @@ export function ItemEditor({
 
                   {/* Brand Field */}
                   <div>
-                    <label htmlFor="item-brand" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-brand" className="flex items-center gap-2 text-sm font-medium text-[#4a3f35] mb-2">
                       Brand
                       {aiFilledFields.brand && (
-                        <span className="inline-flex items-center gap-1 text-xs text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-xs text-[#4a3f35] bg-[#f5ebe0] px-2 py-0.5 rounded-full">
                           <SparkleIcon className="w-3 h-3" />
                           AI
                         </span>
@@ -1217,12 +1217,12 @@ export function ItemEditor({
                         onChange={handleBrandChange}
                         placeholder="e.g., Apple, Samsung, Nike"
                         maxLength={100}
-                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${aiFilledFields.brand
-                            ? 'border-blue-300 bg-blue-50/50'
-                            : 'border-gray-300 bg-white'
+                        className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none ${aiFilledFields.brand
+                            ? 'border-[#d6ccc2] bg-[#fdf8f2]/50'
+                            : 'border-[#f5ebe0] bg-white'
                           }`}
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#d6ccc2]">
                         {brand.length}/100
                       </span>
                     </div>
@@ -1230,7 +1230,7 @@ export function ItemEditor({
 
                   {/* Model Field */}
                   <div>
-                    <label htmlFor="item-model" className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="item-model" className="block text-sm font-medium text-[#4a3f35] mb-2">
                       Model
                     </label>
                     <div className="relative">
@@ -1241,9 +1241,9 @@ export function ItemEditor({
                         onChange={handleModelChange}
                         placeholder="e.g., iPhone 15 Pro, Galaxy S24"
                         maxLength={100}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+                        className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#d6ccc2]">
                         {model.length}/100
                       </span>
                     </div>

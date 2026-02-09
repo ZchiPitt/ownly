@@ -40,11 +40,11 @@ function CheckboxRow({
     <button
       type="button"
       onClick={onToggle}
-      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
+      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-[#fdf8f2]"
     >
       <div
         className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-colors ${
-          checked ? 'bg-blue-600 border-blue-600' : 'border-2 border-gray-300'
+          checked ? 'bg-[#4a3f35] border-[#4a3f35]' : 'border-2 border-[#f5ebe0]'
         }`}
       >
         {checked && (
@@ -60,7 +60,7 @@ function CheckboxRow({
       {icon && <span className="text-lg flex-shrink-0">{icon}</span>}
       <span className={`flex-1 truncate ${checked ? 'font-medium' : ''}`}>{label}</span>
       {meta && (
-        <span className="flex-shrink-0 text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+        <span className="flex-shrink-0 text-xs bg-[#fdf8f2] text-[#8d7b6d] px-2 py-0.5 rounded-full">
           {meta}
         </span>
       )}
@@ -128,14 +128,14 @@ export function MarketplaceFilterSheet({
       <button
         type="button"
         onClick={handleClear}
-        className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+        className="flex-1 px-4 py-2.5 text-sm font-medium text-[#8d7b6d] bg-[#fdf8f2] rounded-lg hover:bg-[#f5ebe0] transition-colors"
       >
         Clear
       </button>
       <button
         type="button"
         onClick={handleApply}
-        className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+        className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-[#4a3f35] rounded-lg hover:bg-[#3d332b] transition-colors"
       >
         Apply Filters
       </button>
@@ -151,13 +151,13 @@ export function MarketplaceFilterSheet({
     >
       <div className="pb-safe">
         <div className="px-4 pt-4">
-          <h3 className="text-sm font-semibold text-gray-900">Categories</h3>
+          <h3 className="text-sm font-semibold text-[#4a3f35]">Categories</h3>
         </div>
         <div className="py-2">
           {isLoading ? (
-            <div className="px-4 py-3 text-sm text-gray-500">Loading categories...</div>
+            <div className="px-4 py-3 text-sm text-[#a89887]">Loading categories...</div>
           ) : sortedCategories.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-gray-500">No categories available.</div>
+            <div className="px-4 py-3 text-sm text-[#a89887]">No categories available.</div>
           ) : (
             sortedCategories.map((category) => (
               <CheckboxRow
@@ -182,7 +182,7 @@ export function MarketplaceFilterSheet({
         </div>
 
         <div className="px-4 pt-2">
-          <h3 className="text-sm font-semibold text-gray-900">Condition</h3>
+          <h3 className="text-sm font-semibold text-[#4a3f35]">Condition</h3>
         </div>
         <div className="py-2">
           {conditionOptions.map((condition) => (
@@ -206,15 +206,15 @@ export function MarketplaceFilterSheet({
         </div>
 
         <div className="px-4 pt-2">
-          <h3 className="text-sm font-semibold text-gray-900">Price Type</h3>
-          <div className="mt-3 inline-flex w-full rounded-lg border border-gray-200 overflow-hidden">
+          <h3 className="text-sm font-semibold text-[#4a3f35]">Price Type</h3>
+          <div className="mt-3 inline-flex w-full rounded-lg border border-[#f5ebe0] overflow-hidden">
             <button
               type="button"
               onClick={() => setPriceType('all')}
               className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 priceType === 'all'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  ? 'bg-[#4a3f35] text-white'
+                  : 'bg-white text-[#8d7b6d] hover:bg-[#fdf8f2]'
               }`}
             >
               All
@@ -224,8 +224,8 @@ export function MarketplaceFilterSheet({
               onClick={() => setPriceType('free')}
               className={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 priceType === 'free'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-600 hover:bg-gray-50'
+                  ? 'bg-[#4a3f35] text-white'
+                  : 'bg-white text-[#8d7b6d] hover:bg-[#fdf8f2]'
               }`}
             >
               Free Only
@@ -234,10 +234,10 @@ export function MarketplaceFilterSheet({
         </div>
 
         <div className="px-4 pt-4">
-          <h3 className="text-sm font-semibold text-gray-900">Price Range</h3>
+          <h3 className="text-sm font-semibold text-[#4a3f35]">Price Range</h3>
           <div className="mt-3 grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Min</label>
+              <label className="block text-xs text-[#a89887] mb-1">Min</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -245,11 +245,11 @@ export function MarketplaceFilterSheet({
                 value={minPrice}
                 onChange={(event) => setMinPrice(event.target.value)}
                 placeholder="$0"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-[#f5ebe0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d6ccc2]"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">Max</label>
+              <label className="block text-xs text-[#a89887] mb-1">Max</label>
               <input
                 type="number"
                 inputMode="decimal"
@@ -257,7 +257,7 @@ export function MarketplaceFilterSheet({
                 value={maxPrice}
                 onChange={(event) => setMaxPrice(event.target.value)}
                 placeholder="$500"
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 text-sm border border-[#f5ebe0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d6ccc2]"
               />
             </div>
           </div>

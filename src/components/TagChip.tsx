@@ -23,13 +23,13 @@ export function TagChip({
     ? { backgroundColor: getColorTint(resolvedColorHex) }
     : undefined;
   const dotBorderClass = resolvedColorHex && isLightColor(resolvedColorHex)
-    ? 'border border-gray-300'
+    ? 'border border-[#d6ccc2]'
     : 'border border-transparent';
 
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap ${
-        hasColor ? 'text-gray-800' : 'bg-gray-100 text-gray-700'
+        hasColor ? 'text-[#4a3f35]' : 'bg-[#f5ebe0] text-[#4a3f35]'
       } ${className}`}
       style={tintStyle}
     >

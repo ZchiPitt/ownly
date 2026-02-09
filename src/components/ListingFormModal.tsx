@@ -130,20 +130,20 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[#4a3f35]/20 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close modal"
       />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-lg bg-white sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-lg bg-[#fdf8f2] sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">List item</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5ebe0] flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[#4a3f35]">List item</h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 -m-2 text-gray-400 hover:text-gray-600"
+            className="p-2 -m-2 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,29 +155,29 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
           {/* Item preview */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-white border border-[#f5ebe0] rounded-xl">
             <img
               src={item.photo_url}
               alt={item.name}
               className="w-14 h-14 rounded-lg object-cover"
             />
             <div>
-              <p className="text-sm text-gray-500">Listing</p>
-              <p className="text-sm font-semibold text-gray-900">{item.name}</p>
+              <p className="text-sm text-[#a89887]">Listing</p>
+              <p className="text-sm font-semibold text-[#4a3f35]">{item.name}</p>
             </div>
           </div>
 
           {/* Price type */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Price type</p>
+            <p className="text-sm font-medium text-[#4a3f35] mb-2">Price type</p>
             <div className="grid grid-cols-3 gap-2">
               {priceTypeOptions.map((option) => (
                 <label
                   key={option.value}
                   className={`flex items-center justify-center gap-2 px-3 py-2.5 border rounded-lg text-sm font-medium cursor-pointer transition-colors ${
                     formData.price_type === option.value
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      ? 'border-[#4a3f35] bg-[#fdf8f2] text-[#4a3f35]'
+                      : 'border-[#f5ebe0] text-[#8d7b6d] hover:border-[#d6ccc2]'
                   }`}
                 >
                   <input
@@ -197,7 +197,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
           {/* Price */}
           {!isFree && (
             <div>
-              <label htmlFor="listing-price" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="listing-price" className="block text-sm font-medium text-[#4a3f35] mb-2">
                 Price
               </label>
               <input
@@ -208,7 +208,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               {formErrors.price && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.price}</p>
@@ -218,7 +218,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
 
           {/* Condition */}
           <div>
-            <label htmlFor="listing-condition" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="listing-condition" className="block text-sm font-medium text-[#4a3f35] mb-2">
               Condition
             </label>
             <select
@@ -228,7 +228,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
                 ...prev,
                 condition: event.target.value as ItemCondition,
               }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+              className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white"
             >
               <option value="" disabled>
                 Select condition
@@ -246,7 +246,7 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
 
           {/* Description */}
           <div>
-            <label htmlFor="listing-description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="listing-description" className="block text-sm font-medium text-[#4a3f35] mb-2">
               Description (optional)
             </label>
             <textarea
@@ -257,27 +257,27 @@ export function ListingFormModal({ isOpen, onClose, item, onSuccess }: ListingFo
                 setFormData((prev) => ({ ...prev, description: next }));
               }}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white resize-none"
+              className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white resize-none"
               placeholder="Add helpful details for buyers"
             />
-            <div className="mt-1 text-xs text-gray-500 text-right">
+            <div className="mt-1 text-xs text-[#a89887] text-right">
               {descriptionCount}/{DESCRIPTION_LIMIT}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-3 pt-2 border-t border-[#f5ebe0]">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-3 border border-[#f5ebe0] text-[#8d7b6d] font-medium rounded-xl hover:bg-[#fdf8f2] transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex-1 px-4 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Listing...' : 'Submit'}
             </button>

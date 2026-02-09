@@ -74,7 +74,7 @@ export function SelectionToolbar({
   return (
     <>
       {/* Selection toolbar - fixed at bottom above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg safe-area-pb">
+      <div className="fixed bottom-14 left-0 right-0 z-40 bg-[#fdf8f2] border-t border-[#f5ebe0] shadow-lg safe-area-pb">
         {/* Selection info and actions */}
         <div className="px-4 py-3">
           {/* Top row: Selection count and select all/deselect all */}
@@ -84,7 +84,7 @@ export function SelectionToolbar({
               <button
                 onClick={onCancel}
                 disabled={isProcessing}
-                className="p-1.5 -ml-1.5 text-gray-500 hover:text-gray-700 disabled:opacity-50"
+                className="p-1.5 -ml-1.5 text-[#a89887] hover:text-[#4a3f35] disabled:opacity-50"
                 aria-label="Exit selection mode"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ export function SelectionToolbar({
               </button>
 
               {/* Selection count */}
-              <span className="text-sm font-medium text-gray-900">
+              <span className="text-sm font-medium text-[#4a3f35]">
                 {selectedCount} selected
               </span>
             </div>
@@ -102,7 +102,7 @@ export function SelectionToolbar({
             <button
               onClick={allSelected ? onDeselectAll : onSelectAll}
               disabled={isProcessing}
-              className="text-sm font-medium text-teal-600 hover:text-teal-700 disabled:opacity-50"
+              className="text-sm font-medium text-[#4a3f35] hover:text-[#3d332b] disabled:opacity-50"
             >
               {allSelected ? 'Deselect All' : 'Select All'}
             </button>

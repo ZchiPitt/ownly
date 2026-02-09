@@ -73,7 +73,7 @@ function InventoryIcon({ active }: { active: boolean }) {
 function MarketplaceIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-[#4a3f35]' : 'text-[#a89887]'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -98,7 +98,7 @@ function MarketplaceIcon({ active }: { active: boolean }) {
 function MessagesIcon({ active }: { active: boolean }) {
   return (
     <svg
-      className={`w-6 h-6 ${active ? 'text-teal-600' : 'text-gray-500'}`}
+      className={`w-6 h-6 ${active ? 'text-[#4a3f35]' : 'text-[#a89887]'}`}
       fill={active ? 'currentColor' : 'none'}
       stroke="currentColor"
       viewBox="0 0 24 24"

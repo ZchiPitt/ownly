@@ -48,7 +48,7 @@ export function StarRating({
           return (
             <span
               key={value}
-              className={isFilled ? 'text-amber-400' : 'text-gray-300'}
+              className={isFilled ? 'text-amber-400' : 'text-[#d6ccc2]'}
               aria-hidden="true"
             >
               {star}
@@ -62,8 +62,8 @@ export function StarRating({
             type="button"
             onClick={() => onChange?.(value)}
             className={[
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 rounded-sm',
-              isFilled ? 'text-amber-400' : 'text-gray-300 hover:text-amber-300',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[#d6ccc2] rounded-sm',
+              isFilled ? 'text-amber-400' : 'text-[#d6ccc2] hover:text-amber-300',
             ].join(' ')}
             role="radio"
             aria-checked={value === Math.round(displayRating)}

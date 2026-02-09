@@ -94,7 +94,7 @@ export function AppShell({
               <div className="flex flex-col">
                 <div className="flex items-baseline gap-3">
                   <h1 className="text-4xl font-black tracking-tighter text-[#4a3f35] leading-none">Ownly</h1>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Your AI Inventory & Ownership Assistant</span>
+                  <span className="text-[10px] font-bold text-[#d6ccc2] uppercase tracking-widest leading-none">Your AI Inventory & Ownership Assistant</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1.5">
                   <p className="text-xs font-bold text-[#8d7b6d] uppercase tracking-[0.15em] leading-none">Know what you own, find quicker, buy smarter, live lighter</p>

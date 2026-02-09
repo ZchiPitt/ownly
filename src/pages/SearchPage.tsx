@@ -168,7 +168,7 @@ function MicrophoneIcon() {
 function NoResultsIcon() {
   return (
     <svg
-      className="w-16 h-16 text-gray-300"
+      className="w-16 h-16 text-[#d6ccc2]"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -451,7 +451,7 @@ function ClearConfirmDialog({ isOpen, onConfirm, onCancel }: ClearConfirmDialogP
         <div className="flex gap-3">
           <button
             onClick={onCancel}
-            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors"
+            className="flex-1 px-4 py-2.5 border border-[#f5ebe0] rounded-lg text-[#6f5f52] font-medium hover:bg-[#fdf8f2] transition-colors"
           >
             Cancel
           </button>
@@ -763,7 +763,7 @@ export function SearchPage() {
     // Loading state - show skeleton
     if (isLoading) {
       return (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-[#f5ebe0]">
           {Array.from({ length: 5 }).map((_, i) => (
             <SearchResultSkeleton key={i} />
           ))}
@@ -813,14 +813,14 @@ export function SearchPage() {
               </div>
               <button
                 onClick={handleClearAllClick}
-                className="text-sm text-blue-500 hover:text-blue-600 font-medium transition-colors"
+                className="text-sm text-[#4a3f35] hover:text-[#3d332b] font-medium transition-colors"
               >
                 Clear All
               </button>
             </div>
 
             {/* Recent search list */}
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-[#f5ebe0]">
               {recentSearches.map((searchQuery) => (
                 <RecentSearchItem
                   key={searchQuery}
@@ -863,7 +863,7 @@ export function SearchPage() {
       return (
         <>
           {renderResultsHeader()}
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-[#f5ebe0]">
             {results.map((item) => (
               <SearchResult key={item.id} item={item} query={query} />
             ))}
@@ -903,7 +903,7 @@ export function SearchPage() {
               value={query}
               onChange={handleQueryChange}
               placeholder="Search items, tags, locations..."
-              className="w-full h-10 pl-10 pr-20 bg-[#f3ece4] rounded-full text-[#4a3f35] placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors"
+              className="w-full h-10 pl-10 pr-20 bg-[#f3ece4] rounded-full text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:bg-white transition-colors"
               aria-label="Search items"
             />
 

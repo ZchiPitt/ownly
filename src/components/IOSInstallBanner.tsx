@@ -48,7 +48,7 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
         isClosing ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'
       }`}
     >
-      <div className="mx-auto max-w-md bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+      <div className="mx-auto max-w-md bg-[#fdf8f2] rounded-2xl shadow-2xl border border-[#f5ebe0] overflow-hidden">
         {/* Main content */}
         <div className="p-4">
           {/* Header with app icon */}
@@ -64,23 +64,23 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
 
             {/* Text content */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 text-base">
+              <h3 className="font-semibold text-[#4a3f35] text-base">
                 Install this app
               </h3>
-              <p className="text-sm text-gray-500 mt-0.5">
+              <p className="text-sm text-[#a89887] mt-0.5">
                 Add Ownly to your Home Screen for quick access
               </p>
             </div>
           </div>
 
           {/* Installation instructions */}
-          <div className="mt-4 bg-gray-50 rounded-xl p-3">
-            <p className="text-sm text-gray-700 flex items-center gap-2">
+          <div className="mt-4 bg-white rounded-xl p-3">
+            <p className="text-sm text-[#4a3f35] flex items-center gap-2">
               <span>Tap</span>
               {/* Share icon (iOS style) */}
-              <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 rounded-lg">
+              <span className="inline-flex items-center justify-center w-7 h-7 bg-[#f5ebe0] rounded-lg">
                 <svg
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 text-[#4a3f35]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -94,7 +94,7 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
                 </svg>
               </span>
               <span>then</span>
-              <span className="font-medium text-gray-900">"Add to Home Screen"</span>
+              <span className="font-medium text-[#4a3f35]">"Add to Home Screen"</span>
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function IOSInstallBanner({ onDismiss }: IOSInstallBannerProps) {
         <div className="px-4 pb-4">
           <button
             onClick={handleDismiss}
-            className="w-full px-4 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+            className="w-full px-4 py-2.5 text-sm font-medium text-[#8d7b6d] bg-[#f5ebe0] rounded-xl hover:bg-[#efe5d8] transition-colors"
           >
             Got It
           </button>

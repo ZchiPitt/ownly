@@ -76,22 +76,22 @@ export function ReviewModal({ isOpen, onClose, transaction, onSuccess }: ReviewM
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[#4a3f35]/20 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close modal"
       />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-lg bg-white sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-lg bg-[#fdf8f2] sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5ebe0] flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[#4a3f35]">
             Rate your experience with {displayName}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 -m-2 text-gray-400 hover:text-gray-600"
+            className="p-2 -m-2 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,26 +102,26 @@ export function ReviewModal({ isOpen, onClose, transaction, onSuccess }: ReviewM
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-          <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
-            <div className="w-12 h-12 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-600">
+          <div className="flex items-center gap-3 p-3 bg-white border border-[#f5ebe0] rounded-xl">
+            <div className="w-12 h-12 rounded-lg bg-[#fdf8f2] border border-[#f5ebe0] flex items-center justify-center text-[#8d7b6d]">
               ⭐
             </div>
             <div>
-              <p className="text-sm text-gray-500">Transaction</p>
-              <p className="text-sm font-semibold text-gray-900">{itemName}</p>
+              <p className="text-sm text-[#a89887]">Transaction</p>
+              <p className="text-sm font-semibold text-[#4a3f35]">{itemName}</p>
             </div>
           </div>
 
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Your rating</p>
+            <p className="text-sm font-medium text-[#4a3f35] mb-2">Your rating</p>
             <StarRating rating={rating} onChange={setRating} size="lg" />
             {!rating && (
-              <p className="text-xs text-gray-500 mt-2">Tap a star to select your rating.</p>
+              <p className="text-xs text-[#a89887] mt-2">Tap a star to select your rating.</p>
             )}
           </div>
 
           <div>
-            <label htmlFor="review-comment" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="review-comment" className="block text-sm font-medium text-[#4a3f35] mb-2">
               Comment (optional)
             </label>
             <textarea
@@ -132,27 +132,27 @@ export function ReviewModal({ isOpen, onClose, transaction, onSuccess }: ReviewM
                 setComment(next);
               }}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white resize-none"
+              className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white resize-none"
               placeholder="Share details about your experience"
             />
-            <div className="mt-1 text-xs text-gray-500 text-right">
+            <div className="mt-1 text-xs text-[#a89887] text-right">
               {commentCount}/{COMMENT_LIMIT}
             </div>
           </div>
 
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-3 pt-2 border-t border-[#f5ebe0]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 border border-[#f5ebe0] text-[#8d7b6d] font-medium rounded-xl hover:bg-[#fdf8f2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex-1 px-4 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Review'}
             </button>

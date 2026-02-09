@@ -157,14 +157,14 @@ function ItemCardSkeleton() {
   return (
     <div className="w-full bg-white rounded-2xl overflow-hidden shadow-sm">
       {/* Image skeleton - 4:5 aspect ratio */}
-      <div className="w-full aspect-[4/5] bg-gray-200 animate-pulse" />
+      <div className="w-full aspect-[4/5] bg-[#f5ebe0] animate-pulse" />
 
       {/* Info skeleton */}
       <div className="p-3">
-        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4 mb-2" />
+        <div className="h-4 bg-[#f5ebe0] rounded animate-pulse w-3/4 mb-2" />
         <div className="flex items-center justify-between">
-          <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2" />
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-12" />
+          <div className="h-3 bg-[#f5ebe0] rounded animate-pulse w-1/2" />
+          <div className="h-4 bg-[#f5ebe0] rounded animate-pulse w-12" />
         </div>
       </div>
     </div>
@@ -177,9 +177,9 @@ function ItemCardSkeleton() {
 function EmptyState({ onAddItem }: { onAddItem: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="w-20 h-20 bg-teal-50 rounded-full flex items-center justify-center mb-4">
+      <div className="w-20 h-20 bg-[#f5ebe0] rounded-full flex items-center justify-center mb-4">
         <svg
-          className="w-10 h-10 text-teal-500"
+          className="w-10 h-10 text-[#8d7b6d]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -192,15 +192,15 @@ function EmptyState({ onAddItem }: { onAddItem: () => void }) {
           />
         </svg>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+      <h3 className="text-lg font-semibold text-[#4a3f35] mb-1">
         No items yet
       </h3>
-      <p className="text-sm text-gray-500 text-center mb-6 max-w-xs">
+      <p className="text-sm text-[#a89887] text-center mb-6 max-w-xs">
         Start by adding your first item
       </p>
       <button
         onClick={onAddItem}
-        className="px-6 py-2.5 bg-teal-600 text-white text-sm font-medium rounded-full hover:bg-teal-700 transition-colors active:scale-95"
+        className="px-6 py-2.5 bg-[#4a3f35] text-white text-sm font-medium rounded-full hover:bg-[#3d332b] transition-colors active:scale-95"
       >
         Add First Item
       </button>
@@ -215,9 +215,9 @@ function FilteredEmptyState({ onClearFilters }: { onClearFilters: () => void }) 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       {/* Filter icon with X overlay */}
-      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 relative">
+      <div className="w-20 h-20 bg-[#f5ebe0] rounded-full flex items-center justify-center mb-4 relative">
         <svg
-          className="w-10 h-10 text-gray-400"
+          className="w-10 h-10 text-[#d6ccc2]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -230,7 +230,7 @@ function FilteredEmptyState({ onClearFilters }: { onClearFilters: () => void }) 
           />
         </svg>
         {/* X badge overlay */}
-        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-gray-500 rounded-full flex items-center justify-center">
+        <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-[#8d7b6d] rounded-full flex items-center justify-center">
           <svg
             className="w-4 h-4 text-white"
             fill="none"
@@ -246,15 +246,15 @@ function FilteredEmptyState({ onClearFilters }: { onClearFilters: () => void }) 
           </svg>
         </div>
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+      <h3 className="text-lg font-semibold text-[#4a3f35] mb-1">
         No items match your filters
       </h3>
-      <p className="text-sm text-gray-500 text-center mb-6 max-w-xs">
+      <p className="text-sm text-[#a89887] text-center mb-6 max-w-xs">
         Try adjusting your filter criteria or clear all filters to see your items
       </p>
       <button
         onClick={onClearFilters}
-        className="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-full hover:bg-gray-200 transition-colors active:scale-95"
+        className="px-6 py-2.5 bg-[#f5ebe0] text-[#4a3f35] text-sm font-medium rounded-full hover:bg-[#efe5d8] transition-colors active:scale-95"
       >
         Clear Filters
       </button>
@@ -269,7 +269,7 @@ function LoadingMoreSpinner() {
   return (
     <div className="flex items-center justify-center py-4">
       <svg
-        className="w-5 h-5 text-teal-600 animate-spin"
+        className="w-5 h-5 text-[#4a3f35] animate-spin"
         fill="none"
         viewBox="0 0 24 24"
       >
@@ -287,7 +287,7 @@ function LoadingMoreSpinner() {
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         />
       </svg>
-      <span className="ml-2 text-sm text-gray-600">Loading more...</span>
+      <span className="ml-2 text-sm text-[#8d7b6d]">Loading more...</span>
     </div>
   );
 }
@@ -298,7 +298,7 @@ function LoadingMoreSpinner() {
 function EndOfListMessage({ totalCount }: { totalCount: number }) {
   return (
     <div className="flex items-center justify-center py-6">
-      <div className="flex items-center gap-2 text-gray-400">
+      <div className="flex items-center gap-2 text-[#d6ccc2]">
         <svg
           className="w-5 h-5"
           fill="none"
@@ -433,15 +433,15 @@ export function GalleryGrid({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+        <h3 className="text-lg font-semibold text-[#4a3f35] mb-1">
           Couldn't load your items
         </h3>
-        <p className="text-sm text-gray-500 text-center mb-4">
+        <p className="text-sm text-[#a89887] text-center mb-4">
           {error}
         </p>
         <button
           onClick={onRefresh}
-          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+          className="px-4 py-2 bg-[#f5ebe0] text-[#4a3f35] text-sm font-medium rounded-lg hover:bg-[#efe5d8] transition-colors"
         >
           Try Again
         </button>
@@ -465,7 +465,7 @@ export function GalleryGrid({
       {isRefreshing && (
         <div className="flex items-center justify-center py-3 mb-2">
           <svg
-            className="w-5 h-5 text-teal-600 animate-spin"
+            className="w-5 h-5 text-[#4a3f35] animate-spin"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -483,7 +483,7 @@ export function GalleryGrid({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <span className="ml-2 text-sm text-gray-600">Refreshing...</span>
+          <span className="ml-2 text-sm text-[#8d7b6d]">Refreshing...</span>
         </div>
       )}
 

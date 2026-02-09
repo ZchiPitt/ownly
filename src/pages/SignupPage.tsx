@@ -241,9 +241,9 @@ export function SignupPage() {
               onChange={handleInputChange('email')}
               onBlur={handleBlur('email')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${(touched.email && errors.email) || showEmailExistsError
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${(touched.email && errors.email) || showEmailExistsError
                 ? 'border-red-500'
-                : 'border-gray-300'
+                : 'border-[#f5ebe0]'
                 }`}
             />
             {touched.email && errors.email && (
@@ -279,9 +279,9 @@ export function SignupPage() {
               onChange={handleInputChange('password')}
               onBlur={handleBlur('password')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.password && errors.password
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.password && errors.password
                 ? 'border-red-500'
-                : 'border-gray-300'
+                : 'border-[#f5ebe0]'
                 }`}
             />
             {touched.password && errors.password && (
@@ -306,9 +306,9 @@ export function SignupPage() {
               onChange={handleInputChange('confirmPassword')}
               onBlur={handleBlur('confirmPassword')}
               disabled={isSubmitting}
-              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.confirmPassword && errors.confirmPassword
+              className={`w-full px-4 py-3 rounded-xl border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${touched.confirmPassword && errors.confirmPassword
                 ? 'border-red-500'
-                : 'border-gray-300'
+                : 'border-[#f5ebe0]'
                 }`}
             />
             {touched.confirmPassword && errors.confirmPassword && (
@@ -323,8 +323,8 @@ export function SignupPage() {
             type="submit"
             disabled={!isFormValid || isSubmitting || isGoogleLoading}
             className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-colors flex items-center justify-center ${isFormValid && !isSubmitting && !isGoogleLoading
-              ? 'bg-[#8d7b6d] hover:bg-[#7c6b5d] active:bg-teal-800'
-              : 'bg-gray-300 cursor-not-allowed'
+              ? 'bg-[#8d7b6d] hover:bg-[#7c6b5d] active:bg-[#332a22]'
+              : 'bg-[#e8dfd5] text-[#b9a99b] cursor-not-allowed'
               }`}
           >
             {isSubmitting ? (
@@ -360,9 +360,9 @@ export function SignupPage() {
 
         {/* Divider */}
         <div className="flex items-center my-6">
-          <div className="flex-1 border-t border-gray-300"></div>
+          <div className="flex-1 border-t border-[#f5ebe0]"></div>
           <span className="px-4 text-sm text-[#8d7b6d]">or continue with</span>
-          <div className="flex-1 border-t border-gray-300"></div>
+          <div className="flex-1 border-t border-[#f5ebe0]"></div>
         </div>
 
         {/* Google Sign In Button */}
@@ -370,7 +370,7 @@ export function SignupPage() {
           type="button"
           onClick={handleGoogleSignIn}
           disabled={isSubmitting || isGoogleLoading}
-          className="w-full py-3 px-4 rounded-xl font-semibold border border-gray-300 bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-3 px-4 rounded-xl font-semibold border border-[#f5ebe0] bg-white text-[#6f5f52] hover:bg-[#fdf8f2] active:bg-[#f3ece4] transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGoogleLoading ? (
             <>

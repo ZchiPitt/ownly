@@ -825,14 +825,14 @@ function ItemDetailError({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-[#4a3f35] text-white font-medium rounded-2xl hover:bg-[#3d332b] transition-colors"
             >
               Try Again
             </button>
           )}
           <button
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 text-[#6f5f52] font-medium rounded-lg hover:bg-[#fdf8f2] transition-colors"
+            className="px-6 py-2 border border-[#f5ebe0] text-[#6f5f52] font-medium rounded-2xl hover:bg-[#fdf8f2] transition-colors"
           >
             Back to Inventory
           </button>
@@ -1415,12 +1415,12 @@ export function ItemDetailPage() {
 
                 {/* Keep Forever toggle */}
                 <button
-                  className={`w-full px-4 py-2.5 text-left hover:bg-[#f3ece4] flex items-center gap-3 ${item.keep_forever ? 'text-blue-600' : 'text-[#6f5f52]'
+                  className={`w-full px-4 py-2.5 text-left hover:bg-[#f3ece4] flex items-center gap-3 ${item.keep_forever ? 'text-[#4a3f35]' : 'text-[#6f5f52]'
                     }`}
                   onClick={handleToggleKeepForever}
                   disabled={isUpdating}
                 >
-                  <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-blue-600' : 'text-[#8d7b6d]'}`} />
+                  <InfinityIcon className={`w-5 h-5 ${item.keep_forever ? 'text-[#4a3f35]' : 'text-[#8d7b6d]'}`} />
                   <span>{item.keep_forever ? 'Unmark Keep Forever' : 'Mark as Keep Forever'}</span>
                 </button>
 
@@ -1460,7 +1460,7 @@ export function ItemDetailPage() {
       <div className="relative">
         <button
           onClick={() => setIsPhotoViewerOpen(true)}
-          className="w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className="w-full focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2"
           aria-label="View full size photo"
         >
           <img
@@ -1493,7 +1493,7 @@ export function ItemDetailPage() {
                     <button
                       key={related.id}
                       onClick={() => navigate(`/item/${related.id}`)}
-                      className="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-sm text-[#6f5f52] border border-[#f5ebe0]/60 hover:border-gray-300 hover:bg-[#f3ece4] transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 rounded-full bg-white text-sm text-[#6f5f52] border border-[#f5ebe0]/60 hover:border-[#d6ccc2] hover:bg-[#f3ece4] transition-colors"
                     >
                       {related.name || 'Unnamed Item'}
                     </button>
@@ -1539,7 +1539,7 @@ export function ItemDetailPage() {
         {item.location && (
           <button
             onClick={() => navigate(`/inventory?location=${item.location!.id}`)}
-            className="flex items-center gap-2 text-[#8d7b6d] mb-4 hover:text-blue-600 transition-colors group"
+            className="flex items-center gap-2 text-[#8d7b6d] mb-4 hover:text-[#4a3f35] transition-colors group"
             aria-label={`Filter by location: ${item.location.path}`}
           >
             <span className="flex-shrink-0">{item.location.icon}</span>
@@ -1697,7 +1697,7 @@ export function ItemDetailPage() {
               ? 'bg-green-600'
               : toast.type === 'error'
                 ? 'bg-red-600'
-                : 'bg-blue-600'
+                : 'bg-[#4a3f35]'
             }`}
           role="alert"
         >
@@ -1709,12 +1709,12 @@ export function ItemDetailPage() {
       {/* Undo delete toast (US-058) */}
       {undoToast && (
         <div
-          className="fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg bg-gray-800 text-white z-50 animate-fade-in"
+          className="fixed bottom-24 left-4 right-4 mx-auto max-w-md px-4 py-3 rounded-lg shadow-lg bg-[#4a3f35] text-white z-50 animate-fade-in"
           role="alert"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <TrashIcon className="w-5 h-5 flex-shrink-0 text-gray-300" />
+              <TrashIcon className="w-5 h-5 flex-shrink-0 text-[#d6ccc2]" />
               <span>Item deleted</span>
             </div>
             <div className="flex items-center gap-3">
@@ -1725,7 +1725,7 @@ export function ItemDetailPage() {
               {/* Undo button */}
               <button
                 onClick={handleUndo}
-                className="px-3 py-1 bg-white text-gray-800 font-medium rounded hover:bg-[#f3ece4] transition-colors"
+                className="px-3 py-1 bg-white text-[#4a3f35] font-medium rounded hover:bg-[#f3ece4] transition-colors"
               >
                 Undo
               </button>

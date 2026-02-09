@@ -67,20 +67,20 @@ export function SortBottomSheet({
     <div
       ref={backdropRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 bg-[#4a3f35]/20 backdrop-blur-sm flex items-end justify-center animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-lg bg-white rounded-t-2xl animate-in slide-in-from-bottom duration-300">
+      <div className="w-full max-w-lg bg-[#fdf8f2] rounded-t-[3rem] soft-shadow animate-in slide-in-from-bottom duration-300 border-t border-white/50">
         {/* Handle bar */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        <div className="flex justify-center pt-5 pb-2">
+          <div className="w-12 h-1.5 bg-[#4a3f35]/10 rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">Sort by</h2>
+        <div className="flex items-center justify-between px-8 py-4">
+          <h2 className="text-2xl font-black text-[#4a3f35] tracking-tight">Sort by</h2>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-10 h-10 flex items-center justify-center bg-white rounded-2xl text-[#d6ccc2] hover:text-[#4a3f35] soft-shadow transition-all active:scale-95"
             aria-label="Close"
           >
             <svg
@@ -109,8 +109,8 @@ export function SortBottomSheet({
                 onClick={() => handleSortSelect(option.key)}
                 className={`w-full flex items-center justify-between px-4 py-3.5 text-left transition-colors ${
                   isSelected
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'hover:bg-gray-50 text-gray-700'
+                    ? 'bg-[#fdf8f2] text-[#4a3f35]'
+                    : 'hover:bg-[#fdf8f2] text-[#4a3f35]'
                 }`}
               >
                 <span className={`text-base ${isSelected ? 'font-medium' : ''}`}>
@@ -118,7 +118,7 @@ export function SortBottomSheet({
                 </span>
                 {isSelected && (
                   <svg
-                    className="w-5 h-5 text-blue-600"
+                    className="w-5 h-5 text-[#4a3f35]"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"

@@ -127,20 +127,20 @@ export function PurchaseRequestModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-[#4a3f35]/20 backdrop-blur-sm"
         onClick={onClose}
         aria-label="Close modal"
       />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-lg bg-white sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-lg bg-[#fdf8f2] sm:rounded-xl rounded-t-xl shadow-xl max-h-[85vh] flex flex-col animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-gray-900">Purchase request</h2>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-[#f5ebe0] flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[#4a3f35]">Purchase request</h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 -m-2 text-gray-400 hover:text-gray-600"
+            className="p-2 -m-2 text-[#d6ccc2] hover:text-[#8d7b6d]"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,16 +152,16 @@ export function PurchaseRequestModal({
         {/* Content */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
           {/* Item preview */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-xl">
+          <div className="flex items-center gap-3 p-3 bg-white border border-[#f5ebe0] rounded-xl">
             <img
               src={listing.item.photo_url}
               alt={listing.item.name}
               className="w-14 h-14 rounded-lg object-cover"
             />
             <div>
-              <p className="text-sm text-gray-500">Item</p>
-              <p className="text-sm font-semibold text-gray-900">{listing.item.name}</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm text-[#a89887]">Item</p>
+              <p className="text-sm font-semibold text-[#4a3f35]">{listing.item.name}</p>
+              <p className="text-xs text-[#a89887] mt-1">
                 {formatPrice(listing.price, listing.price_type)}
               </p>
             </div>
@@ -170,7 +170,7 @@ export function PurchaseRequestModal({
           {/* Offer */}
           {isNegotiable && (
             <div>
-              <label htmlFor="offer-price" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="offer-price" className="block text-sm font-medium text-[#4a3f35] mb-2">
                 Your Offer
               </label>
               <input
@@ -181,7 +181,7 @@ export function PurchaseRequestModal({
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               {formErrors.offer_price && (
                 <p className="mt-1 text-xs text-red-600">{formErrors.offer_price}</p>
@@ -191,7 +191,7 @@ export function PurchaseRequestModal({
 
           {/* Message */}
           <div>
-            <label htmlFor="offer-message" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="offer-message" className="block text-sm font-medium text-[#4a3f35] mb-2">
               Message to seller (optional)
             </label>
             <textarea
@@ -202,28 +202,28 @@ export function PurchaseRequestModal({
                 setFormData((prev) => ({ ...prev, message: next }));
               }}
               rows={4}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white resize-none"
+              className="w-full px-4 py-3 border border-[#f5ebe0] rounded-xl focus:ring-2 focus:ring-[#d6ccc2] focus:border-[#d6ccc2] outline-none bg-white resize-none"
               placeholder="Add a note for the seller"
             />
-            <div className="mt-1 text-xs text-gray-500 text-right">
+            <div className="mt-1 text-xs text-[#a89887] text-right">
               {messageCount}/{MESSAGE_LIMIT}
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-3 pt-2 border-t border-[#f5ebe0]">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 border border-[#f5ebe0] text-[#8d7b6d] font-medium rounded-xl hover:bg-[#fdf8f2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!canSubmit}
-              className="flex-1 px-4 py-3 bg-teal-600 text-white font-medium rounded-xl hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-[#4a3f35] text-white font-medium rounded-xl hover:bg-[#3d332b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Sending...' : 'Send Request'}
             </button>

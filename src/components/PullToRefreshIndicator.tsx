@@ -47,7 +47,7 @@ export function PullToRefreshIndicator({
         {isRefreshing ? (
           // Spinning loader during refresh
           <svg
-            className="w-5 h-5 text-blue-600 animate-spin"
+            className="w-5 h-5 text-[#4a3f35] animate-spin"
             fill="none"
             viewBox="0 0 24 24"
           >
@@ -68,7 +68,7 @@ export function PullToRefreshIndicator({
         ) : (
           // Arrow icon during pull
           <svg
-            className={`w-5 h-5 text-blue-600 transition-transform duration-200 ${
+            className={`w-5 h-5 text-[#4a3f35] transition-transform duration-200 ${
               hasReachedThreshold ? 'rotate-180' : ''
             }`}
             fill="none"
@@ -83,7 +83,7 @@ export function PullToRefreshIndicator({
             />
           </svg>
         )}
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-[#8d7b6d]">
           {isRefreshing
             ? 'Refreshing...'
             : hasReachedThreshold

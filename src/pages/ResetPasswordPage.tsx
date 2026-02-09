@@ -150,10 +150,10 @@ export function ResetPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 onBlur={() => setTouched(true)}
                 disabled={isSubmitting}
-                className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
+                className={`w-full px-4 py-3 rounded-lg border bg-white text-[#4a3f35] placeholder-[#b9a99b] focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:border-transparent transition-colors disabled:bg-[#f3ece4] disabled:cursor-not-allowed ${
                   touched && emailError
                     ? 'border-red-500'
-                    : 'border-gray-300'
+                    : 'border-[#f5ebe0]'
                 }`}
               />
               {touched && emailError && (
@@ -167,8 +167,8 @@ export function ResetPasswordPage() {
               disabled={!isFormValid || isSubmitting}
               className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors flex items-center justify-center ${
                 isFormValid && !isSubmitting
-                  ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800'
-                  : 'bg-gray-300 cursor-not-allowed'
+                  ? 'bg-[#4a3f35] hover:bg-[#3d332b] active:bg-[#332a22]'
+                  : 'bg-[#e8dfd5] text-[#b9a99b] cursor-not-allowed'
               }`}
             >
               {isSubmitting ? (
@@ -209,7 +209,7 @@ export function ResetPasswordPage() {
             Remember your password?{' '}
             <Link
               to="/login"
-              className="text-blue-600 font-semibold hover:text-blue-700"
+              className="text-[#6f5f52] font-semibold hover:text-[#4a3f35]"
             >
               Log in
             </Link>
@@ -272,7 +272,7 @@ export function ResetPasswordPage() {
             className={`py-3 px-6 rounded-lg font-semibold transition-colors ${
               cooldownRemaining > 0 || isSubmitting
                 ? 'bg-[#efe6dc] text-[#8d7b6d] cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800'
+                : 'bg-[#4a3f35] text-white hover:bg-[#3d332b] active:bg-[#332a22]'
             }`}
           >
             {isSubmitting ? (
@@ -325,7 +325,7 @@ export function ResetPasswordPage() {
         <p className="text-center text-[#8d7b6d]">
           <Link
             to="/login"
-            className="text-blue-600 font-semibold hover:text-blue-700"
+            className="text-[#6f5f52] font-semibold hover:text-[#4a3f35]"
           >
             ← Back to Log in
           </Link>

@@ -38,13 +38,13 @@ export const NotFoundPage = () => {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-[#6f5f52] hover:bg-[#fdf8f2] transition-colors"
+            className="px-6 py-3 border border-[#f5ebe0] rounded-lg font-medium text-[#6f5f52] hover:bg-[#fdf8f2] transition-colors"
           >
             Go Back
           </button>
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            className="px-6 py-3 bg-[#4a3f35] text-white rounded-lg font-medium hover:bg-[#3d332b] transition-colors"
           >
             Go to Dashboard
           </button>
@@ -56,25 +56,25 @@ export const NotFoundPage = () => {
           <div className="flex flex-wrap gap-3 justify-center">
             <button
               onClick={() => navigate('/inventory')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-[#4a3f35] hover:text-[#3d332b] font-medium"
             >
               My Inventory
             </button>
             <button
               onClick={() => navigate('/add')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-[#4a3f35] hover:text-[#3d332b] font-medium"
             >
               Add Item
             </button>
             <button
               onClick={() => navigate('/settings')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-[#4a3f35] hover:text-[#3d332b] font-medium"
             >
               Settings
             </button>
             <button
               onClick={() => navigate('/shopping')}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-[#4a3f35] hover:text-[#3d332b] font-medium"
             >
               Shopping Assistant
             </button>
