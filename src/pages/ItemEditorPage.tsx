@@ -68,6 +68,7 @@ export function ItemEditorPage() {
 
   // Save state
   const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successType, setSuccessType] = useState<SuccessType>('single');
   const [savedItemId, setSavedItemId] = useState<string | null>(null);
@@ -91,6 +92,14 @@ export function ItemEditorPage() {
       navigate('/add', { replace: true });
     }
   }, [state, navigate]);
+
+  // Reset save state when navigating to a new item in the queue
+  useEffect(() => {
+    isSavingRef.current = false;
+    setIsSaving(false);
+    setShowSuccess(false);
+    setSavedItemId(null);
+  }, [state?.currentItemIndex]);
 
   // Cleanup timers
   useEffect(() => {
@@ -127,6 +136,8 @@ export function ItemEditorPage() {
    * Handle save item to database
    */
   const handleSave = useCallback(async () => {
+    if (isSavingRef.current) return;
+
     const values = formValuesRef.current;
     if (!values || !user || !state) return;
 
@@ -137,6 +148,7 @@ export function ItemEditorPage() {
       return;
     }
 
+    isSavingRef.current = true;
     setIsSaving(true);
     setLocationError(undefined);
 
@@ -251,7 +263,7 @@ export function ItemEditorPage() {
     } catch (error) {
       console.error('Failed to save item:', error);
       setToast({ message: 'Failed to save item. Please try again.', type: 'error' });
-    } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   }, [user, state, navigate]);

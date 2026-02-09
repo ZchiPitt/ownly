@@ -397,7 +397,8 @@ export function ShoppingPage() {
 
     try {
       // Validate the selected image
-      const validation = await validateImage(file);
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const validation = await validateImage(file, authSession?.access_token);
 
       if (!validation.valid) {
         setToast({
@@ -471,7 +472,8 @@ export function ShoppingPage() {
 
     try {
       // Validate the selected image
-      const validation = await validateImage(file);
+      const { data: { session: authSession } } = await supabase.auth.getSession();
+      const validation = await validateImage(file, authSession?.access_token);
 
       if (!validation.valid) {
         setToast({

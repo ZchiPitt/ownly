@@ -27,6 +27,7 @@ import {
   deleteFromStorage,
   cropImageToBbox,
   validateBbox,
+  clampBbox,
   uploadToStorage,
 } from '@/lib/imageUtils';
 import { supabase } from '@/lib/supabase';
@@ -342,8 +343,12 @@ export function AddItemPage() {
     setIsProcessing(true);
 
     try {
+      // Get access token for HEIC conversion fallback
+      const { data: { session } } = await supabase.auth.getSession();
+      const accessToken = session?.access_token;
+
       // Validate the selected image
-      const validation = await validateImage(file);
+      const validation = await validateImage(file, accessToken);
 
       if (!validation.valid) {
         const validationMessage = validation.error || 'Invalid image';
@@ -541,10 +546,13 @@ export function AddItemPage() {
           throw new Error('Analysis cancelled');
         }
 
-        const bbox = validateBbox(item.bbox) ? item.bbox : DEFAULT_BBOX;
-        const shouldCrop =
-          validateBbox(item.bbox) &&
-          !(bbox[0] === 0 && bbox[1] === 0 && bbox[2] === 100 && bbox[3] === 100);
+        const bbox = validateBbox(item.bbox) ? clampBbox(item.bbox) : DEFAULT_BBOX;
+        const isFullImage =
+          bbox[0] === 0 && bbox[1] === 0 && bbox[2] === 100 && bbox[3] === 100;
+        // Also treat near-full-image bboxes (covering >90% of image) as full image
+        const isNearFullImage =
+          bbox[2] >= 90 && bbox[3] >= 90;
+        const shouldCrop = validateBbox(item.bbox) && !isFullImage && !isNearFullImage;
 
         if (!shouldCrop) {
           results.push({

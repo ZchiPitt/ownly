@@ -130,12 +130,18 @@ function sanitizeBbox(value: unknown): [number, number, number, number] {
     return DEFAULT_BBOX;
   }
 
-  const [x, y, width, height] = numbers;
-  if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+  let [x, y, width, height] = numbers;
+  if (width <= 0 || height <= 0) {
     return DEFAULT_BBOX;
   }
 
-  if (x + width > 100 || y + height > 100) {
+  // Clamp values to valid range instead of rejecting
+  x = Math.max(0, Math.min(x, 99));
+  y = Math.max(0, Math.min(y, 99));
+  width = Math.min(width, 100 - x);
+  height = Math.min(height, 100 - y);
+
+  if (width <= 0 || height <= 0) {
     return DEFAULT_BBOX;
   }
 

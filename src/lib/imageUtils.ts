@@ -32,7 +32,7 @@ export interface ImageValidationResult {
  * @param file - The image file to validate
  * @returns Promise with validation result
  */
-export async function validateImage(file: File): Promise<ImageValidationResult> {
+export async function validateImage(file: File, accessToken?: string): Promise<ImageValidationResult> {
   // Check if file is a supported format
   const format = file.type.toLowerCase();
 
@@ -53,7 +53,7 @@ export async function validateImage(file: File): Promise<ImageValidationResult> 
   let imageFile = file;
   if (isHeic) {
     try {
-      const convertedBlob = await convertHeicToJpeg(file);
+      const convertedBlob = await convertHeicToJpeg(file, accessToken);
       imageFile = new File([convertedBlob], 'converted.jpg', { type: 'image/jpeg' });
     } catch {
       return {
@@ -108,15 +108,28 @@ export function validateBbox(bbox: unknown): bbox is Bbox {
     return false;
   }
 
-  if (x < 0 || y < 0 || width <= 0 || height <= 0) {
+  if (width <= 0 || height <= 0) {
     return false;
   }
 
-  if (x + width > 100 || y + height > 100) {
+  // Allow slightly out-of-bounds values - cropImageToBbox clamps them
+  if (x < 0 || y < 0 || x >= 100 || y >= 100) {
     return false;
   }
 
   return true;
+}
+
+/**
+ * Clamps a bounding box to valid [0-100] percentage ranges.
+ */
+export function clampBbox(bbox: Bbox): Bbox {
+  let [x, y, width, height] = bbox;
+  x = Math.max(0, Math.min(x, 99));
+  y = Math.max(0, Math.min(y, 99));
+  width = Math.min(width, 100 - x);
+  height = Math.min(height, 100 - y);
+  return [x, y, Math.max(1, width), Math.max(1, height)];
 }
 
 /**
@@ -144,7 +157,58 @@ function getImageDimensions(file: File): Promise<{ width: number; height: number
 }
 
 /**
+ * Converts an image to JPEG using the browser's native Canvas API.
+ * Works on iOS Safari which can natively decode HEIC images.
+ */
+function convertViaCanvas(blob: Blob, quality: number = 0.9): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0);
+
+      canvas.toBlob(
+        (result) => {
+          if (result && result.size > 0) {
+            resolve(result);
+          } else {
+            reject(new Error('Canvas toBlob produced empty result'));
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('Browser cannot decode this image format'));
+    };
+
+    img.src = url;
+  });
+}
+
+/**
  * Converts a HEIC/HEIF file to JPEG format.
+ * Tries three strategies in order:
+ * 1. heic2any library (JS polyfill)
+ * 2. Browser native Canvas API (works on iOS Safari)
+ * 3. Server-side conversion (if accessToken provided)
+ *
  * @param file - The HEIC/HEIF file to convert
  * @param accessToken - Optional access token for server-side fallback
  * @returns Promise with the converted JPEG Blob
@@ -153,9 +217,10 @@ export async function convertHeicToJpeg(file: File, accessToken?: string): Promi
   const qualityLevels = [0.9, 0.8, 0.6];
   let lastError: Error | null = null;
 
+  // Strategy 1: heic2any library
   for (const quality of qualityLevels) {
     try {
-      console.log(`[imageUtils] Attempting HEIC conversion with quality ${quality}`);
+      console.log(`[imageUtils] Attempting HEIC conversion with heic2any quality ${quality}`);
       const result = await heic2any({
         blob: file,
         toType: 'image/jpeg',
@@ -168,12 +233,22 @@ export async function convertHeicToJpeg(file: File, accessToken?: string): Promi
       }
       return result;
     } catch (error) {
-      console.error(`[imageUtils] HEIC conversion failed at quality ${quality}:`, error);
+      console.error(`[imageUtils] heic2any failed at quality ${quality}:`, error);
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
 
-  // try server-side conversion as last resort
+  // Strategy 2: Browser native Canvas API (iOS Safari can decode HEIC natively)
+  try {
+    console.log('[imageUtils] Attempting canvas-based HEIC conversion (native browser decode)...');
+    const canvasResult = await convertViaCanvas(file);
+    console.log('[imageUtils] Canvas conversion succeeded');
+    return canvasResult;
+  } catch (canvasError) {
+    console.error('[imageUtils] Canvas conversion also failed:', canvasError);
+  }
+
+  // Strategy 3: Server-side conversion as last resort
   if (accessToken) {
     console.log('[imageUtils] Attempting server-side HEIC conversion...');
     try {
@@ -185,9 +260,9 @@ export async function convertHeicToJpeg(file: File, accessToken?: string): Promi
     }
   }
 
-  // All retries failed
+  // All strategies failed
   throw new Error(
-    `Failed to convert HEIC image after ${qualityLevels.length} attempts. ` +
+    `Failed to convert HEIC image. ` +
     `Please try taking a new photo or use a JPEG/PNG image. ` +
     `(${lastError?.message || 'Unknown error'})`
   );
@@ -262,7 +337,7 @@ function base64ToBlob(base64: string, mimeType: string): Blob {
  * @param maxSize - Maximum file size in bytes (default 2MB)
  * @returns Promise with the compressed image Blob
  */
-export async function compressImage(file: File, maxSize: number = MAX_FILE_SIZE): Promise<Blob> {
+export async function compressImage(file: File, maxSize: number = MAX_FILE_SIZE, accessToken?: string): Promise<Blob> {
   // Handle HEIC conversion first
   let imageBlob: Blob = file;
   const isHeic = file.type.includes('heic') || file.type.includes('heif') ||
@@ -270,7 +345,7 @@ export async function compressImage(file: File, maxSize: number = MAX_FILE_SIZE)
                  file.name.toLowerCase().endsWith('.heif');
 
   if (isHeic) {
-    imageBlob = await convertHeicToJpeg(file);
+    imageBlob = await convertHeicToJpeg(file, accessToken);
   }
 
   // If already under max size and not HEIC, return as-is (unless it's PNG that could be compressed)
@@ -465,7 +540,7 @@ export async function cropImageToBbox(imageUrl: string, bbox: Bbox): Promise<Blo
  * @param file - The image file
  * @returns Promise with the thumbnail Blob
  */
-export async function generateThumbnail(file: File): Promise<Blob> {
+export async function generateThumbnail(file: File, accessToken?: string): Promise<Blob> {
   // Handle HEIC conversion first
   let imageBlob: Blob = file;
   const isHeic = file.type.includes('heic') || file.type.includes('heif') ||
@@ -473,7 +548,7 @@ export async function generateThumbnail(file: File): Promise<Blob> {
                  file.name.toLowerCase().endsWith('.heif');
 
   if (isHeic) {
-    imageBlob = await convertHeicToJpeg(file);
+    imageBlob = await convertHeicToJpeg(file, accessToken);
   }
 
   const img = await loadImage(imageBlob);
@@ -603,17 +678,21 @@ export async function processAndUploadImage(
   file: File,
   userId: string
 ): Promise<{ imageUrl: string; thumbnailUrl: string; imagePath: string; thumbnailPath: string }> {
+  // Get access token for server-side HEIC conversion fallback
+  const { data: { session } } = await supabase.auth.getSession();
+  const accessToken = session?.access_token;
+
   // Validate
-  const validation = await validateImage(file);
+  const validation = await validateImage(file, accessToken);
   if (!validation.valid) {
     throw new Error(validation.error || 'Invalid image');
   }
 
   // Compress main image
-  const compressed = await compressImage(file);
+  const compressed = await compressImage(file, MAX_FILE_SIZE, accessToken);
 
   // Generate thumbnail
-  const thumbnail = await generateThumbnail(file);
+  const thumbnail = await generateThumbnail(file, accessToken);
 
   // Generate filenames
   const uuid = crypto.randomUUID();
