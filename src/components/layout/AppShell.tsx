@@ -137,6 +137,31 @@ export function AppShell({
               </svg>
             </NavLink>
             <NavLink
+              to="/shopping"
+              className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="Shopping Assistant"
+              title="Shopping Assistant"
+            >
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+              </svg>
+            </NavLink>
+            <NavLink
+              to="/messages"
+              className={({ isActive }) => `relative p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
+              aria-label="Messages"
+              title="Messages"
+            >
+              <svg className="w-5.5 h-5.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 9h8m-8 4h5m-8 7.5V7.875C3 6.563 4.063 5.5 5.375 5.5h11.25C17.938 5.5 19 6.563 19 7.875v5.625c0 1.312-1.062 2.375-2.375 2.375H9.25L5.25 19.5a.75.75 0 0 1-1.25-.56Z" />
+              </svg>
+              {_unreadCount > 0 && (
+                <span className="absolute top-2 right-2 bg-red-500 text-white text-[9px] leading-none rounded-full min-w-[14px] h-3.5 px-1 flex items-center justify-center">
+                  {_unreadCount > 9 ? '9+' : _unreadCount}
+                </span>
+              )}
+            </NavLink>
+            <NavLink
               to="/settings"
               className={({ isActive }) => `p-4 rounded-3xl transition-all active:scale-95 ${isActive ? 'bg-[#d6ccc2] text-white soft-shadow' : 'bg-white/40 text-[#8d7b6d] hover:bg-white/60'}`}
               aria-label="Settings"

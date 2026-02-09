@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS user_presence (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    active_listing_id uuid REFERENCES marketplace_listings(id) ON DELETE CASCADE,
+    active_listing_id uuid REFERENCES listings(id) ON DELETE CASCADE,
     last_seen timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
 );
