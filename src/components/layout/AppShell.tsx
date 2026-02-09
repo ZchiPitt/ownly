@@ -96,7 +96,7 @@ export function AppShell({
                   <h1 className="text-2xl sm:text-4xl font-black tracking-tighter text-[#4a3f35] leading-none whitespace-nowrap">Ownly</h1>
                   <span className="text-[10px] font-bold text-[#d6ccc2] uppercase tracking-widest leading-none hidden sm:inline">Your AI Inventory & Ownership Assistant</span>
                 </div>
-                <p className="text-[9px] sm:text-xs font-bold text-[#8d7b6d] uppercase tracking-[0.1em] sm:tracking-[0.15em] leading-tight mt-0.5 sm:mt-1 truncate">Know what you own, find quicker, buy smarter, live lighter</p>
+                <p className="text-[9px] sm:text-xs font-bold text-[#8d7b6d] uppercase tracking-[0.1em] sm:tracking-[0.15em] leading-tight mt-0.5 sm:mt-1 truncate">Know what you own</p>
               </div>
             </div>
           </div>

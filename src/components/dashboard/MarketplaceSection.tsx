@@ -54,7 +54,7 @@ export function MarketplaceSection() {
           </div>
           <div className="flex items-center gap-2 sm:gap-2.5 mt-1">
             <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#fbc4ab] rounded-full animate-pulse"></span>
-            <p className="text-[10px] sm:text-[11px] font-black text-[#8d7b6d] truncate">Give unused items a second life—sell from your inventory, buy from others.</p>
+            <p className="text-[10px] sm:text-[11px] font-black text-[#8d7b6d] truncate">Sell unused items, buy from others.</p>
           </div>
         </div>
         <button

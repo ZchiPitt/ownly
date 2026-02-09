@@ -16,7 +16,7 @@ export function AgentSection() {
                 </div>
                 <div className="text-center w-full">
                     <span className="text-[11px] sm:text-base font-black text-[#4a3f35] uppercase tracking-tight leading-tight">TALK TO OWNLY</span>
-                    <p className="text-[9px] sm:text-[10px] font-bold text-[#4a3f35]/70 mt-1 sm:mt-2 leading-snug">Your AI bestie for finding and deciding</p>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[#4a3f35]/70 mt-1 sm:mt-2 leading-snug">AI bestie for decisions</p>
                 </div>
             </button>
             <button
@@ -31,7 +31,7 @@ export function AgentSection() {
                 </div>
                 <div className="text-center w-full">
                     <span className="text-[11px] sm:text-base font-black text-[#4a3f35] uppercase tracking-tight leading-tight">ADD ITEMS</span>
-                    <p className="text-[9px] sm:text-[10px] font-bold text-[#4a3f35]/70 mt-1 sm:mt-2 leading-snug">Snap a photo and let AI organize the rest</p>
+                    <p className="text-[9px] sm:text-[10px] font-bold text-[#4a3f35]/70 mt-1 sm:mt-2 leading-snug">Snap & let AI organize</p>
                 </div>
             </button>
         </div>
