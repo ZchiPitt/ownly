@@ -48,11 +48,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { TagChip } from '@/components/TagChip';
 import { ListingFormModal } from '@/components/ListingFormModal';
+import { BoundingBoxImage } from '@/components/BoundingBoxImage';
 import { useAuth } from '@/hooks/useAuth';
 import { useListings } from '@/hooks/useListings';
 import { getColorHex } from '@/lib/colorUtils';
 import type { Item, Category, Location } from '@/types';
 import type { Listing } from '@/types/database';
+import type { ItemAIMetadata } from '@/types/database';
 
 /**
  * Full item data with category and location info
@@ -626,9 +628,11 @@ function MetadataSection({
  */
 function PhotoViewer({
   imageUrl,
+  bbox,
   onClose,
 }: {
   imageUrl: string;
+  bbox?: [number, number, number, number] | null;
   onClose: () => void;
 }) {
   const [scale, setScale] = useState(1);
@@ -636,6 +640,63 @@ function PhotoViewer({
   const lastTouchDistanceRef = useRef<number | null>(null);
   const lastTapRef = useRef<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const [overlayRect, setOverlayRect] = useState<{
+    left: number; top: number; width: number; height: number;
+  } | null>(null);
+
+  const hasBbox = bbox && !(bbox[0] === 0 && bbox[1] === 0 && bbox[2] >= 95 && bbox[3] >= 95);
+
+  const calculateOverlay = useCallback(() => {
+    if (!hasBbox || !bbox || !imgRef.current || !containerRef.current) {
+      setOverlayRect(null);
+      return;
+    }
+
+    const container = containerRef.current;
+    const img = imgRef.current;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+
+    if (!naturalWidth || !naturalHeight) {
+      setOverlayRect(null);
+      return;
+    }
+
+    // Calculate rendered image dimensions within object-contain
+    const imgScale = Math.min(
+      containerWidth / naturalWidth,
+      containerHeight / naturalHeight
+    );
+    const renderedWidth = naturalWidth * imgScale;
+    const renderedHeight = naturalHeight * imgScale;
+    const offsetX = (containerWidth - renderedWidth) / 2;
+    const offsetY = (containerHeight - renderedHeight) / 2;
+
+    setOverlayRect({
+      left: offsetX + (bbox[0] / 100) * renderedWidth,
+      top: offsetY + (bbox[1] / 100) * renderedHeight,
+      width: (bbox[2] / 100) * renderedWidth,
+      height: (bbox[3] / 100) * renderedHeight,
+    });
+  }, [hasBbox, bbox]);
+
+  const handleImageLoad = useCallback(() => {
+    calculateOverlay();
+  }, [calculateOverlay]);
+
+  // Recalculate overlay on container resize
+  useEffect(() => {
+    if (!hasBbox || !containerRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      calculateOverlay();
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [hasBbox, calculateOverlay]);
 
   // Handle pinch to zoom
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -737,15 +798,35 @@ function PhotoViewer({
         onTouchEnd={handleTouchEnd}
         onClick={handleTap}
       >
-        <img
-          src={imageUrl}
-          alt="Item photo full view"
-          className="max-w-full max-h-full object-contain transition-transform duration-100"
+        <div
+          className="relative w-full h-full transition-transform duration-100"
           style={{
             transform: `scale(${scale}) translate(${position.x / scale}%, ${position.y / scale}%)`,
           }}
-          draggable={false}
-        />
+        >
+          <img
+            ref={imgRef}
+            src={imageUrl}
+            alt="Item photo full view"
+            className="w-full h-full object-contain"
+            onLoad={handleImageLoad}
+            draggable={false}
+          />
+          {overlayRect && (
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${overlayRect.left}px`,
+                top: `${overlayRect.top}px`,
+                width: `${overlayRect.width}px`,
+                height: `${overlayRect.height}px`,
+                border: '2px dashed #ef4444',
+                borderRadius: '4px',
+              }}
+              aria-hidden="true"
+            />
+          )}
+        </div>
       </div>
 
       {/* Helper text */}
@@ -1457,19 +1538,36 @@ export function ItemDetailPage() {
       </div>
 
       {/* Hero Image - use thumbnail (cropped) if available, fallback to full photo */}
-      <div className="relative">
-        <button
-          onClick={() => setIsPhotoViewerOpen(true)}
-          className="w-full focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2"
-          aria-label="View full size photo"
-        >
-          <img
-            src={item.thumbnail_url || item.photo_url}
-            alt={item.name || 'Item photo'}
-            className="w-full max-h-[300px] object-contain bg-[#f3ece4]"
-          />
-        </button>
-      </div>
+      {(() => {
+        const aiMeta = item.ai_metadata as ItemAIMetadata | null;
+        const detectedBbox = aiMeta?.detected_bbox as [number, number, number, number] | undefined;
+        const hasMeaningfulBbox = detectedBbox && !(detectedBbox[0] === 0 && detectedBbox[1] === 0 && detectedBbox[2] >= 95 && detectedBbox[3] >= 95);
+        return (
+          <div className="relative">
+            {hasMeaningfulBbox ? (
+              <BoundingBoxImage
+                src={item.photo_url}
+                alt={item.name || 'Item photo'}
+                bbox={detectedBbox}
+                className="w-full max-h-[300px] bg-[#f3ece4]"
+                onClick={() => setIsPhotoViewerOpen(true)}
+              />
+            ) : (
+              <button
+                onClick={() => setIsPhotoViewerOpen(true)}
+                className="w-full focus:outline-none focus:ring-2 focus:ring-[#d6ccc2] focus:ring-offset-2"
+                aria-label="View full size photo"
+              >
+                <img
+                  src={item.thumbnail_url || item.photo_url}
+                  alt={item.name || 'Item photo'}
+                  className="w-full max-h-[300px] object-contain bg-[#f3ece4]"
+                />
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Expiration Banner (US-053) */}
       {item.expiration_date && (
@@ -1668,12 +1766,18 @@ export function ItemDetailPage() {
       )}
 
       {/* Full-screen photo viewer */}
-      {isPhotoViewerOpen && (
-        <PhotoViewer
-          imageUrl={item.photo_url}
-          onClose={() => setIsPhotoViewerOpen(false)}
-        />
-      )}
+      {isPhotoViewerOpen && (() => {
+        const aiMeta = item.ai_metadata as ItemAIMetadata | null;
+        const detectedBbox = aiMeta?.detected_bbox as [number, number, number, number] | undefined;
+        const hasMeaningfulBbox = detectedBbox && !(detectedBbox[0] === 0 && detectedBbox[1] === 0 && detectedBbox[2] >= 95 && detectedBbox[3] >= 95);
+        return (
+          <PhotoViewer
+            imageUrl={item.photo_url}
+            bbox={hasMeaningfulBbox ? detectedBbox : null}
+            onClose={() => setIsPhotoViewerOpen(false)}
+          />
+        );
+      })()}
 
       {/* Listing Form Modal */}
       <ListingFormModal

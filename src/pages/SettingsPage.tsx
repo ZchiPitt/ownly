@@ -100,7 +100,6 @@ export function SettingsPage() {
   const { getUnreadCount } = useMessages();
   const { settings, updateSettings, isLoading: isLoadingSettings } = useUserSettings();
   const {
-    permissionState,
     isSupported: isPushSupported,
     isRequesting: isRequestingPush,
     requestPermission,

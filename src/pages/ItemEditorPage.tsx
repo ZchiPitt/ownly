@@ -161,6 +161,7 @@ export function ItemEditorPage() {
             detected_tags: state.detectedItem.tags || undefined,
             detected_brand: state.detectedItem.brand || undefined,
             confidence_score: state.detectedItem.confidence || undefined,
+            detected_bbox: state.detectedItem.bbox || undefined,
             analysis_provider: 'openai',
             analysis_model: 'gpt-4o',
             analyzed_at: new Date().toISOString(),

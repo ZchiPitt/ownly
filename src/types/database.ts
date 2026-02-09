@@ -101,6 +101,7 @@ export interface ItemAIMetadata {
   analysis_provider?: string;
   analysis_model?: string;
   analyzed_at?: string;
+  detected_bbox?: [number, number, number, number]; // [x%, y%, width%, height%]
   [key: string]: unknown;
 }
 
