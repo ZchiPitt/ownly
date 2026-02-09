@@ -78,7 +78,7 @@ export function MarketplaceSection() {
             { label: 'Inbox', path: '/messages' }
           ].map((action, i) => (
             <button key={i} onClick={() => navigate(action.path)} className="flex flex-col items-center gap-2 group active:scale-95 transition-all">
-              <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:bg-[#f8e1d7] transition-colors border border-white/50">
+              <div className="p-4 bg-[#fef3c7] rounded-2xl shadow-sm group-hover:bg-[#fde68a] transition-colors border border-white/50">
                 {renderActionIcon(action.label)}
               </div>
               <span className="text-[9px] font-black uppercase tracking-tighter text-[#8d7b6d]">{action.label}</span>

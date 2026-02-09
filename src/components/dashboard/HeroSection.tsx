@@ -186,7 +186,7 @@ export function HeroSection({ recentItems, isLoading, totalItems }: HeroSectionP
                         { label: 'Tools' }
                     ].map((cat, i) => (
                         <button key={i} onClick={() => handleShortcutClick(cat.label)} className="flex flex-col items-center gap-2 group active:scale-95 transition-all">
-                            <div className="p-4 bg-white rounded-2xl shadow-sm group-hover:bg-[#f8e1d7] transition-colors border border-white/50">
+                            <div className="p-4 bg-[#fef3c7] rounded-2xl shadow-sm group-hover:bg-[#fde68a] transition-colors border border-white/50">
                                 <div className="w-5 h-5 text-[#4a3f35]">
                                     {renderShortcutIcon(cat.label)}
                                 </div>
