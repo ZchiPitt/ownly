@@ -237,7 +237,7 @@
         "Verify in iOS simulator: fallback path creates item"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

@@ -5,7 +5,9 @@ import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../../../contexts';
 import { Screen } from '../../../components';
 import {
+  AnalyzeImageError,
   ImageProcessingError,
+  cleanupTemporaryUploads,
   processImageForUpload,
   uploadAndAnalyzeImage,
   type UploadAndAnalyzeResult,
@@ -47,6 +49,8 @@ export default function AddPreviewScreen() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisPhase, setAnalysisPhase] = useState<'idle' | 'uploading' | 'analyzing' | 'timeout'>('idle');
+  const [uploadedPathsForCleanup, setUploadedPathsForCleanup] = useState<string[]>([]);
+  const [isCleaningUploads, setIsCleaningUploads] = useState(false);
   const singleDetectedItem = useMemo(() => {
     if (!analysisResult || analysisResult.analysis.detected_items.length !== 1) {
       return null;
@@ -75,6 +79,7 @@ export default function AddPreviewScreen() {
       setAnalysisResult(null);
       setAnalysisError(null);
       setAnalysisPhase('idle');
+      setUploadedPathsForCleanup([]);
 
       try {
         const processed = await processImageForUpload({
@@ -120,6 +125,7 @@ export default function AddPreviewScreen() {
     setAnalysisError(null);
     setAnalysisResult(null);
     setAnalysisPhase('uploading');
+    setUploadedPathsForCleanup([]);
 
     const timeoutId = setTimeout(() => {
       setAnalysisPhase((currentPhase) => (currentPhase === 'analyzing' ? 'timeout' : currentPhase));
@@ -134,9 +140,13 @@ export default function AddPreviewScreen() {
 
       setAnalysisPhase('analyzing');
       setAnalysisResult(result);
+      setUploadedPathsForCleanup([result.imagePath, result.thumbnailPath]);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Image analysis failed. Please try again.';
       setAnalysisError(message);
+      if (error instanceof AnalyzeImageError && error.uploadedPaths.length > 0) {
+        setUploadedPathsForCleanup(error.uploadedPaths);
+      }
       Alert.alert('Analysis failed', message);
     } finally {
       clearTimeout(timeoutId);
@@ -150,6 +160,7 @@ export default function AddPreviewScreen() {
       return;
     }
 
+    setUploadedPathsForCleanup([]);
     router.push({
       pathname: '/(tabs)/add/quick-add',
       params: {
@@ -173,6 +184,7 @@ export default function AddPreviewScreen() {
       return;
     }
 
+    setUploadedPathsForCleanup([]);
     router.push({
       pathname: '/(tabs)/add/batch-add',
       params: {
@@ -185,6 +197,56 @@ export default function AddPreviewScreen() {
       },
     });
   };
+
+  const handleOpenManualEntry = () => {
+    if (!artifacts) {
+      return;
+    }
+
+    const params: Record<string, string> = {
+      imageUri: artifacts.processed.uri,
+      thumbnailUri: artifacts.thumbnail.uri,
+    };
+
+    if (analysisResult) {
+      params.imagePath = analysisResult.imagePath;
+      params.thumbnailPath = analysisResult.thumbnailPath;
+      params.imageUrl = analysisResult.imageUrl;
+      params.thumbnailUrl = analysisResult.thumbnailUrl;
+      params.sourceBatchId = deriveSourceBatchId(analysisResult.imagePath) ?? '';
+      params.analysisModel = analysisResult.analysis.analysis_model;
+      params.analyzedAt = analysisResult.analysis.analyzed_at;
+    }
+
+    setUploadedPathsForCleanup([]);
+    router.push({
+      pathname: '/(tabs)/add/manual',
+      params,
+    });
+  };
+
+  const handleCancelFlow = async () => {
+    if (!uploadedPathsForCleanup.length) {
+      router.replace('/(tabs)/add');
+      return;
+    }
+
+    setIsCleaningUploads(true);
+    try {
+      await cleanupTemporaryUploads(uploadedPathsForCleanup);
+      setUploadedPathsForCleanup([]);
+    } catch (error) {
+      Alert.alert('Could not clean up uploads', error instanceof Error ? error.message : 'Please try again.');
+      return;
+    } finally {
+      setIsCleaningUploads(false);
+    }
+
+    router.replace('/(tabs)/add');
+  };
+
+  const hasAnalyzeFailureState = Boolean(analysisError);
+  const hasNoDetections = Boolean(analysisResult && analysisResult.analysis.detected_items.length === 0);
 
   return (
     <Screen style={styles.container}>
@@ -288,25 +350,58 @@ export default function AddPreviewScreen() {
         {artifacts && !processingError ? (
           <Pressable
             style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}
-            onPress={() =>
-              router.push({
-                pathname: '/(tabs)/add/manual',
-                params: {
-                  imageUri: artifacts.processed.uri,
-                  thumbnailUri: artifacts.thumbnail.uri,
-                },
-              })
-            }
+            onPress={handleOpenManualEntry}
           >
             <Text style={styles.secondaryButtonText}>Continue to Manual Entry</Text>
           </Pressable>
         ) : null}
 
+        {(hasAnalyzeFailureState || hasNoDetections) && artifacts ? (
+          <View style={styles.failureCard}>
+            <Text style={styles.failureTitle}>AI could not complete this photo</Text>
+            <Text style={styles.failureBody}>
+              Retry analysis or continue with manual entry so this item flow does not block.
+            </Text>
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryActionButton,
+                pressed && styles.primaryActionButtonPressed,
+                isAnalyzing && styles.buttonDisabled,
+              ]}
+              onPress={handleAnalyze}
+              disabled={isAnalyzing}
+            >
+              <Text style={styles.primaryActionButtonText}>{isAnalyzing ? 'Analyzing...' : 'Retry Analysis'}</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}
+              onPress={handleOpenManualEntry}
+            >
+              <Text style={styles.secondaryButtonText}>Open Manual Entry</Text>
+            </Pressable>
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+                isCleaningUploads && styles.buttonDisabled,
+              ]}
+              onPress={handleCancelFlow}
+              disabled={isCleaningUploads}
+            >
+              <Text style={styles.cancelButtonText}>
+                {isCleaningUploads ? 'Cleaning Uploads...' : 'Cancel and Discard Uploads'}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+
         <Pressable
           style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
-          onPress={() => router.replace('/(tabs)/add')}
+          onPress={handleCancelFlow}
         >
-          <Text style={styles.buttonText}>{imageUri ? 'Choose Another Photo' : 'Back to Add'}</Text>
+          <Text style={styles.buttonText}>
+            {uploadedPathsForCleanup.length > 0 ? 'Back to Add and Clean Up' : imageUri ? 'Choose Another Photo' : 'Back to Add'}
+          </Text>
         </Pressable>
       </View>
     </Screen>
@@ -427,6 +522,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#0a84ff',
+  },
+  failureCard: {
+    marginTop: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ffd6c2',
+    backgroundColor: '#fff6f2',
+    padding: 12,
+  },
+  failureTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#7a2c1f',
+  },
+  failureBody: {
+    marginTop: 6,
+    fontSize: 13,
+    color: '#8e3b2d',
+    lineHeight: 18,
+  },
+  cancelButton: {
+    marginTop: 12,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d70015',
+    backgroundColor: '#ffffff',
+  },
+  cancelButtonPressed: {
+    backgroundColor: '#ffe8eb',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#d70015',
   },
   button: {
     marginTop: 16,

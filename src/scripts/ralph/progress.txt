@@ -11,6 +11,7 @@
 - Pattern: `analyze-image` expects `storage_path` with the bucket prefix (for example `items/<user-id>/<filename>.jpg`), even when the Storage upload API returns a bucket-relative path.
 - Pattern: For Expo Router quick-add flows, pass single-detection payload via route params (JSON-stringify arrays/tuples) and parse defensively on the confirmation screen before mutation submission.
 - Pattern: For multi-detection add flows, serialize the full `detected_items` array into route params, then support both direct batch-save and `ItemEditorForm`-driven sequential edits from the same parsed payload.
+- Pattern: For analyze fallback flows, keep uploaded storage paths in screen state and only clean them on explicit cancel; clear cleanup state before navigating into manual/quick/batch save paths.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -132,4 +133,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Reusing `ItemEditorForm` in a keyed sequential queue allows per-detection edits without duplicating validation logic while keeping batch-save and edit flows in one screen.
   - Gotchas encountered: Playwright MCP could execute and capture artifacts, but local browser navigation to `http://127.0.0.1:5173` failed with `ERR_CONNECTION_REFUSED` in this environment.
   - Useful context: Required browser verification commands were run (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-015-verification.png`); iOS simulator verification remains manual for this mobile-only flow.
+---
+## 2026-02-10 15:34 PST - US-016
+- What was implemented: Added an explicit AI failure fallback path on Add Preview with retry/manual/cancel actions, tracked temporary upload paths for cleanup, and wired cancel-flow cleanup against Supabase Storage. Updated Manual Entry to open with the selected image prefilled (local URI or uploaded storage URL) and persist that image context when creating the item.
+- Files changed: `mobile/lib/analyzeImage.ts`, `mobile/lib/index.ts`, `mobile/app/(tabs)/add/preview.tsx`, `mobile/app/(tabs)/add/manual.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Persist upload-path cleanup candidates in UI state and clear them as soon as the user commits to a save path to avoid deleting images that should become canonical item photos.
+  - Gotchas encountered: Playwright MCP verification commands ran, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment.
+  - Useful context: Verification commands/artifact: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-016-verification.png`; iOS simulator fallback verification remains manual.
 ---
