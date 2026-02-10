@@ -132,7 +132,7 @@
         "Verify in iOS simulator: form interactions and validation messages work"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

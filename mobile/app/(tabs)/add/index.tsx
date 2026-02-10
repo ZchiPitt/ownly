@@ -14,6 +14,11 @@ export default function AddScreen() {
             <Text style={styles.buttonText}>Capture or Upload</Text>
           </Pressable>
         </Link>
+        <Link href="/(tabs)/add/manual" asChild>
+          <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}>
+            <Text style={styles.secondaryButtonText}>Enter Manually</Text>
+          </Pressable>
+        </Link>
       </View>
     </Screen>
   );
@@ -54,5 +59,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  secondaryButton: {
+    marginTop: 10,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#0a84ff',
+    backgroundColor: '#ffffff',
+  },
+  secondaryButtonPressed: {
+    backgroundColor: '#f2f2f7',
+  },
+  secondaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0a84ff',
   },
 });

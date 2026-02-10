@@ -4,6 +4,7 @@
 - Pattern: For iOS-only Expo stories, Playwright MCP can only verify browser-side prerequisites (server reachability/artifact capture); simulator verification still needs manual execution.
 - Pattern: `ActionSheetIOS` is a low-dependency native control for inventory sort/location/category pickers and maps cleanly to TanStack Query keys.
 - Pattern: Supabase typed `.maybeSingle()` queries can infer `never` for selected rows in mobile hooks; cast once to a concrete shared type (`Item | null`) before field access.
+- Pattern: Reuse a single `ItemEditorForm` for create and edit routes, and keep Supabase mutation wiring in the next story to avoid mixing form UX and persistence concerns.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -69,4 +70,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Supabase `.maybeSingle()` item fetches may need an explicit cast to shared `Item` type before field access to avoid `never` inference.
   - Gotchas encountered: Playwright MCP server was healthy but could not connect to local Vite server from MCP browser (`ERR_CONNECTION_REFUSED` for both `http://127.0.0.1:5173` and `http://localhost:5173`), so simulator verification remains manual.
   - Useful context: Captured MCP verification artifacts at `us-008-verification.png` and `us-008-localhost.png`, plus browser snapshots of the connection error state.
+---
+## 2026-02-10 06:01 PST - US-009
+- What was implemented: Added a reusable iOS-native `ItemEditorForm` with validation for required/typed fields, then wired create mode (`/(tabs)/add/manual`) and edit mode (`/(tabs)/inventory/edit/[id]`) screens and navigation entry points from Add and Item Detail.
+- Files changed: `mobile/components/ItemEditorForm.tsx`, `mobile/components/index.ts`, `mobile/app/(tabs)/add/manual.tsx`, `mobile/app/(tabs)/add/index.tsx`, `mobile/app/(tabs)/inventory/edit/[id].tsx`, `mobile/app/(tabs)/inventory/[id].tsx`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: Shared form component keeps create/edit fields and validation logic in one place while allowing story-by-story backend wiring.
+  - Gotchas encountered: Playwright MCP verification could run and capture artifacts, but browser navigation to local server still failed with `ERR_CONNECTION_REFUSED`, so simulator verification remains manual.
+  - Useful context: Verification artifacts captured at `us-009-verification.png` with MCP snapshot showing `chrome-error://chromewebdata/` unreachable state.
 ---

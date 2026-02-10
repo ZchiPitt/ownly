@@ -2,11 +2,13 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   Image,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { Link } from 'expo-router';
 
 import { Screen } from '../../../components';
 import { useAuth } from '../../../contexts';
@@ -109,6 +111,12 @@ export default function InventoryDetailScreen() {
         }}
       />
       <ScrollView contentContainerStyle={styles.container}>
+        <Link href={`/(tabs)/inventory/edit/${item.id}`} asChild>
+          <Pressable style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}>
+            <Text style={styles.editButtonText}>Edit Item</Text>
+          </Pressable>
+        </Link>
+
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Photo</Text>
           {photoUri ? (
@@ -216,5 +224,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#636366',
     textAlign: 'center',
+  },
+  editButton: {
+    backgroundColor: '#0a84ff',
+    borderRadius: 12,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  editButtonPressed: {
+    backgroundColor: '#007aff',
+  },
+  editButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
