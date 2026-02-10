@@ -35,3 +35,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: iOS simulator verification not run in this environment; manual verification still required for auth flows.
   - Useful context: Auth gate redirects after session updates; screens only need to call Supabase auth methods.
 ---
+## 2026-02-10 05:39 - US-005
+- What was implemented: Added Expo Router tab shell with iOS-style stacks and placeholder detail routes for Inventory, Add, Search, Marketplace, and Settings. Added SafeAreaProvider and shared Screen wrapper for safe-area handling.
+- Files changed: `mobile/app/_layout.tsx`, `mobile/app/(tabs)/_layout.tsx`, `mobile/app/(tabs)/index.tsx`, `mobile/app/(tabs)/inventory/_layout.tsx`, `mobile/app/(tabs)/inventory/index.tsx`, `mobile/app/(tabs)/inventory/[id].tsx`, `mobile/app/(tabs)/add/_layout.tsx`, `mobile/app/(tabs)/add/index.tsx`, `mobile/app/(tabs)/add/preview.tsx`, `mobile/app/(tabs)/search/_layout.tsx`, `mobile/app/(tabs)/search/index.tsx`, `mobile/app/(tabs)/search/results.tsx`, `mobile/app/(tabs)/marketplace/_layout.tsx`, `mobile/app/(tabs)/marketplace/index.tsx`, `mobile/app/(tabs)/marketplace/[id].tsx`, `mobile/app/(tabs)/settings/_layout.tsx`, `mobile/app/(tabs)/settings/index.tsx`, `mobile/app/(tabs)/settings/[section].tsx`, `mobile/components/Screen.tsx`, `mobile/components/index.ts`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: None.
+  - Gotchas encountered: Playwright MCP/browser verification is not applicable for iOS-only Expo UI; manual simulator verification still required.
+  - Useful context: Stack headers are configured per tab to keep iOS large titles while Tabs handles the bottom bar.
+---

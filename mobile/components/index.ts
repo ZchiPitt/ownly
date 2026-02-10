@@ -1,1 +1,1 @@
-export {};
+export { default as Screen } from './Screen';

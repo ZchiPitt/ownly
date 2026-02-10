@@ -72,7 +72,7 @@
         "Verify in iOS simulator: tab switching and push/pop navigation work"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

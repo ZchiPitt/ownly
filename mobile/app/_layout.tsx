@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../contexts';
 
@@ -39,15 +40,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <AuthGate>
-        <Stack
-          screenOptions={{
-            headerLargeTitle: true,
-          }}
-        />
-      </AuthGate>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AuthGate>
+          <Stack
+            screenOptions={{
+              headerLargeTitle: true,
+            }}
+          />
+        </AuthGate>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
 
