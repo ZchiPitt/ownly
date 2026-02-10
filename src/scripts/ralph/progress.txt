@@ -5,7 +5,7 @@ Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
 - What was implemented: Scaffolded the `mobile/` Expo Router iOS app with baseline screens/config, added placeholder index files for core folders, and documented mobile setup commands in `README.md`.
-- Files changed: `mobile/package.json`, `mobile/app.json`, `mobile/babel.config.js`, `mobile/tsconfig.json`, `mobile/expo-env.d.ts`, `mobile/.eslintrc.cjs`, `mobile/app/_layout.tsx`, `mobile/app/index.tsx`, `mobile/components/index.ts`, `mobile/contexts/index.ts`, `mobile/hooks/index.ts`, `mobile/lib/index.ts`, `mobile/types/index.ts`, `README.md`, `src/scripts/ralph/prd.json`
+- Files changed: `.gitignore`, `mobile/package.json`, `mobile/app.json`, `mobile/babel.config.js`, `mobile/tsconfig.json`, `mobile/expo-env.d.ts`, `mobile/.eslintrc.cjs`, `mobile/app/_layout.tsx`, `mobile/app/index.tsx`, `mobile/components/index.ts`, `mobile/contexts/index.ts`, `mobile/hooks/index.ts`, `mobile/lib/index.ts`, `mobile/types/index.ts`, `README.md`, `src/scripts/ralph/prd.json`
 - **Learnings for future iterations:**
   - Patterns discovered: Expo lint expects lintable files in standard app folders; placeholder `index.ts` files prevent empty-directory lint failures.
   - Gotchas encountered: `expo lint` fails when target directories only contain `.gitkeep`.
