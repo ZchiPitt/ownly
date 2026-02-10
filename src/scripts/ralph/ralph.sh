@@ -153,6 +153,17 @@ get_next_story() {
   fi
 }
 
+# Helper to verify all stories are actually complete in PRD
+all_stories_passed() {
+  if [ ! -f "$PRD_FILE" ]; then
+    return 1
+  fi
+
+  local remaining
+  remaining=$(jq '[.userStories[] | select(.passes != true)] | length' "$PRD_FILE" 2>/dev/null || echo "999")
+  [ "$remaining" -eq 0 ]
+}
+
 # Helper to format elapsed time
 format_elapsed() {
   local elapsed=$1
@@ -274,19 +285,23 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo ""
   log_info "Iteration $i completed in $(format_elapsed $ITER_ELAPSED)"
 
-  # Check for completion signal
+  # Check for completion signal (must also match PRD truth)
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
-    TOTAL_ELAPSED=$((ITER_END - START_TIME))
-    echo ""
-    log_section "🎉 All Tasks Complete!"
-    echo ""
-    echo -e "  ${GREEN}✓${NC} All user stories have been implemented"
-    echo -e "  ${DIM}Total iterations:${NC}  $i"
-    echo -e "  ${DIM}Total time:${NC}        $(format_elapsed $TOTAL_ELAPSED)"
-    echo -e "  ${DIM}Progress file:${NC}     $PROGRESS_FILE"
-    echo ""
-    log_success "Ralph completed successfully!"
-    exit 0
+    if all_stories_passed; then
+      TOTAL_ELAPSED=$((ITER_END - START_TIME))
+      echo ""
+      log_section "🎉 All Tasks Complete!"
+      echo ""
+      echo -e "  ${GREEN}✓${NC} All user stories have been implemented"
+      echo -e "  ${DIM}Total iterations:${NC}  $i"
+      echo -e "  ${DIM}Total time:${NC}        $(format_elapsed $TOTAL_ELAPSED)"
+      echo -e "  ${DIM}Progress file:${NC}     $PROGRESS_FILE"
+      echo ""
+      log_success "Ralph completed successfully!"
+      exit 0
+    else
+      log_warn "Received COMPLETE promise, but PRD still has unfinished stories. Continuing loop."
+    fi
   fi
 
   # Show updated progress after iteration
