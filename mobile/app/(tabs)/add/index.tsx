@@ -1,22 +1,121 @@
-import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '../../../components';
 
 export default function AddScreen() {
+  const router = useRouter();
+  const [permissionMessage, setPermissionMessage] = useState<string | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
+
+  const handleCameraCapture = async () => {
+    setIsBusy(true);
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permission.granted) {
+        const message =
+          'Camera access is required to capture item photos. Enable camera permission in iOS Settings, then try again.';
+        setPermissionMessage(message);
+        Alert.alert('Camera permission required', message);
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.9,
+      });
+
+      if (result.canceled || !result.assets[0]?.uri) {
+        return;
+      }
+
+      setPermissionMessage(null);
+      router.push({
+        pathname: '/(tabs)/add/preview',
+        params: {
+          imageUri: result.assets[0].uri,
+          source: 'camera',
+        },
+      });
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
+  const handleLibraryPick = async () => {
+    setIsBusy(true);
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        const message =
+          'Photo Library access is required to upload item photos. Enable Photos permission in iOS Settings, then try again.';
+        setPermissionMessage(message);
+        Alert.alert('Photo library permission required', message);
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.9,
+      });
+
+      if (result.canceled || !result.assets[0]?.uri) {
+        return;
+      }
+
+      setPermissionMessage(null);
+      router.push({
+        pathname: '/(tabs)/add/preview',
+        params: {
+          imageUri: result.assets[0].uri,
+          source: 'library',
+        },
+      });
+    } finally {
+      setIsBusy(false);
+    }
+  };
+
   return (
     <Screen style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>Add an Item</Text>
         <Text style={styles.subtitle}>Start with a photo or enter details manually.</Text>
-        <Link href="/(tabs)/add/preview" asChild>
-          <Pressable style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}>
-            <Text style={styles.buttonText}>Capture or Upload</Text>
-          </Pressable>
-        </Link>
+        <Pressable
+          onPress={handleCameraCapture}
+          disabled={isBusy}
+          style={({ pressed }) => [styles.button, pressed && styles.buttonPressed, isBusy && styles.buttonDisabled]}
+        >
+          <Text style={styles.buttonText}>Take Photo</Text>
+        </Pressable>
+        <Pressable
+          onPress={handleLibraryPick}
+          disabled={isBusy}
+          style={({ pressed }) => [
+            styles.secondaryButton,
+            pressed && styles.secondaryButtonPressed,
+            isBusy && styles.secondaryButtonDisabled,
+          ]}
+        >
+          <Text style={styles.secondaryButtonText}>Choose from Library</Text>
+        </Pressable>
+        {permissionMessage ? <Text style={styles.permissionMessage}>{permissionMessage}</Text> : null}
         <Link href="/(tabs)/add/manual" asChild>
-          <Pressable style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}>
-            <Text style={styles.secondaryButtonText}>Enter Manually</Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.tertiaryButton,
+              pressed && styles.tertiaryButtonPressed,
+              isBusy && styles.tertiaryButtonDisabled,
+            ]}
+            disabled={isBusy}
+          >
+            <Text style={styles.tertiaryButtonText}>Enter Manually</Text>
           </Pressable>
         </Link>
       </View>
@@ -55,6 +154,9 @@ const styles = StyleSheet.create({
   buttonPressed: {
     backgroundColor: '#007aff',
   },
+  buttonDisabled: {
+    opacity: 0.55,
+  },
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
@@ -72,9 +174,36 @@ const styles = StyleSheet.create({
   secondaryButtonPressed: {
     backgroundColor: '#f2f2f7',
   },
+  secondaryButtonDisabled: {
+    opacity: 0.55,
+  },
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#0a84ff',
+  },
+  permissionMessage: {
+    marginTop: 10,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#8e3b2d',
+  },
+  tertiaryButton: {
+    marginTop: 14,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#f2f2f7',
+  },
+  tertiaryButtonPressed: {
+    backgroundColor: '#e5e5ea',
+  },
+  tertiaryButtonDisabled: {
+    opacity: 0.55,
+  },
+  tertiaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1c1c1e',
   },
 });

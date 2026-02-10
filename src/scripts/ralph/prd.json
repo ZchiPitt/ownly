@@ -162,7 +162,7 @@
         "Verify in iOS simulator: picker flow and preview work"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

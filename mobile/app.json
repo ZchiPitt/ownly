@@ -10,7 +10,16 @@
       "bundleIdentifier": "com.ownly.app",
       "supportsTablet": true
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Ownly to access your photos so you can upload inventory images.",
+          "cameraPermission": "Allow Ownly to use your camera so you can capture inventory images."
+        }
+      ]
+    ],
     "extra": {
       "router": {
         "origin": "app"
