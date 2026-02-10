@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool codex|claude] [--codex-mode yolo|full-auto] [--verbose] [--quiet] [max_iterations]
+# Usage: ./ralph.sh [--tool codex|claude] [--codex-mode yolo|full-auto] [--codex-model MODEL] [--verbose] [--quiet] [max_iterations]
 
 set -e
 
@@ -21,6 +21,7 @@ MAX_ITERATIONS=10
 VERBOSE=true
 QUIET=false
 CODEX_MODE="yolo"  # yolo allows git branch/commit operations inside codex loop
+CODEX_MODEL="gpt-5.3-codex"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -38,6 +39,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --codex-mode=*)
       CODEX_MODE="${1#*=}"
+      shift
+      ;;
+    --codex-model)
+      CODEX_MODEL="$2"
+      shift 2
+      ;;
+    --codex-model=*)
+      CODEX_MODEL="${1#*=}"
       shift
       ;;
     --verbose|-v)
@@ -237,6 +246,9 @@ echo -e "${BOLD}┌────────────────────�
 echo -e "${BOLD}│${NC}  ${CYAN}🤖 Ralph Agent${NC}                                            ${BOLD}│${NC}"
 echo -e "${BOLD}├─────────────────────────────────────────────────────────────┤${NC}"
 echo -e "${BOLD}│${NC}  Tool:           ${GREEN}$TOOL${NC}$(printf '%*s' $((40 - ${#TOOL})) '')${BOLD}│${NC}"
+if [[ "$TOOL" == "codex" ]]; then
+  echo -e "${BOLD}│${NC}  Codex Model:    ${GREEN}$CODEX_MODEL${NC}$(printf '%*s' $((40 - ${#CODEX_MODEL})) '')${BOLD}│${NC}"
+fi
 echo -e "${BOLD}│${NC}  Max Iterations: ${GREEN}$MAX_ITERATIONS${NC}$(printf '%*s' $((40 - ${#MAX_ITERATIONS})) '')${BOLD}│${NC}"
 PROGRESS_STR=$(get_prd_stats)
 echo -e "${BOLD}│${NC}  Progress:       ${YELLOW}${PROGRESS_STR}${NC}$(printf '%*s' $((40 - ${#PROGRESS_STR})) '')${BOLD}│${NC}"
@@ -266,11 +278,11 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     INSTRUCTIONS_FILE="$SCRIPT_DIR/CODEX.md"
     log_verbose "Reading instructions from: $INSTRUCTIONS_FILE"
     if [[ "$CODEX_MODE" == "yolo" ]]; then
-      log_verbose "Command: codex exec --yolo <instructions>"
-      OUTPUT=$(codex exec --yolo "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
+      log_verbose "Command: codex exec --model $CODEX_MODEL --yolo <instructions>"
+      OUTPUT=$(codex exec --model "$CODEX_MODEL" --yolo "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
     else
-      log_verbose "Command: codex exec --full-auto <instructions>"
-      OUTPUT=$(codex exec --full-auto "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
+      log_verbose "Command: codex exec --model $CODEX_MODEL --full-auto <instructions>"
+      OUTPUT=$(codex exec --model "$CODEX_MODEL" --full-auto "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
     fi
   else
     INSTRUCTIONS_FILE="$SCRIPT_DIR/CLAUDE.md"
