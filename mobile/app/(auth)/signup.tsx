@@ -14,15 +14,17 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../../lib/supabase';
 
 const emailRegex = /\S+@\S+\.\S+/;
+const minimumPasswordLength = 8;
 
-export default function LoginScreen() {
+export default function SignupScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
@@ -30,21 +32,28 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!password) {
-      setError('Enter your password.');
+    if (password.length < minimumPasswordLength) {
+      setError(`Password must be at least ${minimumPasswordLength} characters.`);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
       return;
     }
 
     setError(null);
     setIsLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { error: signUpError } = await supabase.auth.signUp({
       email: trimmedEmail,
       password,
     });
 
-    if (signInError) {
-      setError(signInError.message);
+    if (signUpError) {
+      setError(signUpError.message);
+      setIsLoading(false);
+      return;
     }
 
     setIsLoading(false);
@@ -56,8 +65,8 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to continue.</Text>
+        <Text style={styles.title}>Create account</Text>
+        <Text style={styles.subtitle}>Get started with Ownly.</Text>
       </View>
 
       <View style={styles.form}>
@@ -82,12 +91,27 @@ export default function LoginScreen() {
             autoCapitalize="none"
             autoComplete="password"
             onChangeText={setPassword}
-            placeholder="Your password"
+            placeholder={`At least ${minimumPasswordLength} characters`}
             placeholderTextColor="#8e8e93"
             secureTextEntry
             style={styles.input}
-            textContentType="password"
+            textContentType="newPassword"
             value={password}
+          />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Confirm password</Text>
+          <TextInput
+            autoCapitalize="none"
+            autoComplete="password"
+            onChangeText={setConfirmPassword}
+            placeholder="Re-enter password"
+            placeholderTextColor="#8e8e93"
+            secureTextEntry
+            style={styles.input}
+            textContentType="newPassword"
+            value={confirmPassword}
           />
         </View>
 
@@ -96,7 +120,7 @@ export default function LoginScreen() {
         <Pressable
           accessibilityRole="button"
           disabled={isLoading}
-          onPress={handleLogin}
+          onPress={handleSignup}
           style={({ pressed }) => [
             styles.primaryButton,
             pressed && !isLoading ? styles.primaryButtonPressed : null,
@@ -106,27 +130,19 @@ export default function LoginScreen() {
           {isLoading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Text style={styles.primaryButtonText}>Create account</Text>
           )}
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/(auth)/reset')}
-          style={styles.linkButton}
-        >
-          <Text style={styles.linkText}>Forgot password?</Text>
         </Pressable>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>New to Ownly?</Text>
+        <Text style={styles.footerText}>Already have an account?</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/signup')}
+          onPress={() => router.replace('/(auth)/login')}
           style={styles.linkButton}
         >
-          <Text style={styles.linkText}>Create an account</Text>
+          <Text style={styles.linkText}>Sign in</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

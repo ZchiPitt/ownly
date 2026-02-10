@@ -57,7 +57,7 @@
         "Verify in iOS simulator: auth forms submit and navigation works"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

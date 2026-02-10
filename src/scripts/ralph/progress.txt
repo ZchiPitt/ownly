@@ -27,3 +27,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: None.
   - Useful context: Auth gate redirects to `(auth)` when session is missing and to `(tabs)` when session exists.
 ---
+## 2026-02-10 05:34 - US-004
+- What was implemented: Built login, signup, and reset password screens with validation, loading states, Supabase auth calls, and auth navigation links.
+- Files changed: `mobile/app/(auth)/login.tsx`, `mobile/app/(auth)/signup.tsx`, `mobile/app/(auth)/reset.tsx`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: None.
+  - Gotchas encountered: iOS simulator verification not run in this environment; manual verification still required for auth flows.
+  - Useful context: Auth gate redirects after session updates; screens only need to call Supabase auth methods.
+---

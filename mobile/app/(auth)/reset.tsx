@@ -15,38 +15,37 @@ import { supabase } from '../../lib/supabase';
 
 const emailRegex = /\S+@\S+\.\S+/;
 
-export default function LoginScreen() {
+export default function ResetPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleReset = async () => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
       setError('Enter a valid email address.');
-      return;
-    }
-
-    if (!password) {
-      setError('Enter your password.');
+      setSuccess(null);
       return;
     }
 
     setError(null);
+    setSuccess(null);
     setIsLoading(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: trimmedEmail,
-      password,
-    });
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+      trimmedEmail
+    );
 
-    if (signInError) {
-      setError(signInError.message);
+    if (resetError) {
+      setError(resetError.message);
+      setIsLoading(false);
+      return;
     }
 
+    setSuccess('Check your inbox for password reset instructions.');
     setIsLoading(false);
   };
 
@@ -56,8 +55,10 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to continue.</Text>
+        <Text style={styles.title}>Reset password</Text>
+        <Text style={styles.subtitle}>
+          We will email you a reset link.
+        </Text>
       </View>
 
       <View style={styles.form}>
@@ -76,27 +77,13 @@ export default function LoginScreen() {
           />
         </View>
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="password"
-            onChangeText={setPassword}
-            placeholder="Your password"
-            placeholderTextColor="#8e8e93"
-            secureTextEntry
-            style={styles.input}
-            textContentType="password"
-            value={password}
-          />
-        </View>
-
         {error ? <Text style={styles.error}>{error}</Text> : null}
+        {success ? <Text style={styles.success}>{success}</Text> : null}
 
         <Pressable
           accessibilityRole="button"
           disabled={isLoading}
-          onPress={handleLogin}
+          onPress={handleReset}
           style={({ pressed }) => [
             styles.primaryButton,
             pressed && !isLoading ? styles.primaryButtonPressed : null,
@@ -106,27 +93,18 @@ export default function LoginScreen() {
           {isLoading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text style={styles.primaryButtonText}>Sign In</Text>
+            <Text style={styles.primaryButtonText}>Send reset email</Text>
           )}
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/(auth)/reset')}
-          style={styles.linkButton}
-        >
-          <Text style={styles.linkText}>Forgot password?</Text>
         </Pressable>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>New to Ownly?</Text>
         <Pressable
           accessibilityRole="button"
-          onPress={() => router.push('/(auth)/signup')}
+          onPress={() => router.replace('/(auth)/login')}
           style={styles.linkButton}
         >
-          <Text style={styles.linkText}>Create an account</Text>
+          <Text style={styles.linkText}>Back to sign in</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -178,6 +156,10 @@ const styles = StyleSheet.create({
     color: '#d0342c',
     fontSize: 14,
   },
+  success: {
+    color: '#2f9b51',
+    fontSize: 14,
+  },
   primaryButton: {
     height: 48,
     borderRadius: 14,
@@ -208,10 +190,5 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     paddingVertical: 24,
     alignItems: 'center',
-    gap: 6,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#5b5b5b',
   },
 });
