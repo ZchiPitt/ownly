@@ -2,11 +2,18 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { useAuth } from '../../../contexts';
 import { Screen } from '../../../components';
-import { ImageProcessingError, processImageForUpload, type ProcessedImageArtifacts } from '../../../lib/imageProcessing';
+import {
+  ImageProcessingError,
+  processImageForUpload,
+  uploadAndAnalyzeImage,
+  type UploadAndAnalyzeResult,
+} from '../../../lib';
 
 export default function AddPreviewScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const params = useLocalSearchParams<{
     imageUri?: string;
     source?: string;
@@ -23,9 +30,14 @@ export default function AddPreviewScreen() {
   const imageFileName = typeof params.imageFileName === 'string' ? params.imageFileName : undefined;
   const imageMimeType = typeof params.imageMimeType === 'string' ? params.imageMimeType : undefined;
 
-  const [artifacts, setArtifacts] = useState<ProcessedImageArtifacts | null>(null);
+  const [artifacts, setArtifacts] = useState<Awaited<ReturnType<typeof processImageForUpload>> | null>(null);
   const [processingError, setProcessingError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [analysisResult, setAnalysisResult] = useState<UploadAndAnalyzeResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisPhase, setAnalysisPhase] = useState<'idle' | 'uploading' | 'analyzing' | 'timeout'>('idle');
 
   const hasValidDimensions = useMemo(
     () => Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0,
@@ -44,6 +56,9 @@ export default function AddPreviewScreen() {
       setIsProcessing(true);
       setProcessingError(null);
       setArtifacts(null);
+      setAnalysisResult(null);
+      setAnalysisError(null);
+      setAnalysisPhase('idle');
 
       try {
         const processed = await processImageForUpload({
@@ -80,6 +95,40 @@ export default function AddPreviewScreen() {
     };
   }, [hasValidDimensions, imageFileName, imageHeight, imageMimeType, imageUri, imageWidth]);
 
+  const handleAnalyze = async () => {
+    if (!artifacts || !user || isAnalyzing) {
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisResult(null);
+    setAnalysisPhase('uploading');
+
+    const timeoutId = setTimeout(() => {
+      setAnalysisPhase((currentPhase) => (currentPhase === 'analyzing' ? 'timeout' : currentPhase));
+    }, 15000);
+
+    try {
+      const result = await uploadAndAnalyzeImage({
+        userId: user.id,
+        processedImageUri: artifacts.processed.uri,
+        thumbnailUri: artifacts.thumbnail.uri,
+      });
+
+      setAnalysisPhase('analyzing');
+      setAnalysisResult(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Image analysis failed. Please try again.';
+      setAnalysisError(message);
+      Alert.alert('Analysis failed', message);
+    } finally {
+      clearTimeout(timeoutId);
+      setIsAnalyzing(false);
+      setAnalysisPhase((currentPhase) => (currentPhase === 'timeout' ? 'timeout' : 'idle'));
+    }
+  };
+
   return (
     <Screen style={styles.container}>
       <Stack.Screen
@@ -113,6 +162,55 @@ export default function AddPreviewScreen() {
         ) : (
           <Text style={styles.body}>No image selected yet. Return to Add and choose camera or photo library.</Text>
         )}
+
+        {artifacts && !processingError ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryActionButton,
+              pressed && styles.primaryActionButtonPressed,
+              (isAnalyzing || isProcessing) && styles.buttonDisabled,
+            ]}
+            disabled={isAnalyzing || isProcessing}
+            onPress={handleAnalyze}
+          >
+            <Text style={styles.primaryActionButtonText}>{isAnalyzing ? 'Analyzing...' : 'Analyze with AI'}</Text>
+          </Pressable>
+        ) : null}
+
+        {analysisPhase === 'uploading' && isAnalyzing ? (
+          <Text style={styles.statusText}>Uploading optimized photo to your storage...</Text>
+        ) : null}
+        {(analysisPhase === 'analyzing' || analysisPhase === 'timeout') && isAnalyzing ? (
+          <Text style={styles.statusText}>
+            {analysisPhase === 'timeout'
+              ? 'Still analyzing. This is taking longer than expected.'
+              : 'Analyzing image and detecting items...'}
+          </Text>
+        ) : null}
+        {analysisError ? <Text style={styles.errorText}>{analysisError}</Text> : null}
+
+        {analysisResult ? (
+          <View style={styles.resultsSection}>
+            <Text style={styles.resultsTitle}>Detected items ({analysisResult.analysis.detected_items.length})</Text>
+            {analysisResult.analysis.detected_items.length === 0 ? (
+              <Text style={styles.body}>No items detected. You can continue with manual entry.</Text>
+            ) : (
+              analysisResult.analysis.detected_items.map((detectedItem, index) => (
+                <View key={`${detectedItem.name}-${index}`} style={styles.resultCard}>
+                  <Text style={styles.resultName}>{detectedItem.name}</Text>
+                  <Text style={styles.resultMeta}>
+                    Confidence: {Math.round((detectedItem.confidence || 0) * 100)}%
+                  </Text>
+                  {detectedItem.category_suggestion ? (
+                    <Text style={styles.resultMeta}>Category: {detectedItem.category_suggestion}</Text>
+                  ) : null}
+                  {detectedItem.brand ? <Text style={styles.resultMeta}>Brand: {detectedItem.brand}</Text> : null}
+                </View>
+              ))
+            )}
+          </View>
+        ) : null}
+
         {artifacts && !processingError ? (
           <Pressable
             style={({ pressed }) => [styles.secondaryButton, pressed && styles.secondaryButtonPressed]}
@@ -129,6 +227,7 @@ export default function AddPreviewScreen() {
             <Text style={styles.secondaryButtonText}>Continue to Manual Entry</Text>
           </Pressable>
         ) : null}
+
         <Pressable
           style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]}
           onPress={() => router.replace('/(tabs)/add')}
@@ -181,12 +280,62 @@ const styles = StyleSheet.create({
     color: '#8e3b2d',
     lineHeight: 18,
   },
+  statusText: {
+    marginTop: 10,
+    fontSize: 13,
+    color: '#3a3a3c',
+    lineHeight: 18,
+  },
   thumbnailImage: {
     marginTop: 10,
     width: 120,
     height: 120,
     borderRadius: 10,
     backgroundColor: '#f2f2f7',
+  },
+  primaryActionButton: {
+    marginTop: 16,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#34c759',
+  },
+  primaryActionButtonPressed: {
+    backgroundColor: '#30b357',
+  },
+  primaryActionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  buttonDisabled: {
+    opacity: 0.55,
+  },
+  resultsSection: {
+    marginTop: 14,
+    gap: 8,
+  },
+  resultsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1c1c1e',
+  },
+  resultCard: {
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    borderRadius: 10,
+    padding: 10,
+    backgroundColor: '#f9f9fb',
+  },
+  resultName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1c1c1e',
+    marginBottom: 4,
+  },
+  resultMeta: {
+    fontSize: 13,
+    color: '#5a5a5f',
   },
   secondaryButton: {
     marginTop: 16,

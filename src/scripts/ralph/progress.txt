@@ -8,6 +8,7 @@
 - Pattern: In this codebase, Supabase typed writes to `items` may infer `never`; keep mutation payload shaping explicit and use narrow casts at the write callsite until shared DB typings are normalized.
 - Pattern: `expo-image-picker` with `allowsEditing` and route params (`imageUri`, `source`) gives a lightweight camera/library flow for iOS before upload/analyze logic is added.
 - Pattern: For mobile image preprocessing, use `expo-image-manipulator` in a two-pass JPEG pipeline (main + fallback compression) and compute output size via `fetch(uri).blob().size` to enforce a max-byte guard before upload.
+- Pattern: `analyze-image` expects `storage_path` with the bucket prefix (for example `items/<user-id>/<filename>.jpg`), even when the Storage upload API returns a bucket-relative path.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -105,4 +106,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Two-pass JPEG processing keeps quality acceptable while enforcing upload byte limits for AI/storage inputs.
   - Gotchas encountered: Playwright MCP screenshot output may not persist inside repo paths by default; rely on command output/logged artifact names unless an explicit writable path is provided.
   - Useful context: Browser verification succeeded against local web app during this iteration (`mcporter list`, `playwright.browser_navigate`, `playwright.browser_snapshot`, `playwright.browser_take_screenshot filename=us-012-verification.png`) while iOS simulator validation for this mobile flow remains manual.
+---
+## 2026-02-10 06:14 PST - US-013
+- What was implemented: Added mobile AI analyze wiring from Add Preview by uploading processed + thumbnail JPEGs to Supabase Storage under the authenticated user path, invoking the `analyze-image` Edge Function with `storage_path`, and rendering detected results with explicit uploading/analyzing/timeout/error states.
+- Files changed: `mobile/lib/analyzeImage.ts`, `mobile/lib/index.ts`, `mobile/app/(tabs)/add/preview.tsx`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: Include the bucket prefix (`items/`) in `storage_path` when invoking `analyze-image`, even though upload calls use bucket-relative paths.
+  - Gotchas encountered: Playwright MCP workflow executed, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment; iOS simulator verification is still manual.
+  - Useful context: Verification commands run: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-013-verification.png`.
 ---
