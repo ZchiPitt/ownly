@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph Wiggum - Long-running AI agent loop
-# Usage: ./ralph.sh [--tool amp|claude] [--verbose] [--quiet] [max_iterations]
+# Usage: ./ralph.sh [--tool codex|claude] [--codex-mode yolo|full-auto] [--verbose] [--quiet] [max_iterations]
 
 set -e
 
@@ -16,10 +16,11 @@ DIM='\033[2m'
 NC='\033[0m' # No Color
 
 # Parse arguments
-TOOL="claude"  # Default to Claude Code
+TOOL="codex"  # Default to Codex
 MAX_ITERATIONS=10
 VERBOSE=true
 QUIET=false
+CODEX_MODE="yolo"  # yolo allows git branch/commit operations inside codex loop
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -29,6 +30,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --tool=*)
       TOOL="${1#*=}"
+      shift
+      ;;
+    --codex-mode)
+      CODEX_MODE="$2"
+      shift 2
+      ;;
+    --codex-mode=*)
+      CODEX_MODE="${1#*=}"
       shift
       ;;
     --verbose|-v)
@@ -96,6 +105,21 @@ if [[ "$TOOL" != "codex" && "$TOOL" != "claude" ]]; then
   log_error "Invalid tool '$TOOL'. Must be 'codex' or 'claude'."
   exit 1
 fi
+
+# Validate required binaries
+if [[ "$TOOL" == "codex" ]] && ! command -v codex >/dev/null 2>&1; then
+  log_error "codex CLI not found. Install Codex CLI or run with --tool claude."
+  exit 1
+fi
+if [[ "$TOOL" == "claude" ]] && ! command -v claude >/dev/null 2>&1; then
+  log_error "claude CLI not found. Install Claude Code CLI or run with --tool codex."
+  exit 1
+fi
+if ! command -v jq >/dev/null 2>&1; then
+  log_error "jq is required but not installed. Install jq and retry."
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PRD_FILE="$SCRIPT_DIR/prd.json"
 PROGRESS_FILE="$SCRIPT_DIR/progress.txt"
@@ -203,7 +227,8 @@ echo -e "${BOLD}│${NC}  ${CYAN}🤖 Ralph Agent${NC}                          
 echo -e "${BOLD}├─────────────────────────────────────────────────────────────┤${NC}"
 echo -e "${BOLD}│${NC}  Tool:           ${GREEN}$TOOL${NC}$(printf '%*s' $((40 - ${#TOOL})) '')${BOLD}│${NC}"
 echo -e "${BOLD}│${NC}  Max Iterations: ${GREEN}$MAX_ITERATIONS${NC}$(printf '%*s' $((40 - ${#MAX_ITERATIONS})) '')${BOLD}│${NC}"
-echo -e "${BOLD}│${NC}  Progress:       ${YELLOW}$(get_prd_stats)${NC}$(printf '%*s' $((40 - ${#$(get_prd_stats)})) '')${BOLD}│${NC}"
+PROGRESS_STR=$(get_prd_stats)
+echo -e "${BOLD}│${NC}  Progress:       ${YELLOW}${PROGRESS_STR}${NC}$(printf '%*s' $((40 - ${#PROGRESS_STR})) '')${BOLD}│${NC}"
 echo -e "${BOLD}│${NC}  Next Story:     ${MAGENTA}$(get_next_story | cut -c1-38)${NC}  ${BOLD}│${NC}"
 echo -e "${BOLD}│${NC}  Started:        ${DIM}$(timestamp)${NC}               ${BOLD}│${NC}"
 echo -e "${BOLD}└─────────────────────────────────────────────────────────────┘${NC}"
@@ -225,14 +250,22 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo ""
 
   log_info "Launching $TOOL agent..."
-  log_verbose "Reading instructions from: $SCRIPT_DIR/CLAUDE.md"
 
   if [[ "$TOOL" == "codex" ]]; then
-    log_verbose "Command: codex exec <instructions>"
-    OUTPUT=$(codex exec "$(cat "$SCRIPT_DIR/CLAUDE.md")" 2>&1 | tee /dev/stderr) || true
+    INSTRUCTIONS_FILE="$SCRIPT_DIR/CODEX.md"
+    log_verbose "Reading instructions from: $INSTRUCTIONS_FILE"
+    if [[ "$CODEX_MODE" == "yolo" ]]; then
+      log_verbose "Command: codex exec --yolo <instructions>"
+      OUTPUT=$(codex exec --yolo "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
+    else
+      log_verbose "Command: codex exec --full-auto <instructions>"
+      OUTPUT=$(codex exec --full-auto "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
+    fi
   else
+    INSTRUCTIONS_FILE="$SCRIPT_DIR/CLAUDE.md"
+    log_verbose "Reading instructions from: $INSTRUCTIONS_FILE"
     log_verbose "Command: claude --dangerously-skip-permissions -p <instructions>"
-    OUTPUT=$(claude --dangerously-skip-permissions -p "$(cat "$SCRIPT_DIR/CLAUDE.md")" 2>&1 | tee /dev/stderr) || true
+    OUTPUT=$(claude --dangerously-skip-permissions -p "$(cat "$INSTRUCTIONS_FILE")" 2>&1 | tee /dev/stderr) || true
   fi
 
   ITER_END=$(date +%s)
