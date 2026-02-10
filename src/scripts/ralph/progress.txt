@@ -12,6 +12,7 @@
 - Pattern: For Expo Router quick-add flows, pass single-detection payload via route params (JSON-stringify arrays/tuples) and parse defensively on the confirmation screen before mutation submission.
 - Pattern: For multi-detection add flows, serialize the full `detected_items` array into route params, then support both direct batch-save and `ItemEditorForm`-driven sequential edits from the same parsed payload.
 - Pattern: For analyze fallback flows, keep uploaded storage paths in screen state and only clean them on explicit cancel; clear cleanup state before navigating into manual/quick/batch save paths.
+- Pattern: For mobile inventory search, combine text-field item queries with category/location ID prefilter queries, then dedupe/sort by `updated_at` to avoid brittle joined `.or()` conditions in Supabase.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -141,4 +142,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Persist upload-path cleanup candidates in UI state and clear them as soon as the user commits to a save path to avoid deleting images that should become canonical item photos.
   - Gotchas encountered: Playwright MCP verification commands ran, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment.
   - Useful context: Verification commands/artifact: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-016-verification.png`; iOS simulator fallback verification remains manual.
+---
+## 2026-02-10 15:37 PST - US-017
+- What was implemented: Replaced the placeholder Search tab with a real inventory text-search flow using 300ms debounced input, TanStack Query, and Supabase. Added a new `useInventorySearch` hook that searches item text fields plus category/location keyword matches, merges and deduplicates results, and renders tappable rows that route directly to inventory detail.
+- Files changed: `mobile/app/(tabs)/search/index.tsx`, `mobile/hooks/useInventorySearch.ts`, `mobile/hooks/index.ts`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Use separate category/location ID lookups and feed those IDs into item queries, then merge with text matches to keep search robust without complex relational OR queries.
+  - Gotchas encountered: Playwright MCP still could not reach local Vite from the MCP browser context in this environment (`ERR_CONNECTION_REFUSED`) even after starting dev server on `127.0.0.1:5173`.
+  - Useful context: Browser verification commands executed: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-017-verification.png` (artifact captured from the browser error page); iOS simulator verification remains manual.
 ---
