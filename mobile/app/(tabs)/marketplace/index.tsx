@@ -79,7 +79,14 @@ export default function MarketplaceScreen() {
   return (
     <Screen>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Marketplace Feed</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Marketplace Feed</Text>
+          <Link href="/(tabs)/marketplace/my-listings" asChild>
+            <Pressable style={({ pressed }) => [styles.myListingsButton, pressed && styles.myListingsButtonPressed]}>
+              <Text style={styles.myListingsButtonText}>My Listings</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
       <ScrollView contentContainerStyle={styles.listContainer}>
         {data.map((listing) => (
@@ -113,11 +120,32 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 6,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   sectionTitle: {
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: '#6e6e73',
+  },
+  myListingsButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#ffffff',
+  },
+  myListingsButtonPressed: {
+    backgroundColor: '#f2f2f7',
+  },
+  myListingsButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0a84ff',
   },
   listContainer: {
     paddingHorizontal: 16,

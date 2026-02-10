@@ -6,6 +6,7 @@
 - Pattern: Supabase typed `.maybeSingle()` queries can infer `never` for selected rows in mobile hooks; cast once to a concrete shared type (`Item | null`) before field access.
 - Pattern: Reuse a single `ItemEditorForm` for create and edit routes, and keep Supabase mutation wiring in the next story to avoid mixing form UX and persistence concerns.
 - Pattern: In this codebase, Supabase typed writes to `items` may infer `never`; keep mutation payload shaping explicit and use narrow casts at the write callsite until shared DB typings are normalized.
+- Pattern: Supabase typed writes to `listings` also infer `never` in mobile hooks; cast the `from('listings')` builder to `ReturnType<typeof supabase.from>` before `insert`/`update`.
 - Pattern: `expo-image-picker` with `allowsEditing` and route params (`imageUri`, `source`) gives a lightweight camera/library flow for iOS before upload/analyze logic is added.
 - Pattern: For mobile image preprocessing, use `expo-image-manipulator` in a two-pass JPEG pipeline (main + fallback compression) and compute output size via `fetch(uri).blob().size` to enforce a max-byte guard before upload.
 - Pattern: `analyze-image` expects `storage_path` with the bucket prefix (for example `items/<user-id>/<filename>.jpg`), even when the Storage upload API returns a bucket-relative path.
@@ -158,4 +159,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: None.
   - Gotchas encountered: Playwright MCP browser context still cannot reach local Vite server in this environment (`ERR_CONNECTION_REFUSED`) even when Vite is running on `127.0.0.1:5173`; browser verification remains limited to error-state artifact capture while iOS simulator verification is manual.
   - Useful context: Required verification commands executed: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-018-verification-live.png`.
+---
+## 2026-02-10 15:45 PST - US-019
+- What was implemented: Added a native-style My Listings management flow in the Marketplace stack. Implemented Supabase + TanStack Query hooks for seller-scoped listing retrieval, inventory candidate discovery, listing creation, and listing updates. Added `/(tabs)/marketplace/my-listings` with status-filter tabs (active/sold/reserved/removed), create-listing form, and listing lifecycle actions (create/edit/remove/status transitions). Added entry point from Marketplace feed header.
+- Files changed: `mobile/hooks/useMyListings.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/marketplace/my-listings.tsx`, `mobile/app/(tabs)/marketplace/index.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Supabase typed writes to `listings` need the same cast pattern already used for other tables to avoid `never` inference in mobile hooks.
+  - Gotchas encountered: None.
+  - Useful context: Browser verification completed with required MCP flow against local web server (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-019-verification.png`) and captured a successful artifact (`us-019-verification.png` in MCP output); iOS simulator validation for this mobile-only story remains manual.
 ---

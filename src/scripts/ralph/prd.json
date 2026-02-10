@@ -282,7 +282,7 @@
         "Verify in iOS simulator: listing lifecycle actions work"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
