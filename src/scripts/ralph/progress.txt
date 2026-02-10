@@ -3,6 +3,7 @@
 - Pattern: Expo lint errors when standard folders exist without lintable files; add minimal `index.ts` placeholders during scaffolding.
 - Pattern: For iOS-only Expo stories, Playwright MCP can only verify browser-side prerequisites (server reachability/artifact capture); simulator verification still needs manual execution.
 - Pattern: `ActionSheetIOS` is a low-dependency native control for inventory sort/location/category pickers and maps cleanly to TanStack Query keys.
+- Pattern: Supabase typed `.maybeSingle()` queries can infer `never` for selected rows in mobile hooks; cast once to a concrete shared type (`Item | null`) before field access.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -60,4 +61,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: `ActionSheetIOS` works well for single-select filters without adding picker dependencies.
   - Gotchas encountered: Playwright MCP browser verification still cannot reach local dev server in this environment (`http://127.0.0.1:5173` and `http://localhost:5173` both returned `ERR_CONNECTION_REFUSED`) even while Vite reported ready.
   - Useful context: Verification artifacts captured with Playwright MCP snapshot and screenshot (`../../../var/folders/hs/2948r5010wn2c6_35jjmsm6w0000gn/T/playwright-mcp-output/1770731406242/page-2026-02-10T13-53-56-135Z.png`); manual iOS simulator verification remains required for this story.
+---
+## 2026-02-10 05:57 PST - US-008
+- What was implemented: Replaced placeholder inventory detail with a fully data-driven detail experience using Supabase + TanStack Query, including photo display, core item fields, category/location resolution, tags, and metadata sections with null-safe fallback values.
+- Files changed: `mobile/app/(tabs)/inventory/[id].tsx`, `mobile/hooks/useInventoryItemDetail.ts`, `mobile/hooks/index.ts`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: Supabase `.maybeSingle()` item fetches may need an explicit cast to shared `Item` type before field access to avoid `never` inference.
+  - Gotchas encountered: Playwright MCP server was healthy but could not connect to local Vite server from MCP browser (`ERR_CONNECTION_REFUSED` for both `http://127.0.0.1:5173` and `http://localhost:5173`), so simulator verification remains manual.
+  - Useful context: Captured MCP verification artifacts at `us-008-verification.png` and `us-008-localhost.png`, plus browser snapshots of the connection error state.
 ---

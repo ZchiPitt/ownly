@@ -117,7 +117,7 @@
         "Verify in iOS simulator: open and close detail page from list"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
