@@ -39,6 +39,10 @@ export default function AddScreen() {
         params: {
           imageUri: result.assets[0].uri,
           source: 'camera',
+          imageWidth: String(result.assets[0].width ?? ''),
+          imageHeight: String(result.assets[0].height ?? ''),
+          imageFileName: result.assets[0].fileName ?? '',
+          imageMimeType: result.assets[0].mimeType ?? '',
         },
       });
     } finally {
@@ -75,6 +79,10 @@ export default function AddScreen() {
         params: {
           imageUri: result.assets[0].uri,
           source: 'library',
+          imageWidth: String(result.assets[0].width ?? ''),
+          imageHeight: String(result.assets[0].height ?? ''),
+          imageFileName: result.assets[0].fileName ?? '',
+          imageMimeType: result.assets[0].mimeType ?? '',
         },
       });
     } finally {
