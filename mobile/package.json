@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "expo": "latest",
     "expo-router": "latest",
     "expo-status-bar": "latest",

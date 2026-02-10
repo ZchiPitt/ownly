@@ -11,3 +11,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: `expo lint` fails when target directories only contain `.gitkeep`.
   - Useful context: Initial iOS scaffold uses Expo Router with `expo-router` Babel plugin and `main` set to `expo-router/entry`.
 ---
+## 2026-02-10 03:09 - US-002
+- What was implemented: Added a typed Supabase client for mobile that reads Expo public env vars with a clear startup error when missing, plus TypeScript env typings.
+- Files changed: `mobile/lib/supabase.ts`, `mobile/lib/index.ts`, `mobile/expo-env.d.ts`, `mobile/tsconfig.json`, `mobile/package.json`, `mobile/package-lock.json`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: None.
+  - Gotchas encountered: None.
+  - Useful context: Expo public env vars should be read via `process.env.EXPO_PUBLIC_*`.
+---
