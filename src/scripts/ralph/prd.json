@@ -207,7 +207,7 @@
         "Verify in iOS simulator: single-item quick add persists item"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

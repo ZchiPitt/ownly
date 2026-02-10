@@ -11,6 +11,15 @@ import {
   type UploadAndAnalyzeResult,
 } from '../../../lib';
 
+function deriveSourceBatchId(imagePath: string): string | null {
+  const fileName = imagePath.split('/').pop();
+  if (!fileName) {
+    return null;
+  }
+
+  return fileName.replace(/\.jpg$/i, '') || null;
+}
+
 export default function AddPreviewScreen() {
   const router = useRouter();
   const { user } = useAuth();
@@ -38,6 +47,13 @@ export default function AddPreviewScreen() {
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisPhase, setAnalysisPhase] = useState<'idle' | 'uploading' | 'analyzing' | 'timeout'>('idle');
+  const singleDetectedItem = useMemo(() => {
+    if (!analysisResult || analysisResult.analysis.detected_items.length !== 1) {
+      return null;
+    }
+
+    return analysisResult.analysis.detected_items[0] ?? null;
+  }, [analysisResult]);
 
   const hasValidDimensions = useMemo(
     () => Number.isFinite(imageWidth) && imageWidth > 0 && Number.isFinite(imageHeight) && imageHeight > 0,
@@ -129,6 +145,29 @@ export default function AddPreviewScreen() {
     }
   };
 
+  const handleOpenQuickAdd = () => {
+    if (!analysisResult || !singleDetectedItem) {
+      return;
+    }
+
+    router.push({
+      pathname: '/(tabs)/add/quick-add',
+      params: {
+        imageUrl: analysisResult.imageUrl,
+        thumbnailUrl: analysisResult.thumbnailUrl,
+        sourceBatchId: deriveSourceBatchId(analysisResult.imagePath) ?? '',
+        detectedName: singleDetectedItem.name,
+        detectedCategory: singleDetectedItem.category_suggestion ?? '',
+        detectedBrand: singleDetectedItem.brand ?? '',
+        detectedTags: JSON.stringify(singleDetectedItem.tags ?? []),
+        detectedBbox: singleDetectedItem.bbox ? JSON.stringify(singleDetectedItem.bbox) : '',
+        confidence: String(singleDetectedItem.confidence ?? 0),
+        analysisModel: analysisResult.analysis.analysis_model,
+        analyzedAt: analysisResult.analysis.analyzed_at,
+      },
+    });
+  };
+
   return (
     <Screen style={styles.container}>
       <Stack.Screen
@@ -209,6 +248,15 @@ export default function AddPreviewScreen() {
               ))
             )}
           </View>
+        ) : null}
+
+        {singleDetectedItem ? (
+          <Pressable
+            style={({ pressed }) => [styles.primaryActionButton, pressed && styles.primaryActionButtonPressed]}
+            onPress={handleOpenQuickAdd}
+          >
+            <Text style={styles.primaryActionButtonText}>Review Quick Add</Text>
+          </Pressable>
         ) : null}
 
         {artifacts && !processingError ? (

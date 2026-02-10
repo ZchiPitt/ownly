@@ -9,6 +9,7 @@
 - Pattern: `expo-image-picker` with `allowsEditing` and route params (`imageUri`, `source`) gives a lightweight camera/library flow for iOS before upload/analyze logic is added.
 - Pattern: For mobile image preprocessing, use `expo-image-manipulator` in a two-pass JPEG pipeline (main + fallback compression) and compute output size via `fetch(uri).blob().size` to enforce a max-byte guard before upload.
 - Pattern: `analyze-image` expects `storage_path` with the bucket prefix (for example `items/<user-id>/<filename>.jpg`), even when the Storage upload API returns a bucket-relative path.
+- Pattern: For Expo Router quick-add flows, pass single-detection payload via route params (JSON-stringify arrays/tuples) and parse defensively on the confirmation screen before mutation submission.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -114,4 +115,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Include the bucket prefix (`items/`) in `storage_path` when invoking `analyze-image`, even though upload calls use bucket-relative paths.
   - Gotchas encountered: Playwright MCP workflow executed, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment; iOS simulator verification is still manual.
   - Useful context: Verification commands run: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-013-verification.png`.
+---
+## 2026-02-10 06:17 PST - US-014
+- What was implemented: Added a single-item quick-add flow by wiring Add Preview to expose a dedicated Quick Add confirmation screen when exactly one detection is returned; the confirmation screen persists the item in one tap using `useCreateInventoryItemMutation` with image URLs, `ai_metadata`, and `source_batch_id`, then routes to Inventory.
+- Files changed: `mobile/app/(tabs)/add/preview.tsx`, `mobile/app/(tabs)/add/quick-add.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: For Expo Router quick-add flows, serialize array/tuple detection fields (tags/bbox) into route params and parse defensively on the destination screen.
+  - Gotchas encountered: `mcporter call playwright.browser_navigate` requires `url=...` argument style in this environment; JSON-argument style returned a validation error.
+  - Useful context: Required browser verification commands completed successfully against local web server (`mcporter list`, `playwright.browser_navigate`, `playwright.browser_snapshot`, `playwright.browser_take_screenshot`) with artifact `us-014-verification.png`; iOS simulator validation for this mobile-only flow remains manual.
 ---
