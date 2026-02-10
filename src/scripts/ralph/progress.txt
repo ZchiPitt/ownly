@@ -151,3 +151,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: Playwright MCP still could not reach local Vite from the MCP browser context in this environment (`ERR_CONNECTION_REFUSED`) even after starting dev server on `127.0.0.1:5173`.
   - Useful context: Browser verification commands executed: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-017-verification.png` (artifact captured from the browser error page); iOS simulator verification remains manual.
 ---
+## 2026-02-10 15:41 PST - US-018
+- What was implemented: Replaced placeholder Marketplace feed/detail screens with Supabase-backed listing experiences. Added TanStack Query hooks to load active listings, hydrate listing item + seller profile context, and render robust loading/empty/error states. Listing rows now navigate into a real detail page showing item photo/name, price, condition, seller info, description, and listing metadata.
+- Files changed: `mobile/hooks/useMarketplaceListings.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/marketplace/index.tsx`, `mobile/app/(tabs)/marketplace/[id].tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: None.
+  - Gotchas encountered: Playwright MCP browser context still cannot reach local Vite server in this environment (`ERR_CONNECTION_REFUSED`) even when Vite is running on `127.0.0.1:5173`; browser verification remains limited to error-state artifact capture while iOS simulator verification is manual.
+  - Useful context: Required verification commands executed: `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-018-verification-live.png`.
+---

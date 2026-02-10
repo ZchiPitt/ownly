@@ -1,43 +1,227 @@
 import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '../../../components';
+import { useMarketplaceListingDetail } from '../../../hooks';
+
+const CONDITION_LABELS: Record<string, string> = {
+  new: 'New',
+  like_new: 'Like New',
+  good: 'Good',
+  fair: 'Fair',
+  poor: 'Poor',
+};
+
+function formatPrice(price: number | null, priceType: string): string {
+  if (priceType === 'free') {
+    return 'Free';
+  }
+
+  if (price === null) {
+    return priceType === 'negotiable' ? 'Negotiable' : 'Price unavailable';
+  }
+
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(price);
+
+  return priceType === 'negotiable' ? `${formatted} (Negotiable)` : formatted;
+}
+
+function formatListingDate(createdAt: string): string {
+  const parsed = new Date(createdAt);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Recently listed';
+  }
+
+  return parsed.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 export default function MarketplaceDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id } = useLocalSearchParams<{ id?: string | string[] }>();
+  const listingId = Array.isArray(id) ? id[0] : id;
+
+  const { data, isLoading, isError, error, refetch } = useMarketplaceListingDetail(listingId);
+
+  if (isLoading) {
+    return (
+      <Screen style={styles.centerState}>
+        <ActivityIndicator size="large" color="#0a84ff" />
+        <Text style={styles.helperText}>Loading listing...</Text>
+      </Screen>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Screen style={styles.centerState}>
+        <Text style={styles.errorTitle}>Could not load listing</Text>
+        <Text style={styles.helperText}>{error instanceof Error ? error.message : 'Please try again.'}</Text>
+        <Pressable style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]} onPress={() => refetch()}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </Screen>
+    );
+  }
+
+  if (!data) {
+    return (
+      <Screen style={styles.centerState}>
+        <Text style={styles.emptyTitle}>Listing not found</Text>
+        <Text style={styles.helperText}>This listing may have been sold or removed.</Text>
+      </Screen>
+    );
+  }
 
   return (
-    <Screen style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Listing Detail</Text>
-        <Text style={styles.value}>Listing ID: {id}</Text>
-        <Text style={styles.value}>Condition: Excellent</Text>
-        <Text style={styles.value}>Seller: Ownly Community</Text>
-      </View>
+    <Screen>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Image source={{ uri: data.item.photoUrl }} style={styles.image} resizeMode="cover" />
+
+        <View style={styles.card}>
+          <Text style={styles.title}>{data.item.name?.trim() || 'Untitled listing'}</Text>
+          <Text style={styles.price}>{formatPrice(data.price, data.priceType)}</Text>
+
+          <View style={styles.row}>
+            <Text style={styles.label}>Condition</Text>
+            <Text style={styles.value}>{CONDITION_LABELS[data.condition] ?? data.condition}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Seller</Text>
+            <Text style={styles.value}>{data.seller.displayName?.trim() || 'Ownly Seller'}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Location</Text>
+            <Text style={styles.value}>{data.seller.locationCity?.trim() || 'Not specified'}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Seller Rating</Text>
+            <Text style={styles.value}>
+              {data.seller.sellerRating !== null ? `${data.seller.sellerRating.toFixed(1)} (${data.seller.reviewCount} reviews)` : 'No ratings yet'}
+            </Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Listed</Text>
+            <Text style={styles.value}>{formatListingDate(data.createdAt)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Views</Text>
+            <Text style={styles.value}>{data.viewCount}</Text>
+          </View>
+
+          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.description}>{data.description?.trim() || 'No description provided.'}</Text>
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     padding: 16,
+    paddingBottom: 28,
+  },
+  image: {
+    width: '100%',
+    height: 280,
+    borderRadius: 16,
+    backgroundColor: '#d1d1d6',
+    marginBottom: 14,
   },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 18,
     borderWidth: 1,
     borderColor: '#e5e5ea',
+    padding: 16,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '700',
     color: '#1c1c1e',
-    marginBottom: 12,
+  },
+  price: {
+    marginTop: 4,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0a84ff',
+    marginBottom: 10,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    gap: 12,
+  },
+  label: {
+    fontSize: 14,
+    color: '#6e6e73',
   },
   value: {
-    fontSize: 15,
-    color: '#3a3a3c',
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 14,
+    color: '#1c1c1e',
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    marginTop: 14,
     marginBottom: 6,
+    fontSize: 13,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: '#6e6e73',
+  },
+  description: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: '#3a3a3c',
+  },
+  centerState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1c1c1e',
+    textAlign: 'center',
+  },
+  helperText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6e6e73',
+    textAlign: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1c1c1e',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 14,
+    backgroundColor: '#0a84ff',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryButtonPressed: {
+    backgroundColor: '#007aff',
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

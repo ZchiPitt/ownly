@@ -267,7 +267,7 @@
         "Verify in iOS simulator: feed to detail navigation works"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

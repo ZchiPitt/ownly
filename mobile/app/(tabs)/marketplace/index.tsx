@@ -1,38 +1,108 @@
 import { Link } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '../../../components';
+import { useMarketplaceFeed } from '../../../hooks';
 
-const listings = [
-  { id: 'l-882', name: 'Leather Desk Chair', price: '$140' },
-  { id: 'l-991', name: 'Standing Lamp', price: '$65' },
-];
+const CONDITION_LABELS: Record<string, string> = {
+  new: 'New',
+  like_new: 'Like New',
+  good: 'Good',
+  fair: 'Fair',
+  poor: 'Poor',
+};
+
+function formatPrice(price: number | null, priceType: string): string {
+  if (priceType === 'free') {
+    return 'Free';
+  }
+
+  if (price === null) {
+    return priceType === 'negotiable' ? 'Negotiable' : 'Price unavailable';
+  }
+
+  const formatted = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 2,
+  }).format(price);
+
+  return priceType === 'negotiable' ? `${formatted} (Negotiable)` : formatted;
+}
+
+function formatDateLabel(createdAt: string): string {
+  const parsed = new Date(createdAt);
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Listed recently';
+  }
+
+  return `Listed ${parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })}`;
+}
 
 export default function MarketplaceScreen() {
+  const { data = [], isLoading, isError, error, refetch } = useMarketplaceFeed();
+
+  if (isLoading) {
+    return (
+      <Screen style={styles.centerState}>
+        <ActivityIndicator size="large" color="#0a84ff" />
+        <Text style={styles.helperText}>Loading marketplace...</Text>
+      </Screen>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Screen style={styles.centerState}>
+        <Text style={styles.errorTitle}>Could not load listings</Text>
+        <Text style={styles.helperText}>{error instanceof Error ? error.message : 'Please try again.'}</Text>
+        <Pressable style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]} onPress={() => refetch()}>
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </Pressable>
+      </Screen>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <Screen style={styles.centerState}>
+        <Text style={styles.emptyTitle}>No active listings</Text>
+        <Text style={styles.helperText}>Marketplace listings will appear here when sellers post items.</Text>
+      </Screen>
+    );
+  }
+
   return (
     <Screen>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Featured Listings</Text>
-        <View style={styles.card}>
-          {listings.map((item, index) => (
-            <Link key={item.id} href={`/(tabs)/marketplace/${item.id}`} asChild>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.row,
-                  index !== listings.length - 1 && styles.rowDivider,
-                  pressed && styles.rowPressed,
-                ]}
-              >
-                <View style={styles.rowText}>
-                  <Text style={styles.rowTitle}>{item.name}</Text>
-                  <Text style={styles.rowSubtitle}>{item.price}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            </Link>
-          ))}
-        </View>
+        <Text style={styles.sectionTitle}>Marketplace Feed</Text>
       </View>
+      <ScrollView contentContainerStyle={styles.listContainer}>
+        {data.map((listing) => (
+          <Link key={listing.id} href={`/(tabs)/marketplace/${listing.id}`} asChild>
+            <Pressable style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
+              <Image
+                source={{ uri: listing.item.thumbnailUrl ?? listing.item.photoUrl }}
+                style={styles.image}
+                resizeMode="cover"
+              />
+              <View style={styles.cardContent}>
+                <Text style={styles.itemName}>{listing.item.name?.trim() || 'Untitled listing'}</Text>
+                <Text style={styles.priceText}>{formatPrice(listing.price, listing.priceType)}</Text>
+                <Text style={styles.metaText}>
+                  {CONDITION_LABELS[listing.condition] ?? listing.condition} • {listing.seller.displayName?.trim() || 'Ownly Seller'}
+                </Text>
+                <Text style={styles.subtleText}>{formatDateLabel(listing.createdAt)}</Text>
+              </View>
+              <Text style={styles.chevron}>›</Text>
+            </Pressable>
+          </Link>
+        ))}
+      </ScrollView>
     </Screen>
   );
 }
@@ -40,51 +110,105 @@ export default function MarketplaceScreen() {
 const styles = StyleSheet.create({
   section: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 12,
+    paddingBottom: 6,
   },
   sectionTitle: {
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: '#6e6e73',
-    marginBottom: 8,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+    gap: 10,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
-  },
-  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    padding: 10,
   },
-  rowDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e5ea',
-  },
-  rowPressed: {
+  cardPressed: {
     backgroundColor: '#f2f2f7',
   },
-  rowText: {
-    flex: 1,
+  image: {
+    width: 76,
+    height: 76,
+    borderRadius: 10,
+    backgroundColor: '#d1d1d6',
   },
-  rowTitle: {
+  cardContent: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  itemName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#1c1c1e',
   },
-  rowSubtitle: {
-    fontSize: 13,
-    color: '#8e8e93',
+  priceText: {
     marginTop: 2,
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0a84ff',
+  },
+  metaText: {
+    marginTop: 4,
+    fontSize: 13,
+    color: '#3a3a3c',
+  },
+  subtleText: {
+    marginTop: 2,
+    fontSize: 12,
+    color: '#8e8e93',
   },
   chevron: {
     fontSize: 22,
     color: '#c7c7cc',
-    marginLeft: 8,
+  },
+  centerState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1c1c1e',
+    textAlign: 'center',
+  },
+  helperText: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6e6e73',
+    textAlign: 'center',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1c1c1e',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 14,
+    backgroundColor: '#0a84ff',
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  retryButtonPressed: {
+    backgroundColor: '#007aff',
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
