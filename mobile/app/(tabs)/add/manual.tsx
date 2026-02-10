@@ -1,17 +1,30 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 
 import { ItemEditorForm, Screen, type ItemEditorValues } from '../../../components';
 import { useAuth } from '../../../contexts';
+import { useCreateInventoryItemMutation } from '../../../hooks';
 
 export default function ManualAddScreen() {
   const { user } = useAuth();
+  const router = useRouter();
+  const createItemMutation = useCreateInventoryItemMutation();
 
   const handleSubmit = async (values: ItemEditorValues) => {
-    Alert.alert(
-      'Form ready',
-      `Validated ${values.name.trim()}.\nPersistence wiring is scheduled in US-010.`
-    );
+    if (!user?.id) {
+      return;
+    }
+
+    try {
+      await createItemMutation.mutateAsync({
+        userId: user.id,
+        values,
+      });
+      Alert.alert('Item created', `${values.name.trim() || 'Item'} has been added to your inventory.`);
+      router.replace('/(tabs)/inventory');
+    } catch (error) {
+      Alert.alert('Could not create item', error instanceof Error ? error.message : 'Please try again.');
+    }
   };
 
   if (!user?.id) {

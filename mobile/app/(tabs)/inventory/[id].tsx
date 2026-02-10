@@ -1,6 +1,7 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -8,11 +9,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
 
 import { Screen } from '../../../components';
 import { useAuth } from '../../../contexts';
-import { useInventoryItemDetail } from '../../../hooks';
+import { useInventoryItemDetail, useSoftDeleteItemMutation, useToggleFavoriteItemMutation } from '../../../hooks';
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -54,8 +54,11 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 export default function InventoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useInventoryItemDetail(user?.id, id);
+  const toggleFavoriteMutation = useToggleFavoriteItemMutation();
+  const softDeleteMutation = useSoftDeleteItemMutation();
 
   if (isLoading) {
     return (
@@ -102,6 +105,53 @@ export default function InventoryDetailScreen() {
         })
         .join('\n') || 'None';
 
+  const handleToggleFavorite = async () => {
+    if (!user?.id) {
+      return;
+    }
+
+    try {
+      await toggleFavoriteMutation.mutateAsync({
+        userId: user.id,
+        itemId: item.id,
+        currentValue: item.is_favorite,
+      });
+    } catch (favoriteError) {
+      Alert.alert(
+        'Could not update favorite',
+        favoriteError instanceof Error ? favoriteError.message : 'Please try again.'
+      );
+    }
+  };
+
+  const handleDelete = () => {
+    if (!user?.id) {
+      return;
+    }
+
+    Alert.alert('Delete Item', 'This item will be hidden from inventory. You can restore it later.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await softDeleteMutation.mutateAsync({
+              userId: user.id,
+              itemId: item.id,
+            });
+            router.replace('/(tabs)/inventory');
+          } catch (deleteError) {
+            Alert.alert(
+              'Could not delete item',
+              deleteError instanceof Error ? deleteError.message : 'Please try again.'
+            );
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen>
       <Stack.Screen
@@ -111,11 +161,35 @@ export default function InventoryDetailScreen() {
         }}
       />
       <ScrollView contentContainerStyle={styles.container}>
-        <Link href={`/(tabs)/inventory/edit/${item.id}`} asChild>
-          <Pressable style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}>
-            <Text style={styles.editButtonText}>Edit Item</Text>
+        <View style={styles.actionsRow}>
+          <Link href={`/(tabs)/inventory/edit/${item.id}`} asChild>
+            <Pressable style={({ pressed }) => [styles.editButton, pressed && styles.editButtonPressed]}>
+              <Text style={styles.editButtonText}>Edit Item</Text>
+            </Pressable>
+          </Link>
+          <Pressable
+            style={({ pressed }) => [styles.secondaryAction, pressed && styles.secondaryActionPressed]}
+            onPress={handleToggleFavorite}
+            disabled={toggleFavoriteMutation.isPending}
+          >
+            <Text style={styles.secondaryActionText}>
+              {toggleFavoriteMutation.isPending
+                ? 'Updating...'
+                : item.is_favorite
+                  ? 'Unfavorite'
+                  : 'Favorite'}
+            </Text>
           </Pressable>
-        </Link>
+          <Pressable
+            style={({ pressed }) => [styles.deleteAction, pressed && styles.deleteActionPressed]}
+            onPress={handleDelete}
+            disabled={softDeleteMutation.isPending}
+          >
+            <Text style={styles.deleteActionText}>
+              {softDeleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Text>
+          </Pressable>
+        </View>
 
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Photo</Text>
@@ -159,6 +233,10 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
     gap: 12,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   card: {
     backgroundColor: '#ffffff',
@@ -226,6 +304,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   editButton: {
+    flex: 1,
     backgroundColor: '#0a84ff',
     borderRadius: 12,
     alignItems: 'center',
@@ -237,6 +316,40 @@ const styles = StyleSheet.create({
   editButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '700',
+  },
+  secondaryAction: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#0a84ff',
+    backgroundColor: '#f0f7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  secondaryActionPressed: {
+    opacity: 0.9,
+  },
+  secondaryActionText: {
+    color: '#0a84ff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  deleteAction: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ff3b30',
+    backgroundColor: '#fff1f0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  deleteActionPressed: {
+    opacity: 0.9,
+  },
+  deleteActionText: {
+    color: '#ff3b30',
+    fontSize: 14,
     fontWeight: '700',
   },
 });

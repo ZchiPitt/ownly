@@ -1,20 +1,36 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Alert, ActivityIndicator, StyleSheet, Text } from 'react-native';
 
 import { ItemEditorForm, Screen, type ItemEditorValues } from '../../../../components';
 import { useAuth } from '../../../../contexts';
-import { useInventoryItemDetail } from '../../../../hooks';
+import { useInventoryItemDetail, useUpdateInventoryItemMutation } from '../../../../hooks';
 
 export default function EditInventoryItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const { user } = useAuth();
   const { data, isLoading, isError, error } = useInventoryItemDetail(user?.id, id);
+  const updateItemMutation = useUpdateInventoryItemMutation();
 
   const handleSubmit = async (values: ItemEditorValues) => {
-    Alert.alert(
-      'Changes validated',
-      `Validated ${values.name.trim()}.\nUpdate mutation wiring is scheduled in US-010.`
-    );
+    if (!user?.id || !id) {
+      return;
+    }
+
+    try {
+      await updateItemMutation.mutateAsync({
+        userId: user.id,
+        itemId: id,
+        values,
+      });
+      Alert.alert('Changes saved', `${values.name.trim() || 'Item'} has been updated.`);
+      router.replace(`/(tabs)/inventory/${id}`);
+    } catch (submitError) {
+      Alert.alert(
+        'Could not save changes',
+        submitError instanceof Error ? submitError.message : 'Please try again.'
+      );
+    }
   };
 
   if (isLoading) {

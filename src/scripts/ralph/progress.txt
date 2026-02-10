@@ -5,6 +5,7 @@
 - Pattern: `ActionSheetIOS` is a low-dependency native control for inventory sort/location/category pickers and maps cleanly to TanStack Query keys.
 - Pattern: Supabase typed `.maybeSingle()` queries can infer `never` for selected rows in mobile hooks; cast once to a concrete shared type (`Item | null`) before field access.
 - Pattern: Reuse a single `ItemEditorForm` for create and edit routes, and keep Supabase mutation wiring in the next story to avoid mixing form UX and persistence concerns.
+- Pattern: In this codebase, Supabase typed writes to `items` may infer `never`; keep mutation payload shaping explicit and use narrow casts at the write callsite until shared DB typings are normalized.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -78,4 +79,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Shared form component keeps create/edit fields and validation logic in one place while allowing story-by-story backend wiring.
   - Gotchas encountered: Playwright MCP verification could run and capture artifacts, but browser navigation to local server still failed with `ERR_CONNECTION_REFUSED`, so simulator verification remains manual.
   - Useful context: Verification artifacts captured at `us-009-verification.png` with MCP snapshot showing `chrome-error://chromewebdata/` unreachable state.
+---
+## 2026-02-10 06:05 PST - US-010
+- What was implemented: Added inventory mutation hooks for create/update/toggle favorite/soft delete with shared value mapping and TanStack Query cache invalidation, then wired manual add and edit submit flows to persist changes and updated item detail with favorite/delete actions.
+- Files changed: `mobile/hooks/useInventoryItemMutations.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/add/manual.tsx`, `mobile/app/(tabs)/inventory/edit/[id].tsx`, `mobile/app/(tabs)/inventory/[id].tsx`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: Centralizing item mutation payload mapping avoids create/edit drift and keeps form value normalization in one place.
+  - Gotchas encountered: Playwright MCP server was healthy, but navigation to local dev URL still returned `ERR_CONNECTION_REFUSED`, so browser verification was limited to connection-error artifact capture and iOS simulator verification remains manual.
+  - Useful context: Required MCP checks executed (`mcporter list`, `playwright.browser_navigate`, `playwright.browser_snapshot`, `playwright.browser_take_screenshot`) with artifact `us-010-verification.png`.
 ---
