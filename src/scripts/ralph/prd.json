@@ -222,7 +222,7 @@
         "Verify in iOS simulator: multi-item save flow works"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

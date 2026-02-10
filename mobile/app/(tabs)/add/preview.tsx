@@ -168,6 +168,24 @@ export default function AddPreviewScreen() {
     });
   };
 
+  const handleOpenBatchAdd = () => {
+    if (!analysisResult || analysisResult.analysis.detected_items.length < 2) {
+      return;
+    }
+
+    router.push({
+      pathname: '/(tabs)/add/batch-add',
+      params: {
+        imageUrl: analysisResult.imageUrl,
+        thumbnailUrl: analysisResult.thumbnailUrl,
+        sourceBatchId: deriveSourceBatchId(analysisResult.imagePath) ?? '',
+        detectedItems: JSON.stringify(analysisResult.analysis.detected_items),
+        analysisModel: analysisResult.analysis.analysis_model,
+        analyzedAt: analysisResult.analysis.analyzed_at,
+      },
+    });
+  };
+
   return (
     <Screen style={styles.container}>
       <Stack.Screen
@@ -256,6 +274,14 @@ export default function AddPreviewScreen() {
             onPress={handleOpenQuickAdd}
           >
             <Text style={styles.primaryActionButtonText}>Review Quick Add</Text>
+          </Pressable>
+        ) : null}
+        {analysisResult && analysisResult.analysis.detected_items.length > 1 ? (
+          <Pressable
+            style={({ pressed }) => [styles.primaryActionButton, pressed && styles.primaryActionButtonPressed]}
+            onPress={handleOpenBatchAdd}
+          >
+            <Text style={styles.primaryActionButtonText}>Select Items to Save</Text>
           </Pressable>
         ) : null}
 
