@@ -14,6 +14,7 @@
 - Pattern: For multi-detection add flows, serialize the full `detected_items` array into route params, then support both direct batch-save and `ItemEditorForm`-driven sequential edits from the same parsed payload.
 - Pattern: For analyze fallback flows, keep uploaded storage paths in screen state and only clean them on explicit cancel; clear cleanup state before navigating into manual/quick/batch save paths.
 - Pattern: For mobile inventory search, combine text-field item queries with category/location ID prefilter queries, then dedupe/sort by `updated_at` to avoid brittle joined `.or()` conditions in Supabase.
+- Pattern: `saved_listings.user_id` maps to `profiles.id` (not `auth.users.id`), so mobile save/unsave flows should resolve profile ID first and key TanStack caches by auth user ID.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -167,4 +168,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Supabase typed writes to `listings` need the same cast pattern already used for other tables to avoid `never` inference in mobile hooks.
   - Gotchas encountered: None.
   - Useful context: Browser verification completed with required MCP flow against local web server (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-019-verification.png`) and captured a successful artifact (`us-019-verification.png` in MCP output); iOS simulator validation for this mobile-only story remains manual.
+---
+## 2026-02-10 15:50 PST - US-020
+- What was implemented: Added saved-listings support in mobile marketplace with Supabase-backed persistence: users can now save/unsave listings from feed and detail screens, and browse/manage saved items in a dedicated `Saved Listings` screen.
+- Files changed: `mobile/hooks/useSavedMarketplaceListings.ts`, `mobile/hooks/index.ts`, `mobile/components/ListingSaveButton.tsx`, `mobile/components/index.ts`, `mobile/app/(tabs)/marketplace/index.tsx`, `mobile/app/(tabs)/marketplace/[id].tsx`, `mobile/app/(tabs)/marketplace/saved.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: `saved_listings.user_id` references `profiles.id`, so resolve profile ID from `auth.users.id` before save-state queries/mutations.
+  - Gotchas encountered: Saved-list queries need explicit `saved_listings` cast (`ReturnType<typeof supabase.from>`) in mobile until shared DB table typings are regenerated.
+  - Useful context: Browser verification requirements were executed with Playwright MCP and captured artifact `us-020-verification.png` after navigating to `http://127.0.0.1:5173`; iOS simulator verification of the mobile flow remains manual.
 ---

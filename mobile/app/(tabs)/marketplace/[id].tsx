@@ -1,8 +1,14 @@
 import { useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Screen } from '../../../components';
-import { useMarketplaceListingDetail } from '../../../hooks';
+import { ListingSaveButton, Screen } from '../../../components';
+import { useAuth } from '../../../contexts/AuthProvider';
+import {
+  useMarketplaceListingDetail,
+  useSavedListingIds,
+  useSaveMarketplaceListingMutation,
+  useUnsaveMarketplaceListingMutation,
+} from '../../../hooks';
 
 const CONDITION_LABELS: Record<string, string> = {
   new: 'New',
@@ -44,10 +50,32 @@ function formatListingDate(createdAt: string): string {
 }
 
 export default function MarketplaceDetailScreen() {
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const listingId = Array.isArray(id) ? id[0] : id;
 
   const { data, isLoading, isError, error, refetch } = useMarketplaceListingDetail(listingId);
+  const { data: savedListingIds = [] } = useSavedListingIds(user?.id);
+  const saveListingMutation = useSaveMarketplaceListingMutation(user?.id);
+  const unsaveListingMutation = useUnsaveMarketplaceListingMutation(user?.id);
+
+  const isSaved = listingId ? savedListingIds.includes(listingId) : false;
+
+  const handleToggleSaved = async () => {
+    if (!listingId) {
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await unsaveListingMutation.mutateAsync({ listingId });
+      } else {
+        await saveListingMutation.mutateAsync({ listingId });
+      }
+    } catch (saveError) {
+      Alert.alert('Could not update saved listing', saveError instanceof Error ? saveError.message : 'Please try again.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -86,7 +114,14 @@ export default function MarketplaceDetailScreen() {
 
         <View style={styles.card}>
           <Text style={styles.title}>{data.item.name?.trim() || 'Untitled listing'}</Text>
-          <Text style={styles.price}>{formatPrice(data.price, data.priceType)}</Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.price}>{formatPrice(data.price, data.priceType)}</Text>
+            <ListingSaveButton
+              isSaved={isSaved}
+              disabled={saveListingMutation.isPending || unsaveListingMutation.isPending}
+              onToggle={handleToggleSaved}
+            />
+          </View>
 
           <View style={styles.row}>
             <Text style={styles.label}>Condition</Text>
@@ -148,11 +183,16 @@ const styles = StyleSheet.create({
     color: '#1c1c1e',
   },
   price: {
-    marginTop: 4,
     fontSize: 18,
     fontWeight: '700',
     color: '#0a84ff',
+  },
+  priceRow: {
+    marginTop: 4,
     marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   row: {
     flexDirection: 'row',

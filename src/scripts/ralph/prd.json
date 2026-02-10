@@ -297,7 +297,7 @@
         "Verify in iOS simulator: saved listings flow works"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

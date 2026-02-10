@@ -1,8 +1,14 @@
 import { Link } from 'expo-router';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Screen } from '../../../components';
-import { useMarketplaceFeed } from '../../../hooks';
+import { ListingSaveButton, Screen } from '../../../components';
+import { useAuth } from '../../../contexts/AuthProvider';
+import {
+  useMarketplaceFeed,
+  useSavedListingIds,
+  useSaveMarketplaceListingMutation,
+  useUnsaveMarketplaceListingMutation,
+} from '../../../hooks';
 
 const CONDITION_LABELS: Record<string, string> = {
   new: 'New',
@@ -44,7 +50,25 @@ function formatDateLabel(createdAt: string): string {
 }
 
 export default function MarketplaceScreen() {
+  const { user } = useAuth();
   const { data = [], isLoading, isError, error, refetch } = useMarketplaceFeed();
+  const { data: savedListingIds = [] } = useSavedListingIds(user?.id);
+  const saveListingMutation = useSaveMarketplaceListingMutation(user?.id);
+  const unsaveListingMutation = useUnsaveMarketplaceListingMutation(user?.id);
+
+  const savedIds = new Set(savedListingIds);
+
+  const handleToggleSaved = async (listingId: string, shouldSave: boolean) => {
+    try {
+      if (shouldSave) {
+        await saveListingMutation.mutateAsync({ listingId });
+      } else {
+        await unsaveListingMutation.mutateAsync({ listingId });
+      }
+    } catch (saveError) {
+      Alert.alert('Could not update saved listing', saveError instanceof Error ? saveError.message : 'Please try again.');
+    }
+  };
 
   if (isLoading) {
     return (
@@ -81,11 +105,18 @@ export default function MarketplaceScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Marketplace Feed</Text>
-          <Link href="/(tabs)/marketplace/my-listings" asChild>
-            <Pressable style={({ pressed }) => [styles.myListingsButton, pressed && styles.myListingsButtonPressed]}>
-              <Text style={styles.myListingsButtonText}>My Listings</Text>
-            </Pressable>
-          </Link>
+          <View style={styles.sectionActions}>
+            <Link href="/(tabs)/marketplace/saved" asChild>
+              <Pressable style={({ pressed }) => [styles.savedButton, pressed && styles.savedButtonPressed]}>
+                <Text style={styles.savedButtonText}>Saved</Text>
+              </Pressable>
+            </Link>
+            <Link href="/(tabs)/marketplace/my-listings" asChild>
+              <Pressable style={({ pressed }) => [styles.myListingsButton, pressed && styles.myListingsButtonPressed]}>
+                <Text style={styles.myListingsButtonText}>My Listings</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
       </View>
       <ScrollView contentContainerStyle={styles.listContainer}>
@@ -105,7 +136,14 @@ export default function MarketplaceScreen() {
                 </Text>
                 <Text style={styles.subtleText}>{formatDateLabel(listing.createdAt)}</Text>
               </View>
-              <Text style={styles.chevron}>›</Text>
+              <View style={styles.trailingActions}>
+                <ListingSaveButton
+                  isSaved={savedIds.has(listing.id)}
+                  disabled={saveListingMutation.isPending || unsaveListingMutation.isPending}
+                  onToggle={() => handleToggleSaved(listing.id, !savedIds.has(listing.id))}
+                />
+                <Text style={styles.chevron}>›</Text>
+              </View>
             </Pressable>
           </Link>
         ))}
@@ -125,11 +163,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  sectionActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: '#6e6e73',
+  },
+  savedButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#ffd1dc',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#fff1f4',
+  },
+  savedButtonPressed: {
+    backgroundColor: '#ffe8ee',
+  },
+  savedButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#d63357',
   },
   myListingsButton: {
     borderRadius: 999,
@@ -173,7 +232,12 @@ const styles = StyleSheet.create({
   cardContent: {
     flex: 1,
     marginLeft: 12,
-    marginRight: 8,
+    marginRight: 10,
+  },
+  trailingActions: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   itemName: {
     fontSize: 16,
