@@ -1,9 +1,11 @@
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../contexts';
+import { queryClient } from '../lib/queryClient';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, isLoading } = useAuth();
@@ -41,15 +43,17 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AuthGate>
-          <Stack
-            screenOptions={{
-              headerLargeTitle: true,
-            }}
-          />
-        </AuthGate>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <AuthGate>
+            <Stack
+              screenOptions={{
+                headerLargeTitle: true,
+              }}
+            />
+          </AuthGate>
+        </AuthProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

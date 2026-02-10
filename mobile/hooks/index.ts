@@ -1,1 +1,1 @@
-export {};
+export { useInventoryItems } from './useInventoryItems';

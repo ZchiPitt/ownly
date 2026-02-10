@@ -87,7 +87,7 @@
         "Verify in iOS simulator: list loads and paginates"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

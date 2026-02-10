@@ -1,6 +1,7 @@
 # Ralph Progress Log
 ## Codebase Patterns
 - Pattern: Expo lint errors when standard folders exist without lintable files; add minimal `index.ts` placeholders during scaffolding.
+- Pattern: For iOS-only Expo stories, Playwright MCP can only verify browser-side prerequisites (server reachability/artifact capture); simulator verification still needs manual execution.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -42,4 +43,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: None.
   - Gotchas encountered: Playwright MCP/browser verification is not applicable for iOS-only Expo UI; manual simulator verification still required.
   - Useful context: Stack headers are configured per tab to keep iOS large titles while Tabs handles the bottom bar.
+---
+## 2026-02-10 05:50 - US-006
+- What was implemented: Added inventory infinite pagination using TanStack Query and Supabase with current-user + non-deleted filters, then wired the Inventory tab to real data with loading, empty, error, retry, and list-end load-more states.
+- Files changed: `mobile/app/_layout.tsx`, `mobile/app/(tabs)/inventory/index.tsx`, `mobile/hooks/useInventoryItems.ts`, `mobile/hooks/index.ts`, `mobile/lib/queryClient.ts`, `mobile/lib/index.ts`, `mobile/package.json`, `mobile/package-lock.json`, `src/scripts/ralph/prd.json`
+- **Learnings for future iterations:**
+  - Patterns discovered: Root-level `QueryClientProvider` keeps story-level data hooks minimal and reusable across tabs.
+  - Gotchas encountered: Playwright MCP was reachable, but browser verification could not target this iOS-only flow; `playwright.browser_navigate` to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED`.
+  - Useful context: Captured Playwright MCP snapshot output for the failed browser navigation; manual iOS simulator verification is still required for Inventory pagination behavior.
 ---
