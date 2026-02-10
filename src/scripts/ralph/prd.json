@@ -102,7 +102,7 @@
         "Verify in iOS simulator: changing controls updates results"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
