@@ -230,6 +230,22 @@ npm run build
 npm run preview
 ```
 
+## Mobile (iOS) Setup
+
+The Expo iOS app lives under `mobile/`.
+
+```bash
+cd mobile
+npm install
+
+# Start the Expo dev server for iOS
+npx expo start --ios
+
+# Quality checks
+npx tsc --noEmit
+npx expo lint
+```
+
 ## Project Structure
 
 ```

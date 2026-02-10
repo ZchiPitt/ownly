@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Ownly",
+    "slug": "ownly",
+    "version": "0.1.0",
+    "scheme": "ownly",
+    "platforms": ["ios"],
+    "orientation": "portrait",
+    "ios": {
+      "bundleIdentifier": "com.ownly.app",
+      "supportsTablet": true
+    },
+    "plugins": ["expo-router"],
+    "extra": {
+      "router": {
+        "origin": "app"
+      }
+    }
+  }
+}
