@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Link, useLocalSearchParams } from 'expo-router';
 import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ListingSaveButton, Screen } from '../../../components';
@@ -152,6 +152,18 @@ export default function MarketplaceDetailScreen() {
 
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{data.description?.trim() || 'No description provided.'}</Text>
+
+          <Link
+            href={{
+              pathname: '/(tabs)/marketplace/messages/[listingId]',
+              params: { listingId: data.id },
+            }}
+            asChild
+          >
+            <Pressable style={({ pressed }) => [styles.messageButton, pressed && styles.messageButtonPressed]}>
+              <Text style={styles.messageButtonText}>Message Seller</Text>
+            </Pressable>
+          </Link>
         </View>
       </ScrollView>
     </Screen>
@@ -224,6 +236,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     color: '#3a3a3c',
+  },
+  messageButton: {
+    marginTop: 16,
+    borderRadius: 12,
+    backgroundColor: '#0a84ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  messageButtonPressed: {
+    backgroundColor: '#007aff',
+  },
+  messageButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '600',
   },
   centerState: {
     flex: 1,

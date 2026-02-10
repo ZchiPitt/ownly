@@ -106,6 +106,11 @@ export default function MarketplaceScreen() {
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Marketplace Feed</Text>
           <View style={styles.sectionActions}>
+            <Link href="/(tabs)/marketplace/messages" asChild>
+              <Pressable style={({ pressed }) => [styles.messagesButton, pressed && styles.messagesButtonPressed]}>
+                <Text style={styles.messagesButtonText}>Messages</Text>
+              </Pressable>
+            </Link>
             <Link href="/(tabs)/marketplace/saved" asChild>
               <Pressable style={({ pressed }) => [styles.savedButton, pressed && styles.savedButtonPressed]}>
                 <Text style={styles.savedButtonText}>Saved</Text>
@@ -189,6 +194,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#d63357',
+  },
+  messagesButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#d1d1d6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#ffffff',
+  },
+  messagesButtonPressed: {
+    backgroundColor: '#f2f2f7',
+  },
+  messagesButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1c1c1e',
   },
   myListingsButton: {
     borderRadius: 999,

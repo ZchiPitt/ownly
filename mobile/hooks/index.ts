@@ -15,6 +15,13 @@ export {
   useUpdateMarketplaceListingMutation,
 } from './useMyListings';
 export {
+  useMarketplaceConversations,
+  useMarketplaceChatMessages,
+  useSendMarketplaceMessageMutation,
+  useMarkMarketplaceMessagesReadMutation,
+  useMarketplaceMessageSubscription,
+} from './useMarketplaceMessages';
+export {
   useCreateInventoryItemMutation,
   useUpdateInventoryItemMutation,
   useToggleFavoriteItemMutation,

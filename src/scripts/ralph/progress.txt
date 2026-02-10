@@ -15,6 +15,7 @@
 - Pattern: For analyze fallback flows, keep uploaded storage paths in screen state and only clean them on explicit cancel; clear cleanup state before navigating into manual/quick/batch save paths.
 - Pattern: For mobile inventory search, combine text-field item queries with category/location ID prefilter queries, then dedupe/sort by `updated_at` to avoid brittle joined `.or()` conditions in Supabase.
 - Pattern: `saved_listings.user_id` maps to `profiles.id` (not `auth.users.id`), so mobile save/unsave flows should resolve profile ID first and key TanStack caches by auth user ID.
+- Pattern: For marketplace chat in mobile, key conversations by `listing_id`, derive unread counts from rows where current profile is receiver and `read_at` is null, and invalidate both conversation + message query keys from realtime inserts.
 Started: Tue Feb 10 02:57:51 PST 2026
 ---
 ## 2026-02-10 03:03 - US-001
@@ -176,4 +177,12 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: `saved_listings.user_id` references `profiles.id`, so resolve profile ID from `auth.users.id` before save-state queries/mutations.
   - Gotchas encountered: Saved-list queries need explicit `saved_listings` cast (`ReturnType<typeof supabase.from>`) in mobile until shared DB table typings are regenerated.
   - Useful context: Browser verification requirements were executed with Playwright MCP and captured artifact `us-020-verification.png` after navigating to `http://127.0.0.1:5173`; iOS simulator verification of the mobile flow remains manual.
+---
+## 2026-02-10 15:54 PST - US-021
+- What was implemented: Added marketplace messaging on mobile with a new Supabase-backed inbox and listing chat flow. Implemented conversation list loading, unread counts, chat send, mark-as-read updates, and realtime INSERT subscription invalidation. Added entry points from Marketplace feed (`Messages`) and listing detail (`Message Seller`).
+- Files changed: `mobile/hooks/useMarketplaceMessages.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/marketplace/messages/index.tsx`, `mobile/app/(tabs)/marketplace/messages/[listingId].tsx`, `mobile/app/(tabs)/marketplace/index.tsx`, `mobile/app/(tabs)/marketplace/[id].tsx`, `mobile/app/(tabs)/marketplace/_layout.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: For mobile marketplace chat, maintain query key parity between conversation list and listing chat messages so mutation/realtime invalidation keeps unread/read states consistent.
+  - Gotchas encountered: Playwright MCP commands ran, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment.
+  - Useful context: Required verification commands were executed (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-021-verification.png`); artifact was captured on the browser error page (`chrome-error://chromewebdata/`). iOS simulator verification remains manual for this mobile-only story.
 ---
