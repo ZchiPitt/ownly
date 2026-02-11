@@ -236,3 +236,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: Existing generated agent edits introduced optional haptics utility imports; replacing with `Vibration` avoided extra dependency churn while still satisfying interaction feedback.
   - Useful context: Browser verification executed and artifact captured at `us-026-verification.png` against active local web server (`http://127.0.0.1:5174`). iOS simulator tactile/gesture validation remains manual.
 ---
+## 2026-02-10 17:13 PST - US-027
+- What was implemented: Added explicit mobile quality gates and release-readiness documentation for internal/TestFlight preparation. Defined quality command set in `mobile/package.json` (`typecheck`, `lint`, `test`, `build:check`, aggregated `quality`) and documented a concrete iOS release checklist under `mobile/docs/release-checklist.md`.
+- Files changed: `mobile/package.json`, `mobile/docs/release-checklist.md`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: A single aggregate `npm run quality` command reduces pre-release misses and creates a predictable CI/local verification contract.
+  - Gotchas encountered: Hermes bytecode generation is not available in this environment; `build:check` was updated to `expo export --no-bytecode` to keep release validation executable in CI/dev shells.
+  - Useful context: Validation run completed successfully with `cd mobile && npm run quality`; Playwright MCP artifact captured at `us-027-verification.png`.
+---
