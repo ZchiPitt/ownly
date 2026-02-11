@@ -1,5 +1,8 @@
 import { ReactNode } from 'react';
-import { SafeAreaView, StyleSheet, ViewStyle } from 'react-native';
+import { StyleSheet, ViewStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { iosColors } from '../theme/tokens';
 
 interface ScreenProps {
   children: ReactNode;
@@ -7,12 +10,16 @@ interface ScreenProps {
 }
 
 export default function Screen({ children, style }: ScreenProps) {
-  return <SafeAreaView style={[styles.container, style]}>{children}</SafeAreaView>;
+  return (
+    <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={[styles.container, style]}>
+      {children}
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f2f2f7',
+    backgroundColor: iosColors.background,
   },
 });

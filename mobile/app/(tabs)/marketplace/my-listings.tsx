@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 
-import { Screen } from '../../../components';
+import { IOSSegmentedControl, Screen } from '../../../components';
 import { useAuth } from '../../../contexts/AuthProvider';
 import {
   useCreateMarketplaceListingMutation,
@@ -22,6 +22,8 @@ import {
   type MyListingStatusFilter,
   type MyMarketplaceListing,
 } from '../../../hooks/useMyListings';
+import { Vibration } from 'react-native';
+import { iosColors, iosRadius, iosSpacing, iosTypography } from '../../../theme/tokens';
 import type { ItemCondition, ListingStatus, PriceType } from '../../../../src/types/database';
 
 const STATUS_TABS: Array<{ key: MyListingStatusFilter; label: string }> = [
@@ -299,6 +301,7 @@ export default function MyListingsScreen() {
         description: createDraft.description,
       });
 
+      Vibration.vibrate(5);
       resetCreateForm();
     } catch (mutationError) {
       setCreateError(mutationError instanceof Error ? mutationError.message : 'Could not create listing.');
@@ -328,6 +331,7 @@ export default function MyListingsScreen() {
         listingId,
         updates: { status },
       });
+      Vibration.vibrate(5);
     } catch (mutationError) {
       setEditError(mutationError instanceof Error ? mutationError.message : 'Could not update listing status.');
     }
@@ -353,6 +357,7 @@ export default function MyListingsScreen() {
         },
       });
 
+      Vibration.vibrate(5);
       setEditingListingId(null);
     } catch (mutationError) {
       setEditError(mutationError instanceof Error ? mutationError.message : 'Could not update listing.');
@@ -466,20 +471,11 @@ export default function MyListingsScreen() {
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Manage Listings</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabRow}>
-            {STATUS_TABS.map((tab) => {
-              const selected = statusFilter === tab.key;
-              return (
-                <Pressable
-                  key={tab.key}
-                  onPress={() => setStatusFilter(tab.key)}
-                  style={({ pressed }) => [styles.tab, selected && styles.tabSelected, pressed && styles.tabPressed]}
-                >
-                  <Text style={[styles.tabText, selected && styles.tabTextSelected]}>{tab.label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
+          <IOSSegmentedControl
+            options={STATUS_TABS}
+            selectedKey={statusFilter}
+            onChange={setStatusFilter}
+          />
 
           {listings.length === 0 ? (
             <Text style={styles.emptyText}>No listings for this status yet.</Text>
@@ -621,175 +617,148 @@ export default function MyListingsScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    padding: 16,
-    gap: 14,
-    paddingBottom: 28,
+    padding: iosSpacing.lg,
+    gap: iosSpacing.md,
+    paddingBottom: iosSpacing.xl + iosSpacing.sm,
   },
   sectionCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
+    backgroundColor: iosColors.surface,
+    borderRadius: iosRadius.lg,
     borderWidth: 1,
-    borderColor: '#e5e5ea',
-    padding: 14,
-    gap: 10,
+    borderColor: iosColors.separator,
+    padding: iosSpacing.md,
+    gap: iosSpacing.sm,
   },
   sectionTitle: {
-    fontSize: 17,
+    ...iosTypography.title,
     fontWeight: '700',
-    color: '#1c1c1e',
+    color: iosColors.textPrimary,
   },
   sectionHelper: {
-    fontSize: 13,
-    color: '#6e6e73',
+    ...iosTypography.caption,
+    color: iosColors.textSecondary,
     marginBottom: 2,
   },
   row: {
     flexDirection: 'row',
-    gap: 8,
+    gap: iosSpacing.sm,
   },
   pickerButton: {
-    borderRadius: 12,
+    borderRadius: iosRadius.md,
     borderWidth: 1,
-    borderColor: '#d1d1d6',
-    backgroundColor: '#fafafa',
-    paddingHorizontal: 12,
+    borderColor: iosColors.separatorStrong,
+    backgroundColor: iosColors.surfaceMuted,
+    paddingHorizontal: iosSpacing.md,
     paddingVertical: 10,
   },
   compactPickerButton: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: iosRadius.md,
     borderWidth: 1,
-    borderColor: '#d1d1d6',
-    backgroundColor: '#fafafa',
-    paddingHorizontal: 12,
+    borderColor: iosColors.separatorStrong,
+    backgroundColor: iosColors.surfaceMuted,
+    paddingHorizontal: iosSpacing.md,
     paddingVertical: 10,
   },
   pickerButtonPressed: {
-    backgroundColor: '#f2f2f7',
+    backgroundColor: iosColors.pressed,
   },
   pickerButtonLabel: {
-    fontSize: 12,
+    ...iosTypography.footnote,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    color: '#6e6e73',
+    color: iosColors.textSecondary,
   },
   pickerButtonValue: {
     marginTop: 2,
     fontSize: 15,
-    color: '#1c1c1e',
+    color: iosColors.textPrimary,
     fontWeight: '600',
   },
   inputGroup: {
     gap: 4,
   },
   inputLabel: {
-    fontSize: 12,
+    ...iosTypography.footnote,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    color: '#6e6e73',
+    color: iosColors.textSecondary,
   },
   input: {
-    backgroundColor: '#fafafa',
+    backgroundColor: iosColors.surfaceMuted,
     borderWidth: 1,
-    borderColor: '#d1d1d6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    borderColor: iosColors.separatorStrong,
+    borderRadius: iosRadius.md,
+    paddingHorizontal: iosSpacing.md,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#1c1c1e',
+    color: iosColors.textPrimary,
   },
   multilineInput: {
     minHeight: 74,
     textAlignVertical: 'top',
   },
   primaryButton: {
-    backgroundColor: '#0a84ff',
-    borderRadius: 12,
+    backgroundColor: iosColors.tint,
+    borderRadius: iosRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 42,
-    paddingHorizontal: 16,
+    paddingHorizontal: iosSpacing.lg,
   },
   compactPrimaryButton: {
     flex: 1,
   },
   primaryButtonPressed: {
-    backgroundColor: '#007aff',
+    opacity: 0.85,
   },
   primaryButtonText: {
-    color: '#ffffff',
+    color: iosColors.surface,
     fontSize: 15,
     fontWeight: '700',
   },
-  tabRow: {
-    gap: 8,
-    paddingVertical: 2,
-  },
-  tab: {
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#d1d1d6',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-  },
-  tabPressed: {
-    backgroundColor: '#f2f2f7',
-  },
-  tabSelected: {
-    borderColor: '#0a84ff',
-    backgroundColor: '#eaf3ff',
-  },
-  tabText: {
-    fontSize: 13,
-    color: '#3a3a3c',
-    fontWeight: '600',
-  },
-  tabTextSelected: {
-    color: '#0a84ff',
-  },
   listingsContainer: {
-    gap: 10,
+    gap: iosSpacing.sm,
   },
   listingCard: {
     borderWidth: 1,
-    borderColor: '#e5e5ea',
-    borderRadius: 14,
+    borderColor: iosColors.separator,
+    borderRadius: iosRadius.lg,
     padding: 10,
-    gap: 10,
+    gap: iosSpacing.sm,
   },
   listingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: iosSpacing.sm,
   },
   listingImage: {
     width: 64,
     height: 64,
     borderRadius: 10,
-    backgroundColor: '#d1d1d6',
+    backgroundColor: iosColors.separatorStrong,
   },
   listingMain: {
     flex: 1,
     gap: 2,
   },
   listingName: {
-    fontSize: 16,
+    ...iosTypography.body,
     fontWeight: '700',
-    color: '#1c1c1e',
+    color: iosColors.textPrimary,
   },
   listingPrice: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0a84ff',
+    color: iosColors.tint,
   },
   listingMeta: {
-    fontSize: 12,
-    color: '#8e8e93',
+    ...iosTypography.footnote,
+    color: iosColors.textSecondary,
   },
   badgeBase: {
     borderRadius: 999,
-    paddingHorizontal: 8,
+    paddingHorizontal: iosSpacing.sm,
     paddingVertical: 4,
   },
   badgeLabel: {
@@ -798,59 +767,59 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   activeBadge: {
-    backgroundColor: '#e6f4ea',
+    backgroundColor: iosColors.successBg,
   },
   activeBadgeText: {
-    color: '#2f7a45',
+    color: iosColors.success,
   },
   reservedBadge: {
-    backgroundColor: '#fff6d8',
+    backgroundColor: iosColors.warningBg,
   },
   reservedBadgeText: {
-    color: '#7b631a',
+    color: iosColors.warning,
   },
   soldBadge: {
-    backgroundColor: '#e9e9ec',
+    backgroundColor: iosColors.pressed,
   },
   soldBadgeText: {
-    color: '#4a4a4f',
+    color: iosColors.textPrimary,
   },
   removedBadge: {
-    backgroundColor: '#f2f2f7',
+    backgroundColor: iosColors.pressed,
   },
   removedBadgeText: {
-    color: '#6e6e73',
+    color: iosColors.textSecondary,
   },
   actionRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: iosSpacing.sm,
   },
   secondaryButton: {
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#d1d1d6',
-    backgroundColor: '#fafafa',
+    borderColor: iosColors.separatorStrong,
+    backgroundColor: iosColors.surfaceMuted,
     paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingVertical: iosSpacing.sm,
   },
   secondaryButtonText: {
-    fontSize: 13,
+    ...iosTypography.caption,
     fontWeight: '600',
-    color: '#3a3a3c',
+    color: iosColors.textPrimary,
   },
   editCard: {
     borderTopWidth: 1,
-    borderTopColor: '#ececf0',
+    borderTopColor: iosColors.separator,
     paddingTop: 10,
-    gap: 8,
+    gap: iosSpacing.sm,
   },
   emptyText: {
     fontSize: 14,
-    color: '#6e6e73',
+    color: iosColors.textSecondary,
   },
   errorText: {
-    color: '#d13b3b',
+    color: iosColors.danger,
     fontSize: 13,
     fontWeight: '500',
   },
@@ -861,29 +830,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   helperText: {
-    marginTop: 8,
+    marginTop: iosSpacing.sm,
     fontSize: 14,
-    color: '#6e6e73',
+    color: iosColors.textSecondary,
     textAlign: 'center',
   },
   errorTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1c1c1e',
+    color: iosColors.textPrimary,
     textAlign: 'center',
   },
   retryButton: {
-    marginTop: 14,
-    backgroundColor: '#0a84ff',
+    marginTop: iosSpacing.md,
+    backgroundColor: iosColors.tint,
     borderRadius: 10,
-    paddingHorizontal: 16,
+    paddingHorizontal: iosSpacing.lg,
     paddingVertical: 10,
   },
   retryButtonPressed: {
-    backgroundColor: '#007aff',
+    opacity: 0.85,
   },
   retryButtonText: {
-    color: '#ffffff',
+    color: iosColors.surface,
     fontSize: 14,
     fontWeight: '600',
   },

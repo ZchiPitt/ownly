@@ -387,7 +387,7 @@
         "Verify in iOS simulator: key screens follow native iOS interaction expectations"
       ],
       "priority": 26,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

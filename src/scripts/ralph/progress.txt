@@ -1,5 +1,6 @@
 # Ralph Progress Log
 ## Codebase Patterns
+- Pattern: Keep push-tap navigation and in-app notification navigation on a shared resolver (`notification type + payload + item id`) to prevent routing drift across surfaces.
 - Pattern: Expo lint errors when standard folders exist without lintable files; add minimal `index.ts` placeholders during scaffolding.
 - Pattern: For iOS-only Expo stories, Playwright MCP can only verify browser-side prerequisites (server reachability/artifact capture); simulator verification still needs manual execution.
 - Pattern: `ActionSheetIOS` is a low-dependency native control for inventory sort/location/category pickers and maps cleanly to TanStack Query keys.
@@ -218,4 +219,20 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Patterns discovered: Centralizing notification deep-link resolution in `mobile/lib/notificationRouting.ts` avoids drift between in-app notification center navigation and push-tap navigation behavior.
   - Gotchas encountered: Shell globbing for Expo Router paths with parentheses requires quoting in command-line file operations to avoid `no matches found` failures.
   - Useful context: Playwright MCP verification executed (`mcporter list`, navigate/snapshot/screenshot). Initial navigation to `http://127.0.0.1:5173` hit `ERR_CONNECTION_REFUSED`; live artifact captured successfully on active dev server at `http://127.0.0.1:5174` (`us-025-verification-live.png`).
+---
+## 2026-02-10 17:07 PST - US-025
+- What was implemented: Added push delivery wiring for all core marketplace events in mobile by creating shared marketplace notification builders, emitting `new_inquiry`/`new_message` from chat sends and existing transaction event notifications with deep-link metadata, then routing push taps through a centralized resolver used by both the notifications center and app-level notification response listener. Updated `send-push-notification` Edge Function to deliver to Expo tokens (`ExponentPushToken[...]`) as well as Web Push subscriptions.
+- Files changed: `mobile/lib/marketplaceNotifications.ts`, `mobile/lib/notificationRouting.ts`, `mobile/lib/index.ts`, `mobile/hooks/useMarketplaceMessages.ts`, `mobile/hooks/useMarketplaceTransactions.ts`, `mobile/hooks/usePushNotificationRouting.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/settings/notifications.tsx`, `mobile/app/_layout.tsx`, `supabase/functions/send-push-notification/index.ts`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: A shared notification routing helper prevents divergence between in-app notification-center navigation and push-tap routing behavior.
+  - Gotchas encountered: `new_inquiry` detection in chat flows is off-by-one if message counting happens after insert; use `<= 1` to identify first-thread message correctly.
+  - Useful context: Required Playwright MCP commands executed (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-025-verification-live.png`). First attempt failed before dev server start with `ERR_CONNECTION_REFUSED`; verification succeeded after starting Vite at `http://127.0.0.1:5173`.
+---
+## 2026-02-10 17:12 PST - US-026
+- What was implemented: Added an iOS-native visual foundation and interaction polish layer for mobile UI. Introduced centralized iOS design tokens (spacing, typography, radius, palette), upgraded `Screen` to safe-area-context for notch-safe top/side insets, and added reusable native-style UI primitives (`IOSListCell`, `IOSSegmentedControl`) with light haptic feedback via tap vibration. Applied these primitives to Settings and Marketplace My Listings status filtering to improve iOS-native feel.
+- Files changed: `mobile/theme/tokens.ts`, `mobile/components/Screen.tsx`, `mobile/components/IOSListCell.tsx`, `mobile/components/IOSSegmentedControl.tsx`, `mobile/components/index.ts`, `mobile/app/(tabs)/settings/index.tsx`, `mobile/app/(tabs)/marketplace/my-listings.tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Small reusable primitives + tokens deliver broad native-feel improvements with low churn versus one-off per-screen restyles.
+  - Gotchas encountered: Existing generated agent edits introduced optional haptics utility imports; replacing with `Vibration` avoided extra dependency churn while still satisfying interaction feedback.
+  - Useful context: Browser verification executed and artifact captured at `us-026-verification.png` against active local web server (`http://127.0.0.1:5174`). iOS simulator tactile/gesture validation remains manual.
 ---
