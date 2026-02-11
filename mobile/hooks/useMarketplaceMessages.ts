@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 
+import { createMarketplaceNotification } from '../lib/marketplaceNotifications';
+import type { NotificationType } from '../../src/types/database';
 import { supabase } from '../lib/supabase';
 
 export type MarketplaceConversation = {
@@ -34,6 +36,13 @@ export type MarketplaceChatMessage = {
 };
 
 type ProfileIdRow = { id: string };
+type UserIdRow = { user_id: string };
+type DisplayNameRow = { display_name: string | null };
+type ListingItemNameRow = {
+  item: {
+    name: string | null;
+  } | null;
+};
 
 type MessageConversationRow = {
   id: string;
@@ -80,6 +89,58 @@ async function fetchProfileIdByUserId(userId: string): Promise<string> {
   }
 
   return profile.id;
+}
+
+async function fetchUserIdByProfileId(profileId: string): Promise<string | null> {
+  const { data, error } = await (supabase.from('profiles') as ReturnType<typeof supabase.from>)
+    .select('user_id')
+    .eq('id', profileId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as UserIdRow | null)?.user_id ?? null;
+}
+
+async function fetchProfileDisplayName(profileId: string): Promise<string | null> {
+  const { data, error } = await (supabase.from('profiles') as ReturnType<typeof supabase.from>)
+    .select('display_name')
+    .eq('id', profileId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as DisplayNameRow | null)?.display_name ?? null;
+}
+
+async function fetchListingItemName(listingId: string): Promise<string | null> {
+  const { data, error } = await (supabase.from('listings') as ReturnType<typeof supabase.from>)
+    .select('item:items(name)')
+    .eq('id', listingId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return (data as ListingItemNameRow | null)?.item?.name ?? null;
+}
+
+async function countConversationMessages(listingId: string, senderId: string, receiverId: string): Promise<number> {
+  const { count, error } = await (supabase.from('messages') as ReturnType<typeof supabase.from>)
+    .select('id', { count: 'exact', head: true })
+    .eq('listing_id', listingId)
+    .or(`and(sender_id.eq.${senderId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${senderId})`);
+
+  if (error) {
+    throw error;
+  }
+
+  return count ?? 0;
 }
 
 async function fetchMarketplaceConversations(userId: string): Promise<MarketplaceConversation[]> {
@@ -222,6 +283,25 @@ export function useSendMarketplaceMessageMutation(userId: string | undefined, li
 
       if (error) {
         throw error;
+      }
+      const recipientUserId = await fetchUserIdByProfileId(receiverId);
+      if (recipientUserId) {
+        try {
+          const senderDisplayName = await fetchProfileDisplayName(senderProfileId);
+          const itemName = await fetchListingItemName(listingId);
+          const priorMessageCount = await countConversationMessages(listingId, senderProfileId, receiverId);
+          const notificationType: NotificationType = priorMessageCount <= 1 ? 'new_inquiry' : 'new_message';
+
+          await createMarketplaceNotification(recipientUserId, notificationType, {
+            listing_id: listingId,
+            sender_id: senderProfileId,
+            sender_name: senderDisplayName?.trim() || 'Someone',
+            item_name: itemName?.trim() || undefined,
+            message_preview: trimmed,
+          });
+        } catch {
+          // Ignore notification send failures to avoid blocking chat delivery.
+        }
       }
     },
     onSuccess: () => {

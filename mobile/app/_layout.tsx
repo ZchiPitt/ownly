@@ -1,18 +1,29 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
+import * as Notifications from 'expo-notifications';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../contexts';
-import { useExpoPushRegistration } from '../hooks';
+import { useExpoPushRegistration, usePushNotificationRouting } from '../hooks';
 import { queryClient } from '../lib/queryClient';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { session, user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const { refreshRegistration } = useExpoPushRegistration(user?.id);
+  usePushNotificationRouting();
 
   useEffect(() => {
     if (isLoading) {

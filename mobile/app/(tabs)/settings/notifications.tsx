@@ -10,14 +10,7 @@ import {
   useMarkNotificationReadMutation,
   useNotifications,
 } from '../../../hooks';
-
-type NotificationTarget = {
-  pathname:
-    | '/(tabs)/marketplace/[id]'
-    | '/(tabs)/marketplace/messages/[listingId]'
-    | '/(tabs)/inventory/[id]';
-  params: Record<string, string>;
-};
+import { resolveNotificationTarget } from '../../../lib/notificationRouting';
 
 function formatNotificationDate(createdAt: string): string {
   const parsedDate = new Date(createdAt);
@@ -31,42 +24,6 @@ function formatNotificationDate(createdAt: string): string {
     hour: 'numeric',
     minute: '2-digit',
   });
-}
-
-function getNotificationTarget(notification: AppNotification): NotificationTarget | null {
-  const listingId = notification.data?.listing_id;
-  const transactionId = notification.data?.transaction_id;
-  const itemId = notification.itemId;
-
-  if (notification.type === 'new_message' && listingId) {
-    return {
-      pathname: '/(tabs)/marketplace/messages/[listingId]',
-      params: { listingId },
-    };
-  }
-
-  if (listingId && transactionId) {
-    return {
-      pathname: '/(tabs)/marketplace/messages/[listingId]',
-      params: { listingId },
-    };
-  }
-
-  if (listingId) {
-    return {
-      pathname: '/(tabs)/marketplace/[id]',
-      params: { id: listingId },
-    };
-  }
-
-  if (itemId) {
-    return {
-      pathname: '/(tabs)/inventory/[id]',
-      params: { id: itemId },
-    };
-  }
-
-  return null;
 }
 
 export default function NotificationsScreen() {
@@ -98,7 +55,11 @@ export default function NotificationsScreen() {
       await handleMarkRead(notification.id);
     }
 
-    const target = getNotificationTarget(notification);
+    const target = resolveNotificationTarget({
+      type: notification.type,
+      data: notification.data,
+      itemId: notification.itemId,
+    });
     if (target) {
       router.push({
         pathname: target.pathname,
@@ -199,7 +160,11 @@ export default function NotificationsScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => {
-            const target = getNotificationTarget(item);
+            const target = resolveNotificationTarget({
+              type: item.type,
+              data: item.data,
+              itemId: item.itemId,
+            });
 
             return (
               <Pressable style={({ pressed }) => [styles.row, !item.isRead && styles.unreadRow, pressed && styles.rowPressed]} onPress={() => handleOpenNotification(item)}>

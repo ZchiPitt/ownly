@@ -36,3 +36,4 @@ export {
 export { useNotifications, useMarkNotificationReadMutation } from './useNotifications';
 export type { AppNotification } from './useNotifications';
 export { useExpoPushRegistration } from './useExpoPushRegistration';
+export { usePushNotificationRouting } from './usePushNotificationRouting';

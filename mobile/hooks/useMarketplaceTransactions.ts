@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { createMarketplaceNotification, type MarketplaceNotificationType } from '../lib/marketplaceNotifications';
 import { supabase } from '../lib/supabase';
-import type { ListingStatus, NotificationType, TransactionStatus } from '../../src/types/database';
+import type { ListingStatus, TransactionStatus } from '../../src/types/database';
 
 type ProfileRow = {
   id: string;
@@ -28,12 +29,6 @@ type TransactionRow = {
   created_at: string;
   updated_at: string;
 };
-
-type MarketplaceNotificationType =
-  | 'purchase_request'
-  | 'request_accepted'
-  | 'request_declined'
-  | 'transaction_complete';
 
 export type MarketplaceTransactionRole = 'buyer' | 'seller' | 'viewer';
 
@@ -131,68 +126,6 @@ async function fetchUserIdByProfileId(profileId: string): Promise<string | null>
 
   const profile = data as { user_id: string } | null;
   return profile?.user_id ?? null;
-}
-
-function getNotificationContent(
-  type: MarketplaceNotificationType,
-  senderName: string,
-  itemName: string
-): { title: string; body: string } {
-  switch (type) {
-    case 'purchase_request':
-      return {
-        title: `${senderName} wants to buy ${itemName}`,
-        body: 'Tap to view the purchase request',
-      };
-    case 'request_accepted':
-      return {
-        title: `${senderName} accepted your request`,
-        body: `Your request for ${itemName} was accepted`,
-      };
-    case 'request_declined':
-      return {
-        title: `${senderName} declined your request`,
-        body: 'Your purchase request was declined',
-      };
-    case 'transaction_complete':
-      return {
-        title: 'Transaction complete!',
-        body: 'Leave a review for this transaction',
-      };
-    default:
-      return {
-        title: 'Marketplace update',
-        body: 'Your transaction status changed',
-      };
-  }
-}
-
-async function createMarketplaceNotification(
-  recipientUserId: string,
-  type: MarketplaceNotificationType,
-  data: {
-    listing_id: string;
-    transaction_id: string;
-    sender_id: string;
-    sender_name: string;
-    item_name: string;
-  }
-): Promise<void> {
-  const { title, body } = getNotificationContent(type, data.sender_name, data.item_name);
-  const dbType = type as NotificationType;
-
-  const { error } = await (supabase.from('notifications') as ReturnType<typeof supabase.from>).insert({
-    user_id: recipientUserId,
-    type: dbType,
-    title,
-    body,
-    item_id: null,
-    data,
-  } as Record<string, unknown>);
-
-  if (error) {
-    throw error;
-  }
 }
 
 async function fetchMarketplaceTransactionContext(

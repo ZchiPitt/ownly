@@ -211,3 +211,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: Permission status handling should include `'undetermined'` explicitly in hook state to avoid TS narrowing issues while permissions are loading.
   - Useful context: Required Playwright MCP workflow completed successfully (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-024-verification-live.png`) with artifact captured on running local app; mobile push runtime behavior still requires physical iPhone verification.
 ---
+## 2026-02-10 17:06 PST - US-025
+- What was implemented: Added marketplace push-delivery event coverage and payload routing for iOS. Message sending now emits `new_inquiry` (first thread message) or `new_message` notifications with deep-link metadata. Added centralized notification-route resolver and app-level Expo notification response handling so push taps deep-link into marketplace message/detail or inventory screens from foreground/background launch contexts. Extended Edge Function `send-push-notification` to support Expo token endpoints (`ExponentPushToken[...]`) in addition to existing Web Push delivery.
+- Files changed: `mobile/hooks/useMarketplaceMessages.ts`, `mobile/hooks/usePushNotificationRouting.ts`, `mobile/hooks/index.ts`, `mobile/lib/notificationRouting.ts`, `mobile/app/_layout.tsx`, `mobile/app/(tabs)/settings/notifications.tsx`, `supabase/functions/send-push-notification/index.ts`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Centralizing notification deep-link resolution in `mobile/lib/notificationRouting.ts` avoids drift between in-app notification center navigation and push-tap navigation behavior.
+  - Gotchas encountered: Shell globbing for Expo Router paths with parentheses requires quoting in command-line file operations to avoid `no matches found` failures.
+  - Useful context: Playwright MCP verification executed (`mcporter list`, navigate/snapshot/screenshot). Initial navigation to `http://127.0.0.1:5173` hit `ERR_CONNECTION_REFUSED`; live artifact captured successfully on active dev server at `http://127.0.0.1:5174` (`us-025-verification-live.png`).
+---

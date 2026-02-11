@@ -1,13 +1,13 @@
 /**
  * Supabase Edge Function: send-push-notification
  *
- * Sends Web Push notifications to user devices when notifications are created.
+ * Sends Web Push or Expo Push notifications to user devices when notifications are created.
  * Called by database trigger on notifications table INSERT.
  *
  * @requires SUPABASE_URL environment variable
  * @requires SUPABASE_SERVICE_ROLE_KEY environment variable
- * @requires VAPID_PUBLIC_KEY environment variable
- * @requires VAPID_PRIVATE_KEY environment variable
+ * @requires VAPID_PUBLIC_KEY environment variable (for Web Push endpoints)
+ * @requires VAPID_PRIVATE_KEY environment variable (for Web Push endpoints)
  */
 
 import { createClient, SupabaseClient } from 'jsr:@supabase/supabase-js@2';
@@ -424,6 +424,72 @@ async function sendPushToSubscription(
   }
 }
 
+
+
+function isExpoPushEndpoint(endpoint: string): boolean {
+  return endpoint.startsWith('ExponentPushToken[') || endpoint.startsWith('ExpoPushToken[');
+}
+
+async function sendExpoPushToSubscription(
+  subscription: PushSubscription,
+  payload: SendPushRequest,
+  soundEnabled: boolean
+): Promise<{ success: boolean; shouldRemove: boolean; error?: string }> {
+  try {
+    const requestBody = {
+      to: subscription.endpoint,
+      title: payload.title,
+      body: payload.body,
+      data: {
+        ...(payload.data ?? {}),
+        type: payload.type || 'system',
+        notification_id: payload.notification_id,
+      },
+      sound: soundEnabled ? 'default' : undefined,
+    };
+
+    const response = await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return {
+        success: false,
+        shouldRemove: false,
+        error: `Expo push failed with status ${response.status}: ${errorText}`
+      };
+    }
+
+    const result = await response.json() as { data?: { status?: string; message?: string; details?: { error?: string } } };
+    const status = result.data?.status;
+
+    if (status === 'ok') {
+      return { success: true, shouldRemove: false };
+    }
+
+    const expoError = result.data?.details?.error || result.data?.message || 'Unknown Expo push error';
+    const shouldRemove = expoError === 'DeviceNotRegistered';
+
+    return {
+      success: false,
+      shouldRemove,
+      error: expoError,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      shouldRemove: false,
+      error: error instanceof Error ? error.message : 'Unknown Expo push error',
+    };
+  }
+}
+
 /**
  * Remove invalid subscriptions from the database
  */
@@ -502,19 +568,6 @@ Deno.serve(async (req: Request) => {
       const error: ApiError = {
         error: {
           message: 'Supabase configuration missing',
-          code: 'CONFIGURATION_ERROR',
-        },
-      };
-      return new Response(JSON.stringify(error), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    if (!vapidPublicKey || !vapidPrivateKey) {
-      const error: ApiError = {
-        error: {
-          message: 'VAPID keys not configured. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Supabase secrets.',
           code: 'CONFIGURATION_ERROR',
         },
       };
@@ -604,6 +657,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const hasWebSubscriptions = (subscriptions as PushSubscription[]).some(
+      (subscription) => !isExpoPushEndpoint(subscription.endpoint)
+    );
+
+    if (hasWebSubscriptions && (!vapidPublicKey || !vapidPrivateKey)) {
+      const error: ApiError = {
+        error: {
+          message: 'VAPID keys not configured for Web Push subscriptions. Set VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY in Supabase secrets.',
+          code: 'CONFIGURATION_ERROR',
+        },
+      };
+      return new Response(JSON.stringify(error), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     console.log(`[send-push] Found ${subscriptions.length} active subscription(s)`);
 
     // Send push to all subscriptions
@@ -612,14 +682,16 @@ Deno.serve(async (req: Request) => {
     const subscriptionsSuccessful: string[] = [];
 
     for (const subscription of subscriptions as PushSubscription[]) {
-      const result = await sendPushToSubscription(
-        subscription,
-        body,
-        vapidPublicKey,
-        vapidPrivateKey,
-        vapidSubject,
-        soundEnabled
-      );
+      const result = isExpoPushEndpoint(subscription.endpoint)
+        ? await sendExpoPushToSubscription(subscription, body, soundEnabled)
+        : await sendPushToSubscription(
+            subscription,
+            body,
+            vapidPublicKey as string,
+            vapidPrivateKey as string,
+            vapidSubject,
+            soundEnabled
+          );
 
       results.push({
         subscription_id: subscription.id,
