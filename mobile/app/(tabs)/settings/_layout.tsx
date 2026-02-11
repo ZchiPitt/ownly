@@ -8,6 +8,15 @@ export default function SettingsLayout() {
         headerLargeTitleShadowVisible: false,
         headerTintColor: '#0a84ff',
       }}
-    />
+    >
+      <Stack.Screen name="index" options={{ title: 'Settings' }} />
+      <Stack.Screen
+        name="notifications"
+        options={{
+          title: 'Notifications',
+          headerLargeTitle: false,
+        }}
+      />
+    </Stack>
   );
 }

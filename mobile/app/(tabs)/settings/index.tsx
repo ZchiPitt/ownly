@@ -4,10 +4,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../../../components';
 
 const settingsLinks = [
-  { id: 'profile', label: 'Profile' },
-  { id: 'notifications', label: 'Notifications' },
-  { id: 'support', label: 'Support' },
-];
+  { id: 'profile', label: 'Profile', href: '/(tabs)/settings/profile' },
+  { id: 'notifications', label: 'Notifications', href: '/(tabs)/settings/notifications' },
+  { id: 'support', label: 'Support', href: '/(tabs)/settings/support' },
+] as const;
 
 export default function SettingsScreen() {
   return (
@@ -16,7 +16,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.card}>
           {settingsLinks.map((item, index) => (
-            <Link key={item.id} href={`/(tabs)/settings/${item.id}`} asChild>
+            <Link key={item.id} href={item.href} asChild>
               <Pressable
                 style={({ pressed }) => [
                   styles.row,

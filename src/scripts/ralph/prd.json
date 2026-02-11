@@ -342,7 +342,7 @@
         "Verify in iOS simulator: notifications list interactions work"
       ],
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

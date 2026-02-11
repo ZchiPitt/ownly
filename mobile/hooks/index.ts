@@ -33,3 +33,5 @@ export {
   useToggleFavoriteItemMutation,
   useSoftDeleteItemMutation,
 } from './useInventoryItemMutations';
+export { useNotifications, useMarkNotificationReadMutation } from './useNotifications';
+export type { AppNotification } from './useNotifications';
