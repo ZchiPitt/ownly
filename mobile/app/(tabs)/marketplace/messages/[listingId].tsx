@@ -16,13 +16,18 @@ import {
 import { Screen } from '../../../../components';
 import { useAuth } from '../../../../contexts/AuthProvider';
 import {
+  getTransactionStatusLabel,
+  useCreateMarketplacePurchaseRequestMutation,
   useMarkMarketplaceMessagesReadMutation,
   useMarketplaceChatMessages,
   useMarketplaceConversations,
   useMarketplaceListingDetail,
   useMarketplaceMessageSubscription,
+  useMarketplaceTransactionContext,
   useSendMarketplaceMessageMutation,
+  useUpdateMarketplaceTransactionStatusMutation,
 } from '../../../../hooks';
+import type { TransactionStatus } from '../../../../../src/types/database';
 
 function formatMessageTime(createdAt: string): string {
   const date = new Date(createdAt);
@@ -57,6 +62,8 @@ export default function MarketplaceChatScreen() {
 
   const sendMessageMutation = useSendMarketplaceMessageMutation(user?.id, normalizedListingId);
   const markReadMutation = useMarkMarketplaceMessagesReadMutation(user?.id, normalizedListingId);
+  const purchaseRequestMutation = useCreateMarketplacePurchaseRequestMutation(user?.id);
+  const updateTransactionStatusMutation = useUpdateMarketplaceTransactionStatusMutation(user?.id);
 
   useMarketplaceMessageSubscription(user?.id, normalizedListingId);
 
@@ -95,6 +102,48 @@ export default function MarketplaceChatScreen() {
 
     return listingDetail.sellerUserId !== user.id ? listingDetail.sellerId : null;
   }, [activeConversation?.otherUser.id, listingDetail, user]);
+  const { data: transactionContext } = useMarketplaceTransactionContext(
+    user?.id,
+    normalizedListingId,
+    receiverId ?? undefined
+  );
+
+  const handleCreatePurchaseRequest = async () => {
+    if (!normalizedListingId || !transactionContext) {
+      return;
+    }
+
+    setSendError(null);
+
+    try {
+      await purchaseRequestMutation.mutateAsync({
+        listingId: normalizedListingId,
+        sellerProfileId: transactionContext.sellerProfileId,
+        agreedPrice: transactionContext.listingPrice,
+        itemName: transactionContext.itemName,
+      });
+    } catch (transactionError) {
+      setSendError(transactionError instanceof Error ? transactionError.message : 'Could not create purchase request.');
+    }
+  };
+
+  const handleTransactionTransition = async (nextStatus: TransactionStatus) => {
+    if (!normalizedListingId || !transactionContext?.transaction) {
+      return;
+    }
+
+    setSendError(null);
+
+    try {
+      await updateTransactionStatusMutation.mutateAsync({
+        listingId: normalizedListingId,
+        transactionId: transactionContext.transaction.id,
+        nextStatus,
+      });
+    } catch (transactionError) {
+      setSendError(transactionError instanceof Error ? transactionError.message : 'Could not update transaction.');
+    }
+  };
 
   const handleSend = async () => {
     if (!receiverId || !draft.trim()) {
@@ -155,6 +204,58 @@ export default function MarketplaceChatScreen() {
           <Text style={styles.headerSellerName}>{headerTitle}</Text>
         </View>
       </View>
+      {transactionContext ? (
+        <View style={styles.transactionCard}>
+          <Text style={styles.transactionTitle}>Transaction Status</Text>
+          {transactionContext.transaction ? (
+            <>
+              <Text style={styles.transactionStatusText}>
+                {getTransactionStatusLabel(transactionContext.transaction.status)}
+              </Text>
+              {transactionContext.transaction.availableTransitions.length > 0 ? (
+                <View style={styles.transactionActionRow}>
+                  {transactionContext.transaction.availableTransitions.map((status) => (
+                    <Pressable
+                      key={status}
+                      style={({ pressed }) => [
+                        styles.transactionActionButton,
+                        status === 'cancelled' ? styles.transactionActionButtonDestructive : styles.transactionActionButtonPrimary,
+                        pressed ? styles.transactionActionButtonPressed : null,
+                        updateTransactionStatusMutation.isPending ? styles.transactionActionButtonDisabled : null,
+                      ]}
+                      onPress={() => handleTransactionTransition(status)}
+                      disabled={updateTransactionStatusMutation.isPending}
+                    >
+                      <Text style={styles.transactionActionLabel}>
+                        {status === 'accepted' ? 'Accept' : status === 'completed' ? 'Complete' : 'Cancel'}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.transactionHint}>No transaction actions available for your role.</Text>
+              )}
+            </>
+          ) : transactionContext.canCreatePurchaseRequest ? (
+            <Pressable
+              style={({ pressed }) => [
+                styles.transactionActionButton,
+                styles.transactionActionButtonPrimary,
+                pressed ? styles.transactionActionButtonPressed : null,
+                purchaseRequestMutation.isPending ? styles.transactionActionButtonDisabled : null,
+              ]}
+              onPress={handleCreatePurchaseRequest}
+              disabled={purchaseRequestMutation.isPending}
+            >
+              <Text style={styles.transactionActionLabel}>
+                {purchaseRequestMutation.isPending ? 'Sending...' : 'Send Purchase Request'}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.transactionHint}>No transaction started for this listing yet.</Text>
+          )}
+        </View>
+      ) : null}
 
       <KeyboardAvoidingView
         style={styles.flex}
@@ -259,6 +360,61 @@ const styles = StyleSheet.create({
     borderColor: '#e5e5ea',
     padding: 10,
     marginBottom: 8,
+  },
+  transactionCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    backgroundColor: '#f9f9fb',
+    padding: 10,
+    marginBottom: 8,
+  },
+  transactionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    color: '#6e6e73',
+  },
+  transactionStatusText: {
+    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1c1c1e',
+  },
+  transactionHint: {
+    marginTop: 6,
+    fontSize: 12,
+    color: '#6e6e73',
+  },
+  transactionActionRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  transactionActionButton: {
+    borderRadius: 8,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  transactionActionButtonPrimary: {
+    backgroundColor: '#0a84ff',
+  },
+  transactionActionButtonDestructive: {
+    backgroundColor: '#ff3b30',
+  },
+  transactionActionButtonPressed: {
+    opacity: 0.82,
+  },
+  transactionActionButtonDisabled: {
+    opacity: 0.6,
+  },
+  transactionActionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   headerImage: {
     width: 44,

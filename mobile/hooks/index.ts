@@ -22,6 +22,12 @@ export {
   useMarketplaceMessageSubscription,
 } from './useMarketplaceMessages';
 export {
+  useMarketplaceTransactionContext,
+  useCreateMarketplacePurchaseRequestMutation,
+  useUpdateMarketplaceTransactionStatusMutation,
+  getTransactionStatusLabel,
+} from './useMarketplaceTransactions';
+export {
   useCreateInventoryItemMutation,
   useUpdateInventoryItemMutation,
   useToggleFavoriteItemMutation,

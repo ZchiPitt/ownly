@@ -4,11 +4,16 @@ import { Alert, ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Tex
 import { ListingSaveButton, Screen } from '../../../components';
 import { useAuth } from '../../../contexts/AuthProvider';
 import {
+  getTransactionStatusLabel,
+  useCreateMarketplacePurchaseRequestMutation,
   useMarketplaceListingDetail,
+  useMarketplaceTransactionContext,
   useSavedListingIds,
   useSaveMarketplaceListingMutation,
+  useUpdateMarketplaceTransactionStatusMutation,
   useUnsaveMarketplaceListingMutation,
 } from '../../../hooks';
+import type { TransactionStatus } from '../../../../src/types/database';
 
 const CONDITION_LABELS: Record<string, string> = {
   new: 'New',
@@ -58,6 +63,9 @@ export default function MarketplaceDetailScreen() {
   const { data: savedListingIds = [] } = useSavedListingIds(user?.id);
   const saveListingMutation = useSaveMarketplaceListingMutation(user?.id);
   const unsaveListingMutation = useUnsaveMarketplaceListingMutation(user?.id);
+  const purchaseRequestMutation = useCreateMarketplacePurchaseRequestMutation(user?.id);
+  const updateTransactionStatusMutation = useUpdateMarketplaceTransactionStatusMutation(user?.id);
+  const { data: transactionContext } = useMarketplaceTransactionContext(user?.id, listingId);
 
   const isSaved = listingId ? savedListingIds.includes(listingId) : false;
 
@@ -74,6 +82,40 @@ export default function MarketplaceDetailScreen() {
       }
     } catch (saveError) {
       Alert.alert('Could not update saved listing', saveError instanceof Error ? saveError.message : 'Please try again.');
+    }
+  };
+
+  const handleCreatePurchaseRequest = async () => {
+    if (!listingId || !data || !transactionContext) {
+      return;
+    }
+
+    try {
+      await purchaseRequestMutation.mutateAsync({
+        listingId,
+        sellerProfileId: transactionContext.sellerProfileId,
+        agreedPrice: data.price,
+        itemName: transactionContext.itemName,
+      });
+      Alert.alert('Request sent', 'The seller has been notified of your purchase request.');
+    } catch (transactionError) {
+      Alert.alert('Could not send request', transactionError instanceof Error ? transactionError.message : 'Please try again.');
+    }
+  };
+
+  const handleTransition = async (nextStatus: TransactionStatus) => {
+    if (!listingId || !transactionContext?.transaction) {
+      return;
+    }
+
+    try {
+      await updateTransactionStatusMutation.mutateAsync({
+        listingId,
+        transactionId: transactionContext.transaction.id,
+        nextStatus,
+      });
+    } catch (transactionError) {
+      Alert.alert('Could not update transaction', transactionError instanceof Error ? transactionError.message : 'Please try again.');
     }
   };
 
@@ -149,6 +191,64 @@ export default function MarketplaceDetailScreen() {
             <Text style={styles.label}>Views</Text>
             <Text style={styles.value}>{data.viewCount}</Text>
           </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Listing Status</Text>
+            <Text style={styles.value}>{data.status}</Text>
+          </View>
+
+          {transactionContext ? (
+            <View style={styles.transactionCard}>
+              <Text style={styles.transactionTitle}>Transaction</Text>
+              {transactionContext.transaction ? (
+                <>
+                  <View style={styles.row}>
+                    <Text style={styles.label}>Status</Text>
+                    <Text style={styles.value}>{getTransactionStatusLabel(transactionContext.transaction.status)}</Text>
+                  </View>
+                  {transactionContext.transaction.availableTransitions.length > 0 ? (
+                    <View style={styles.transactionActions}>
+                      {transactionContext.transaction.availableTransitions.map((status) => (
+                        <Pressable
+                          key={status}
+                          style={({ pressed }) => [
+                            styles.transactionActionButton,
+                            status === 'cancelled' ? styles.transactionActionButtonDestructive : styles.transactionActionButtonPrimary,
+                            pressed ? styles.transactionActionButtonPressed : null,
+                            updateTransactionStatusMutation.isPending ? styles.transactionActionButtonDisabled : null,
+                          ]}
+                          onPress={() => handleTransition(status)}
+                          disabled={updateTransactionStatusMutation.isPending}
+                        >
+                          <Text style={styles.transactionActionLabel}>
+                            {status === 'accepted' ? 'Accept Request' : status === 'completed' ? 'Mark Complete' : 'Cancel Request'}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.transactionHint}>No status actions available for your role.</Text>
+                  )}
+                </>
+              ) : transactionContext.canCreatePurchaseRequest ? (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.transactionActionButton,
+                    styles.transactionActionButtonPrimary,
+                    pressed ? styles.transactionActionButtonPressed : null,
+                    purchaseRequestMutation.isPending ? styles.transactionActionButtonDisabled : null,
+                  ]}
+                  onPress={handleCreatePurchaseRequest}
+                  disabled={purchaseRequestMutation.isPending}
+                >
+                  <Text style={styles.transactionActionLabel}>
+                    {purchaseRequestMutation.isPending ? 'Sending Request...' : 'Send Purchase Request'}
+                  </Text>
+                </Pressable>
+              ) : (
+                <Text style={styles.transactionHint}>No active transaction for this listing yet.</Text>
+              )}
+            </View>
+          ) : null}
 
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{data.description?.trim() || 'No description provided.'}</Text>
@@ -174,6 +274,54 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 28,
+  },
+  transactionCard: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    backgroundColor: '#f9f9fb',
+    padding: 12,
+  },
+  transactionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#3a3a3c',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  transactionHint: {
+    marginTop: 6,
+    fontSize: 13,
+    color: '#6e6e73',
+  },
+  transactionActions: {
+    marginTop: 8,
+    gap: 8,
+  },
+  transactionActionButton: {
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  transactionActionButtonPrimary: {
+    backgroundColor: '#0a84ff',
+  },
+  transactionActionButtonDestructive: {
+    backgroundColor: '#ff3b30',
+  },
+  transactionActionButtonPressed: {
+    opacity: 0.82,
+  },
+  transactionActionButtonDisabled: {
+    opacity: 0.6,
+  },
+  transactionActionLabel: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   image: {
     width: '100%',

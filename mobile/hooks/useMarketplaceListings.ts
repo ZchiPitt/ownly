@@ -1,13 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { supabase } from '../lib/supabase';
-import type { ItemCondition, PriceType } from '../../src/types/database';
+import type { ItemCondition, ListingStatus, PriceType } from '../../src/types/database';
 
 type ListingRow = {
   id: string;
   item_id: string;
   seller_id: string;
-  status: string;
+  status: ListingStatus;
   price: number | null;
   price_type: PriceType;
   condition: ItemCondition;
@@ -36,6 +36,7 @@ export type MarketplaceListingSummary = {
   id: string;
   itemId: string;
   sellerId: string;
+  status: ListingStatus;
   price: number | null;
   priceType: PriceType;
   condition: ItemCondition;
@@ -73,6 +74,7 @@ function mapListingSummary(
     id: listing.id,
     itemId: listing.item_id,
     sellerId: listing.seller_id,
+    status: listing.status,
     price: listing.price,
     priceType: listing.price_type,
     condition: listing.condition,
@@ -144,7 +146,6 @@ async function fetchMarketplaceListingDetail(listingId: string): Promise<Marketp
     .from('listings')
     .select('id, item_id, seller_id, status, price, price_type, condition, description, view_count, created_at')
     .eq('id', listingId)
-    .eq('status', 'active')
     .maybeSingle();
 
   if (listingError) {
@@ -153,6 +154,10 @@ async function fetchMarketplaceListingDetail(listingId: string): Promise<Marketp
 
   const listing = (listingData as ListingRow | null) ?? null;
   if (!listing) {
+    return null;
+  }
+
+  if (listing.status === 'removed') {
     return null;
   }
 
@@ -184,6 +189,7 @@ async function fetchMarketplaceListingDetail(listingId: string): Promise<Marketp
     id: listing.id,
     itemId: listing.item_id,
     sellerId: listing.seller_id,
+    status: listing.status,
     sellerUserId: seller?.user_id ?? '',
     price: listing.price,
     priceType: listing.price_type,

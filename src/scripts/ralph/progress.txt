@@ -186,3 +186,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: Playwright MCP commands ran, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED` in this environment.
   - Useful context: Required verification commands were executed (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-021-verification.png`); artifact was captured on the browser error page (`chrome-error://chromewebdata/`). iOS simulator verification remains manual for this mobile-only story.
 ---
+## 2026-02-10 16:52 PST - US-022
+- What was implemented: Added marketplace transaction status flow across listing detail and chat contexts. Implemented a new transaction hook module for context loading, purchase request creation, status transition permissions (buyer/seller role checks), listing status side effects (reserved/sold/active), and notification record creation for purchase requests and status updates. Wired status UI/actions into marketplace detail and chat screens.
+- Files changed: `mobile/hooks/useMarketplaceTransactions.ts`, `mobile/hooks/index.ts`, `mobile/app/(tabs)/marketplace/[id].tsx`, `mobile/app/(tabs)/marketplace/messages/[listingId].tsx`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Reuse one transaction-context query (`listing + latest transaction + role`) across both detail/chat surfaces so permission checks and available status actions stay consistent.
+  - Gotchas encountered: Playwright MCP server was healthy, but browser navigation to `http://127.0.0.1:5173` returned `ERR_CONNECTION_REFUSED`; captured snapshot/screenshot artifact from error state while iOS simulator verification remains manual.
+  - Useful context: Validation passed with `cd mobile && npx tsc --noEmit && npx expo lint` and repository tests passed with `npm test`.
+---
