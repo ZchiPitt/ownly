@@ -17,6 +17,13 @@ export default function SettingsLayout() {
           headerLargeTitle: false,
         }}
       />
+      <Stack.Screen
+        name="[section]"
+        options={{
+          title: 'Details',
+          headerLargeTitle: false,
+        }}
+      />
     </Stack>
   );
 }

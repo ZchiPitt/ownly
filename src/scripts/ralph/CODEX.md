@@ -18,7 +18,10 @@ You are an autonomous coding agent working on the Ownly iOS app (Expo + React Na
 4. Pick the **highest priority** user story where `passes: false`
 5. Implement that single user story
 6. Run quality checks: `cd mobile && npx tsc --noEmit && npx expo lint`
-7. If checks pass, commit ALL changes with message: `feat: [Story ID] - [Story Title]`
+7. If checks pass, commit ALL changes using Conventional Commit format:
+   - `feat(us-001): bootstrap expo ios scaffold`
+   - `fix(us-010): correct inventory mutation invalidation`
+   - `chore(us-027): tighten release quality checks`
 8. Update the PRD to set `passes: true` for the completed story
 9. Append your progress to `src/scripts/ralph/progress.txt`
 
