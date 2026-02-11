@@ -5,12 +5,14 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '../contexts';
+import { useExpoPushRegistration } from '../hooks';
 import { queryClient } from '../lib/queryClient';
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { session, isLoading } = useAuth();
+  const { session, user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const { refreshRegistration } = useExpoPushRegistration(user?.id);
 
   useEffect(() => {
     if (isLoading) {
@@ -28,6 +30,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       router.replace('/(tabs)');
     }
   }, [session, isLoading, segments, router]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    void refreshRegistration();
+  }, [user?.id, refreshRegistration]);
 
   if (isLoading) {
     return (

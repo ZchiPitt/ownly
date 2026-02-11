@@ -203,3 +203,11 @@ Started: Tue Feb 10 02:57:51 PST 2026
   - Gotchas encountered: None.
   - Useful context: Required verification workflow completed successfully with `mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, and `mcporter call playwright.browser_take_screenshot filename=us-023-verification.png`; iOS simulator interaction verification for this mobile screen remains manual.
 ---
+## 2026-02-10 16:59 PST - US-024
+- What was implemented: Added iOS Expo push registration flow with permission handling, Expo token acquisition, and Supabase sync into `push_subscriptions`. Integrated registration refresh at authenticated app startup and expanded Settings → Notifications with push status, enable/refresh action, and iOS Settings deep-link when permissions are denied.
+- Files changed: `mobile/hooks/useExpoPushRegistration.ts`, `mobile/hooks/index.ts`, `mobile/app/_layout.tsx`, `mobile/app/(tabs)/settings/notifications.tsx`, `mobile/app.json`, `mobile/package.json`, `mobile/package-lock.json`, `src/scripts/ralph/prd.json`, `src/scripts/ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Patterns discovered: Reuse existing `push_subscriptions` schema by storing Expo tokens in `endpoint` and marking previous Expo endpoints inactive per user before upsert.
+  - Gotchas encountered: Permission status handling should include `'undetermined'` explicitly in hook state to avoid TS narrowing issues while permissions are loading.
+  - Useful context: Required Playwright MCP workflow completed successfully (`mcporter list`, `mcporter call playwright.browser_navigate url=http://127.0.0.1:5173`, `mcporter call playwright.browser_snapshot`, `mcporter call playwright.browser_take_screenshot filename=us-024-verification-live.png`) with artifact captured on running local app; mobile push runtime behavior still requires physical iPhone verification.
+---

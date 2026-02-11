@@ -1,10 +1,15 @@
 import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
-import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Screen } from '../../../components';
 import { useAuth } from '../../../contexts';
-import { type AppNotification, useMarkNotificationReadMutation, useNotifications } from '../../../hooks';
+import {
+  type AppNotification,
+  useExpoPushRegistration,
+  useMarkNotificationReadMutation,
+  useNotifications,
+} from '../../../hooks';
 
 type NotificationTarget = {
   pathname:
@@ -67,6 +72,7 @@ function getNotificationTarget(notification: AppNotification): NotificationTarge
 export default function NotificationsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const pushRegistration = useExpoPushRegistration(user?.id);
   const { data = [], isLoading, isError, error, refetch } = useNotifications(user?.id);
   const markReadMutation = useMarkNotificationReadMutation();
 
@@ -101,85 +107,162 @@ export default function NotificationsScreen() {
     }
   };
 
+  const handleEnablePush = async () => {
+    if (pushRegistration.permissionStatus === 'denied') {
+      Alert.alert(
+        'Push notifications are disabled',
+        'Enable notifications for Ownly from iPhone Settings to receive alerts.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Open Settings',
+            onPress: () => {
+              void Linking.openSettings();
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    const result = await pushRegistration.requestPermissionAndRegister();
+    if (result.error) {
+      Alert.alert('Push registration failed', result.error);
+    }
+  };
+
+  const pushStatusLabel = useMemo(() => {
+    if (pushRegistration.permissionStatus === 'granted' && pushRegistration.expoPushToken) {
+      return 'Enabled on this device';
+    }
+
+    if (pushRegistration.permissionStatus === 'denied') {
+      return 'Disabled in iOS Settings';
+    }
+
+    if (pushRegistration.permissionStatus === 'granted') {
+      return 'Permission granted, token pending';
+    }
+
+    return 'Not enabled yet';
+  }, [pushRegistration.expoPushToken, pushRegistration.permissionStatus]);
+
+  const pushTokenPreview = useMemo(() => {
+    if (!pushRegistration.expoPushToken) {
+      return null;
+    }
+
+    const token = pushRegistration.expoPushToken;
+    if (token.length <= 20) {
+      return token;
+    }
+
+    return `${token.slice(0, 12)}...${token.slice(-8)}`;
+  }, [pushRegistration.expoPushToken]);
+
+  let notificationsContent: React.ReactNode = null;
   if (isLoading) {
-    return (
-      <Screen style={styles.centerState}>
+    notificationsContent = (
+      <View style={styles.centerState}>
         <ActivityIndicator size="large" color="#0a84ff" />
         <Text style={styles.helperText}>Loading notifications...</Text>
-      </Screen>
+      </View>
     );
-  }
-
-  if (isError) {
-    return (
-      <Screen style={styles.centerState}>
+  } else if (isError) {
+    notificationsContent = (
+      <View style={styles.centerState}>
         <Text style={styles.errorTitle}>Could not load notifications</Text>
         <Text style={styles.helperText}>{error instanceof Error ? error.message : 'Please try again.'}</Text>
         <Pressable style={({ pressed }) => [styles.retryButton, pressed && styles.retryButtonPressed]} onPress={() => refetch()}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </Pressable>
-      </Screen>
+      </View>
     );
-  }
-
-  if (data.length === 0) {
-    return (
-      <Screen style={styles.centerState}>
+  } else if (data.length === 0) {
+    notificationsContent = (
+      <View style={styles.centerState}>
         <Text style={styles.emptyTitle}>No notifications yet</Text>
         <Text style={styles.helperText}>Marketplace and inventory alerts will appear here.</Text>
-      </Screen>
+      </View>
+    );
+  } else {
+    notificationsContent = (
+      <>
+        <View style={styles.headerCard}>
+          <Text style={styles.headerTitle}>Notification Center</Text>
+          <Text style={styles.headerSubtitle}>
+            {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
+          </Text>
+        </View>
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => {
+            const target = getNotificationTarget(item);
+
+            return (
+              <Pressable style={({ pressed }) => [styles.row, !item.isRead && styles.unreadRow, pressed && styles.rowPressed]} onPress={() => handleOpenNotification(item)}>
+                <View style={styles.rowBody}>
+                  <View style={styles.rowTitleWrap}>
+                    {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                    <Text style={styles.rowTitle}>{item.title}</Text>
+                  </View>
+                  <Text style={styles.rowMessage}>{item.body?.trim() || 'Open to see details.'}</Text>
+                  <View style={styles.rowFooter}>
+                    <Text style={styles.rowDate}>{formatNotificationDate(item.createdAt)}</Text>
+                    <Text style={styles.rowType}>{item.type.replaceAll('_', ' ')}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.trailingActions}>
+                  {!item.isRead ? (
+                    <Pressable
+                      style={({ pressed }) => [styles.markReadButton, pressed && styles.markReadButtonPressed]}
+                      onPress={(event) => {
+                        event.stopPropagation();
+                        void handleMarkRead(item.id);
+                      }}
+                      disabled={markReadMutation.isPending}
+                    >
+                      <Text style={styles.markReadLabel}>Mark read</Text>
+                    </Pressable>
+                  ) : null}
+                  {target ? <Text style={styles.chevron}>›</Text> : null}
+                </View>
+              </Pressable>
+            );
+          }}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+        />
+      </>
     );
   }
 
   return (
     <Screen style={styles.container}>
-      <View style={styles.headerCard}>
-        <Text style={styles.headerTitle}>Notification Center</Text>
-        <Text style={styles.headerSubtitle}>
-          {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up'}
-        </Text>
+      <View style={styles.pushCard}>
+        <Text style={styles.pushCardTitle}>Push Notifications</Text>
+        <Text style={styles.pushCardSubtitle}>{pushStatusLabel}</Text>
+        {pushTokenPreview ? <Text style={styles.pushToken}>Token: {pushTokenPreview}</Text> : null}
+        {pushRegistration.error ? <Text style={styles.pushError}>{pushRegistration.error}</Text> : null}
+        <Pressable
+          style={({ pressed }) => [styles.pushButton, pressed && styles.pushButtonPressed]}
+          onPress={() => {
+            void handleEnablePush();
+          }}
+          disabled={pushRegistration.isRegistering}
+        >
+          {pushRegistration.isRegistering ? (
+            <ActivityIndicator size="small" color="#ffffff" />
+          ) : (
+            <Text style={styles.pushButtonText}>
+              {pushRegistration.permissionStatus === 'granted' ? 'Refresh Device Token' : 'Enable Push Notifications'}
+            </Text>
+          )}
+        </Pressable>
       </View>
-      <FlatList
-        data={data}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => {
-          const target = getNotificationTarget(item);
-
-          return (
-            <Pressable style={({ pressed }) => [styles.row, !item.isRead && styles.unreadRow, pressed && styles.rowPressed]} onPress={() => handleOpenNotification(item)}>
-              <View style={styles.rowBody}>
-                <View style={styles.rowTitleWrap}>
-                  {!item.isRead ? <View style={styles.unreadDot} /> : null}
-                  <Text style={styles.rowTitle}>{item.title}</Text>
-                </View>
-                <Text style={styles.rowMessage}>{item.body?.trim() || 'Open to see details.'}</Text>
-                <View style={styles.rowFooter}>
-                  <Text style={styles.rowDate}>{formatNotificationDate(item.createdAt)}</Text>
-                  <Text style={styles.rowType}>{item.type.replaceAll('_', ' ')}</Text>
-                </View>
-              </View>
-
-              <View style={styles.trailingActions}>
-                {!item.isRead ? (
-                  <Pressable
-                    style={({ pressed }) => [styles.markReadButton, pressed && styles.markReadButtonPressed]}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      void handleMarkRead(item.id);
-                    }}
-                    disabled={markReadMutation.isPending}
-                  >
-                    <Text style={styles.markReadLabel}>Mark read</Text>
-                  </Pressable>
-                ) : null}
-                {target ? <Text style={styles.chevron}>›</Text> : null}
-              </View>
-            </Pressable>
-          );
-        }}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+      {notificationsContent}
     </Screen>
   );
 }
@@ -197,6 +280,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     marginBottom: 12,
+  },
+  pushCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#dce7ff',
+    backgroundColor: '#f3f8ff',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+    gap: 6,
+  },
+  pushCardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1c1c1e',
+  },
+  pushCardSubtitle: {
+    fontSize: 13,
+    color: '#3a3a3c',
+  },
+  pushToken: {
+    fontSize: 12,
+    color: '#6e6e73',
+  },
+  pushError: {
+    fontSize: 12,
+    color: '#c62828',
+  },
+  pushButton: {
+    marginTop: 2,
+    alignSelf: 'flex-start',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#0a84ff',
+    minWidth: 176,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pushButtonPressed: {
+    opacity: 0.85,
+  },
+  pushButtonText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   headerTitle: {
     fontSize: 15,

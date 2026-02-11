@@ -8,10 +8,14 @@
     "orientation": "portrait",
     "ios": {
       "bundleIdentifier": "com.ownly.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSUserNotificationsUsageDescription": "Ownly uses notifications to alert you about marketplace messages and transaction updates."
+      }
     },
     "plugins": [
       "expo-router",
+      "expo-notifications",
       [
         "expo-image-picker",
         {

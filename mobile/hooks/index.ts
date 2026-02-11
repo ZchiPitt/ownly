@@ -35,3 +35,4 @@ export {
 } from './useInventoryItemMutations';
 export { useNotifications, useMarkNotificationReadMutation } from './useNotifications';
 export type { AppNotification } from './useNotifications';
+export { useExpoPushRegistration } from './useExpoPushRegistration';

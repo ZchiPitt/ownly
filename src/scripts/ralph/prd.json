@@ -357,7 +357,7 @@
         "Verify in iOS simulator/device: permission flow and token registration succeed"
       ],
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
