@@ -8,7 +8,7 @@
     "orientation": "portrait",
     "ios": {
       "bundleIdentifier": "com.ownly.app",
-      "supportsTablet": true,
+      "supportsTablet": false,
       "infoPlist": {
         "NSUserNotificationsUsageDescription": "Ownly uses notifications to alert you about marketplace messages and transaction updates."
       }
